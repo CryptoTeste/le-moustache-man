@@ -848,7 +848,7 @@ function vGaleria(){
       <span class="nm"><b>Jantar ${roman(y)}</b><small>${bits}</small></span>
       <span style="display:flex;gap:3px">${ms.filter(([,x])=>x.type.startsWith('image/')).slice(0,3).map(([,x])=>`<img src="${x.data}" alt="" style="width:40px;height:40px;object-fit:cover">`).join('')}</span>
       <span style="color:var(--brass);font:20px var(--f-serif)">›</span></button>`}).join('')}</div></section>`})()}
-  <p class="demo"><span class="dot brass"></span>Nomes e anos de exemplo. A Comissão substitui pelos verdadeiros.</p>`;
+  ${ONLINE?'':'<p class="demo"><span class="dot brass"></span>Nomes e anos de exemplo. A Comissão substitui pelos verdadeiros.</p>'}`;
 }
 
 /* ---------- Regras ---------- */
