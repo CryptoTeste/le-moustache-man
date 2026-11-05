@@ -1,0 +1,1301 @@
+<!doctype html>
+<html lang="pt">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<script src="firebase-config.js"></script>
+<title>Le Moustache Man</title>
+<meta name="apple-mobile-web-app-title" content="Le Moustache Man">
+<meta name="application-name" content="Le Moustache Man">
+<meta name="theme-color" content="#0E0D0B">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500;1,600&family=Manrope:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: single-column phone app (max 520px), quiet header, fixed bottom tab bar. One deliberate dark look: a gentlemen's club ledger in brass and oxblood. */
+:root{
+  color-scheme:dark;
+  --bg:#0E0D0B; --surface:#14120E; --surface-2:#1C1912; --line:#2A261F; --line-soft:#221F1A; --line-strong:#3A352C;
+  --ink:#ECE4D3; --muted:#A39A88; --faint:#8C8473; --dim:#5E574A;
+  --brass:#C9A45C; --brass-hi:#E2C27F; --on-brass:#14120E;
+  --wine:#7a1b2a; --wine-line:#9A3242; --wine-ink:#D07A84; --wine-soft:#E4C9CC;
+  --green:#7FB08E; --green-deep:#1F3A2C; --green-line:#2E5440;
+  --f-serif:"Cormorant Garamond",Georgia,"Times New Roman",serif;
+  --f-sans:"Manrope",system-ui,-apple-system,"Segoe UI",sans-serif;
+}
+*{box-sizing:border-box}
+/* The serif's default figures are old-style (1 looks like I, 0 like o). The font shorthand resets numeric settings, so force lining figures everywhere. */
+*,*::before,*::after{font-feature-settings:"lnum" 1 !important}
+html,body{min-height:100%}
+body{background:var(--bg);color:var(--ink);font:15px/1.5 var(--f-sans);-webkit-font-smoothing:antialiased;font-variant-numeric:lining-nums}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--bg)}
+button,input,textarea,select{font:inherit;color:inherit}
+button{cursor:pointer;-webkit-tap-highlight-color:transparent}
+:focus-visible{outline:1px solid var(--brass);outline-offset:3px}
+h1,h2,h3{margin:0;font-weight:500;text-wrap:balance}
+p{margin:0}
+
+.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);
+  padding-left:max(22px,env(safe-area-inset-left,0px));padding-right:max(22px,env(safe-area-inset-right,0px))}
+.top-in{max-width:520px;margin:0 auto;display:flex;justify-content:space-between;align-items:center;padding-block:14px}
+.mark{display:flex;align-items:center;gap:10px}
+.mark svg{width:40px;height:15px;color:var(--brass)}
+.mark span{font-size:10px;letter-spacing:.3em;color:var(--muted)}
+.mark .wm{font:500 20px/1 var(--f-serif);letter-spacing:.01em;color:var(--ink)}
+.mark .wm em{font-style:italic;color:var(--brass)}
+.avatar-btn{width:38px;height:38px;border-radius:50%;border:1px solid var(--brass);background:transparent;color:var(--brass);font:600 18px var(--f-serif);overflow:hidden;padding:0}
+.avatar-btn img{width:100%;height:100%;object-fit:cover;display:block}
+.avatar-btn.on{box-shadow:0 0 0 2px var(--bg),0 0 0 3px var(--brass)}
+.photo-prompt{display:flex;gap:16px;align-items:center;border:1px dashed var(--brass);padding:16px}
+.photo-prompt .portrait{width:76px;height:76px}
+.yr{display:grid;grid-template-columns:56px minmax(0,1fr) auto;gap:12px;align-items:center;padding:12px 0;border-top:1px solid var(--line-soft)}
+.yr:first-child{border-top:0}
+.yr b{font:500 20px/1 var(--f-serif);color:var(--brass)}
+.yr .what{font-size:14px;min-width:0}
+.yr .what small{display:block;font-size:12px;color:var(--faint)}
+
+.wrap{max-width:520px;margin:0 auto;padding-block:14px 120px;
+  padding-left:max(22px,env(safe-area-inset-left,0px));padding-right:max(22px,env(safe-area-inset-right,0px));
+  display:flex;flex-direction:column;gap:28px}
+
+.eyebrow{font-size:10px;letter-spacing:.3em;color:var(--brass);text-transform:uppercase}
+.title{font:500 42px/1 var(--f-serif);letter-spacing:-.01em}
+.title em{font-style:italic;color:var(--brass)}
+.head{display:flex;flex-direction:column;gap:10px}
+.h-serif{font:italic 500 22px/1.2 var(--f-serif)}
+.sec{display:flex;flex-direction:column;gap:12px}
+.sec-row{display:flex;justify-content:space-between;align-items:baseline;gap:10px}
+.note{font-size:12px;color:var(--faint)}
+.muted{color:var(--muted)}
+.status{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--muted)}
+.dot{width:6px;height:6px;border-radius:50%;background:var(--faint);flex:none}
+.dot.on{background:var(--green)} .dot.wine{background:var(--wine-ink)} .dot.brass{background:var(--brass)}
+
+.ledger{border-top:1px solid var(--line);border-bottom:1px solid var(--line);display:flex;flex-direction:column}
+.ledger > div{display:flex;gap:16px;padding:14px 0;border-top:1px solid var(--line-soft)}
+.ledger > div:first-child{border-top:0}
+.ledger .k{width:64px;flex:none;font-size:10px;letter-spacing:.22em;color:var(--faint);padding-top:4px}
+.ledger .v{font-size:15px;line-height:1.45;min-width:0}
+.ledger .v small{display:block;color:var(--muted);font-size:15px}
+
+.btn{min-height:52px;border-radius:2px;border:1px solid var(--line-strong);background:transparent;color:var(--ink);
+  font-size:12px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;padding:0 16px}
+.btn.brass{background:var(--brass);border-color:var(--brass);color:var(--on-brass)}
+.btn.wine{background:var(--wine);border-color:var(--wine-line);color:#fff}
+.btn.sel{border-color:var(--brass);color:var(--brass)}
+.btn.sm{min-height:36px;font-size:10px;padding:0 12px}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+.btns{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.btn-row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+
+.panel{background:var(--surface);border:1px solid var(--line);padding:16px 18px;display:flex;flex-direction:column;gap:12px}
+.stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));text-align:center;background:#17150F;border:1px solid var(--line);padding:16px 8px}
+.stats > div + div{border-left:1px solid var(--line)}
+.stats b{display:block;font:500 34px/1 var(--f-serif);font-variant-numeric:lining-nums tabular-nums}
+.stats span{display:block;font-size:9px;letter-spacing:.24em;color:var(--faint);margin-top:6px}
+
+.list{display:flex;flex-direction:column}
+.row{display:flex;align-items:center;gap:14px;padding:12px 0;border-top:1px solid var(--line);min-width:0}
+.row:first-child{border-top:0}
+.row .nm{flex:1;min-width:0;display:flex;flex-direction:column;gap:1px}
+.row .nm b{font-weight:600;font-size:15px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.row .nm small{font-size:12px;color:var(--faint)}
+.ini{width:38px;height:38px;border-radius:50%;border:1px solid var(--line-strong);display:grid;place-items:center;font:500 18px var(--f-serif);color:var(--muted);flex:none}
+.ini.mascote{border-color:var(--green-line);color:var(--green)}
+.ini{overflow:hidden}
+.ini img,.portrait img{width:100%;height:100%;object-fit:cover;display:block}
+
+/* Livro de honra */
+.portrait{width:92px;height:92px;border-radius:50%;padding:3px;border:1px solid var(--brass);flex:none}
+.portrait.green{border-color:var(--green)}
+.portrait .in{width:100%;height:100%;border-radius:50%;overflow:hidden;background:var(--surface-2);display:grid;place-items:center;font:500 36px var(--f-serif);color:var(--muted)}
+.hon-feat{background:var(--surface);border:1px solid var(--line);padding:20px 16px 22px;display:flex;flex-direction:column;gap:18px}
+.hon-date{display:flex;align-items:baseline;justify-content:space-between;gap:10px;border-bottom:1px solid var(--line);padding-bottom:12px}
+.hon-date b{font:500 34px/1 var(--f-serif);color:var(--brass)}
+.hon-date span{font-size:11px;letter-spacing:.14em;color:var(--muted);text-transform:uppercase;text-align:right}
+.hon-pair{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.hon-p{display:flex;flex-direction:column;align-items:center;gap:8px;text-align:center;min-width:0}
+.hon-p b{font:500 24px/1.1 var(--f-serif);overflow-wrap:anywhere}
+.hon-p small{font-size:12px;color:var(--faint)}
+.hon-row{display:grid;grid-template-columns:56px repeat(2,minmax(0,1fr));gap:10px;align-items:center;padding:12px 0;border-top:1px solid var(--line-soft)}
+.hon-row:first-child{border-top:0}
+.hon-row .hy b{display:block;font:500 20px/1 var(--f-serif);color:var(--brass)}
+.hon-row .hy small{font-size:11px;color:var(--faint)}
+.hon-row .hp{display:flex;align-items:center;gap:8px;min-width:0}
+.hon-row .hp .ini{width:30px;height:30px;font-size:14px}
+.hon-row .hp div{min-width:0;display:flex;flex-direction:column}
+.hon-row .hp b{font-size:14px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.hon-row .hp small{font-size:9px;letter-spacing:.16em;text-transform:uppercase;color:var(--faint)}
+.pass-photo{width:58px;height:58px;border-radius:50%;overflow:hidden;border:2px solid rgba(232,201,135,.7);flex:none}
+.pass-photo img{width:100%;height:100%;object-fit:cover;display:block}
+.ini.vencedor{border-color:var(--wine-line);color:var(--wine-ink)}
+.tag{font-size:10px;letter-spacing:.16em;color:var(--faint);text-transform:uppercase;white-space:nowrap}
+.tag.green{color:var(--green)} .tag.wine{color:var(--wine-ink)} .tag.brass{color:var(--brass)}
+
+details.grp{border-top:1px solid var(--line)}
+details.grp:last-child{border-bottom:1px solid var(--line)}
+details.grp>summary{list-style:none;cursor:pointer;display:flex;justify-content:space-between;align-items:center;padding:14px 0;font-size:13px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+details.grp>summary::-webkit-details-marker{display:none}
+details.grp>summary::after{content:"+";font:400 20px var(--f-serif);color:var(--brass)}
+details.grp[open]>summary::after{content:"−"}
+details.grp>.list{padding-bottom:6px}
+
+.notice{border:1px solid var(--line);background:var(--surface);padding:14px 16px;font-size:14px;line-height:1.5;display:flex;flex-direction:column;gap:4px}
+.notice b{font-weight:600}
+.notice.wine{border-color:var(--wine-line);background:#1D1012}
+.notice.wine b{color:var(--wine-ink)}
+.notice.green{border-color:var(--green-line);background:#111A14}
+.notice.green b{color:var(--green)}
+.notice.brass b{color:var(--brass)}
+
+textarea,input[type=text],input[type=date],input[type=time],select{width:100%;background:var(--surface);border:1px solid var(--line-strong);border-radius:2px;padding:12px 14px;font-size:15px}
+textarea{min-height:84px;resize:vertical}
+label.f{display:flex;flex-direction:column;gap:6px;font-size:10px;letter-spacing:.22em;color:var(--faint);text-transform:uppercase}
+.grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+
+.seg{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));border:1px solid var(--line-strong)}
+.seg.three{grid-template-columns:repeat(3,minmax(0,1fr))}
+.seg.four{grid-template-columns:repeat(3,minmax(0,1fr));position:sticky;top:calc(env(safe-area-inset-top,0px) + 66px);z-index:4;background:var(--bg)}
+.seg.four button{font-size:9px;letter-spacing:.06em;padding:12px 2px;display:flex;align-items:center;justify-content:center;gap:5px}
+.badge{display:inline-grid;place-items:center;min-width:16px;height:16px;border-radius:8px;background:var(--wine);color:#fff;font-size:9px;letter-spacing:0;padding:0 4px}
+.seg button{border:0;background:transparent;padding:11px 4px;font-size:10px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:var(--faint)}
+.seg button + button{border-left:1px solid var(--line-strong)}
+.seg button.on{background:var(--brass);color:var(--on-brass)}
+
+.cand{display:flex;align-items:center;gap:14px;padding:12px 14px;border-radius:2px;border:1px solid var(--line);background:var(--surface);text-align:left;width:100%}
+.cand.on{border-color:var(--brass);background:var(--surface-2)}
+.cand .n{font:15px var(--f-serif);color:var(--faint);width:24px;flex:none}
+.cand .radio{width:20px;height:20px;border-radius:50%;border:1px solid var(--dim);display:grid;place-items:center;flex:none}
+.cand.on .radio{border-color:var(--brass)}
+.cand.on .radio::after{content:"";width:10px;height:10px;border-radius:50%;background:var(--brass)}
+.cand.on .ini{border-color:var(--brass);color:var(--brass)}
+
+.bar{display:flex;flex-direction:column;gap:6px}
+.bar .lab{display:flex;justify-content:space-between;align-items:baseline;font-size:15px}
+.bar .lab b{font:500 22px var(--f-serif);font-variant-numeric:lining-nums tabular-nums}
+.bar .track{height:4px;background:var(--line)}
+.bar .fill{height:100%;background:var(--dim)}
+.bar.win .fill{background:var(--brass)}
+.bar.win .lab span{color:var(--brass);font-weight:600}
+
+.motto{font:italic 17px var(--f-serif);color:var(--faint);text-align:center}
+
+/* Reveal ceremony */
+.ceremony{position:fixed;inset:0;z-index:50;background:#090806;display:flex;justify-content:center;overflow:auto;
+  padding:calc(56px + env(safe-area-inset-top,0px)) max(22px,env(safe-area-inset-right,0px)) calc(32px + env(safe-area-inset-bottom,0px)) max(22px,env(safe-area-inset-left,0px));animation:cerIn .4s ease-out}
+.cer-in{width:100%;max-width:440px;display:flex;flex-direction:column;gap:30px;position:relative;z-index:2;margin:auto 0}
+.confetti{position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:3}
+.cer-skip{position:fixed;top:calc(16px + env(safe-area-inset-top,0px));right:max(22px,env(safe-area-inset-right,0px));z-index:4}
+.cer-head{text-align:center;display:flex;flex-direction:column;gap:10px;align-items:center}
+.cer-bars{display:flex;flex-direction:column;gap:16px;transition:opacity .6s,transform .6s}
+.cer-bars.dim{opacity:.15;transform:scale(.96)}
+.cer-bars.final{gap:10px;animation:rise .8s .9s both}
+.cer-bars.final .lab{font-size:14px}.cer-bars.final .lab b{font-size:20px}
+.cer-bar .lab{display:flex;justify-content:space-between;align-items:baseline;font-size:17px}
+.cer-bar .lab b{font:500 28px var(--f-serif)}
+.cer-bar .track{height:4px;background:var(--line);margin-top:6px}
+.cer-bar .fill{height:100%;width:0;background:var(--dim);transition:width .9s cubic-bezier(.2,.8,.2,1)}
+.cer-bar.lead .fill{background:var(--brass)}.cer-bar.lead .lab span{color:var(--brass);font-weight:600}
+.cer-drum{text-align:center;font:italic 500 28px var(--f-serif);color:var(--muted);animation:rise .5s both}
+.cer-drum i{font-style:normal;animation:blink 1s infinite}.cer-drum i:nth-child(2){animation-delay:.2s}.cer-drum i:nth-child(3){animation-delay:.4s}
+.cer-win{display:flex;flex-direction:column;align-items:center;gap:14px;text-align:center}
+.cer-win .portrait{width:172px;height:172px;animation:popIn 1s cubic-bezier(.2,1.5,.3,1) both,glow 2.6s ease-in-out 1s infinite}
+.cer-win .portrait .in{font-size:68px}
+.cer-name{font:500 50px/1 var(--f-serif);animation:rise .8s .35s both;overflow-wrap:anywhere}
+.cer-sub{font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(--brass);animation:rise .8s .55s both}
+.cer-votes{font-size:13px;color:var(--muted);animation:rise .8s .7s both}
+.cer-you{font:italic 600 30px var(--f-serif);color:var(--brass);animation:rise .6s both}
+.cer-tie{font:500 54px/1 var(--f-serif);color:var(--brass);animation:popIn .8s both}
+.cer-go{animation:rise .6s 1.2s both}
+@keyframes popIn{from{transform:scale(.3);opacity:0}to{transform:scale(1);opacity:1}}
+@keyframes glow{0%,100%{box-shadow:0 0 0 0 rgba(201,164,92,0)}50%{box-shadow:0 0 0 10px rgba(201,164,92,.10),0 0 60px 10px rgba(201,164,92,.28)}}
+@keyframes rise{from{transform:translateY(16px);opacity:0}to{transform:none;opacity:1}}
+@keyframes cerIn{from{opacity:0}}
+@keyframes blink{50%{opacity:.15}}
+@media (prefers-reduced-motion:reduce){.ceremony,.ceremony *{animation:none!important;transition:none!important}}
+.title-sm{font:500 32px/1.05 var(--f-serif);letter-spacing:-.005em}
+.title-sm em{font-style:italic;color:var(--brass)}
+.ballot{display:flex;flex-direction:column;gap:16px;padding-top:24px;border-top:1px solid var(--line)}
+
+/* invitation card: the dinner's essentials at a glance */
+.invite{display:grid;grid-template-columns:auto minmax(0,1fr);background:#17150F;border:1px solid var(--brass);outline:1px solid rgba(201,164,92,.3);outline-offset:4px;margin:4px}
+.inv-date{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;padding:16px 18px;border-right:1px solid rgba(201,164,92,.45);min-width:96px;text-align:center}
+.inv-date .wd,.inv-date .mo{font-size:10px;letter-spacing:.3em;color:var(--muted)}
+.inv-date b{font:500 60px/.85 var(--f-serif);color:var(--brass);font-variant-numeric:lining-nums}
+.inv-date .hr{font:italic 500 18px var(--f-serif);color:var(--ink);margin-top:4px}
+.inv-body{padding:16px;display:flex;flex-direction:column;gap:10px;min-width:0}
+.inv-place{font:500 25px/1.08 var(--f-serif)}
+.inv-city{font-size:13px;color:var(--muted);margin-top:2px}
+.inv-dress{font-size:13px;line-height:1.45;color:var(--muted);border-top:1px solid var(--line);padding-top:10px}
+.inv-dress span{font-size:9px;letter-spacing:.24em;color:var(--brass);margin-right:6px}
+.inv-foot{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
+.inv-foot a{font-size:10px;font-weight:700;letter-spacing:.18em;color:var(--brass);text-decoration:none;text-transform:uppercase;display:inline-flex;align-items:center;gap:6px}
+
+/* album timeline */
+.feed{display:flex;flex-direction:column;gap:26px}
+.post{display:flex;flex-direction:column;gap:10px}
+.post header{display:flex;align-items:center;gap:10px;min-width:0}
+.post header .ini{width:32px;height:32px;font-size:15px}
+.post header .who-n{flex:1;min-width:0;display:flex;flex-direction:column}
+.post header .who-n b{font-size:14px;font-weight:600}
+.post header .who-n small{font-size:11px;color:var(--faint)}
+.post .media{width:100%;max-width:100%;max-height:72vh;object-fit:cover;display:block;background:#000;border:1px solid var(--line-soft)}
+.post footer{display:flex;align-items:center;gap:10px}
+.like{display:inline-flex;align-items:center;gap:8px;background:none;border:0;padding:4px 0;color:var(--muted);font-size:13px}
+.like svg{width:30px;height:12px}
+.like.on{color:var(--brass)}
+.txt-btn{background:none;border:0;padding:4px 0;font-size:10px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:var(--faint)}
+.add-link{display:inline-flex;align-items:center;gap:6px;font-size:10px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:var(--brass);cursor:pointer;padding:6px 0}
+.add-link svg{width:14px;height:14px}
+
+/* honour card / pass */
+.pass{border-radius:14px;padding:20px;display:flex;flex-direction:column;gap:22px;position:relative;overflow:hidden;box-shadow:0 18px 40px rgba(0,0,0,.5);color:#fff}
+.pass.membro{background:#1F1C17;border:1px solid #4A4232}
+.pass.mascote{background:var(--green-deep);border:1px solid var(--green-line)}
+.pass.vencedor{background:var(--wine);border:1px solid var(--wine-line)}
+.pass .ghost{position:absolute;right:-30px;bottom:-14px;width:200px;height:75px;opacity:.06;color:#fff;pointer-events:none}
+.pass .top-row{display:flex;justify-content:space-between;align-items:flex-start;gap:8px}
+.pass .lbl{font-size:9px;letter-spacing:.3em;color:#E8C987;text-transform:uppercase}
+.pass .no{font:18px var(--f-serif);color:#E8C987}
+.pass .name{font:500 36px/1 var(--f-serif)}
+.pass .sub{font-size:12px;color:var(--wine-soft);margin-top:4px}
+.pass.membro .sub,.pass.mascote .sub{color:#CFC6B4}
+.pass .meta{display:flex;gap:26px}
+.pass .meta div div:first-child{font-size:9px;letter-spacing:.24em;opacity:.7}
+.pass .meta div div:last-child{font-size:15px;font-weight:600}
+
+/* rules */
+details.ch{border-top:1px solid var(--line)}
+details.ch:last-of-type{border-bottom:1px solid var(--line)}
+details.ch>summary{list-style:none;cursor:pointer;padding:16px 0;display:flex;align-items:baseline;gap:14px}
+details.ch>summary::-webkit-details-marker{display:none}
+details.ch>summary .rn{font:500 18px var(--f-serif);color:var(--brass);width:30px;flex:none}
+details.ch>summary h2{font:500 22px/1.15 var(--f-serif);flex:1}
+.art{display:flex;gap:14px;padding:12px 0 14px 44px;border-top:1px solid var(--line-soft)}
+.art .n{font:600 13px var(--f-sans);color:var(--brass);width:34px;flex:none;padding-top:2px}
+.art h3{font-size:15px;font-weight:600;margin-bottom:4px}
+.art p{font-size:14px;color:var(--muted);max-width:60ch}
+mark{background:rgba(201,164,92,.25);color:var(--ink)}
+.protocol{counter-reset:p;display:flex;flex-direction:column}
+.protocol div{counter-increment:p;display:flex;gap:14px;padding:12px 0;border-top:1px solid var(--line-soft);font-size:14px}
+.protocol div::before{content:counter(p,upper-roman);font:500 16px var(--f-serif);color:var(--brass);width:30px;flex:none}
+
+/* nav */
+.tabs{position:fixed;left:0;right:0;bottom:0;z-index:6;background:var(--bg);border-top:1px solid var(--line);
+  padding-bottom:env(safe-area-inset-bottom,0px);padding-left:max(8px,env(safe-area-inset-left,0px));padding-right:max(8px,env(safe-area-inset-right,0px))}
+.tabs-in{max-width:520px;margin:0 auto;display:flex}
+.tabs a{flex:1;display:flex;flex-direction:column;align-items:center;gap:5px;padding:11px 0 12px;font-size:9px;letter-spacing:.2em;color:var(--faint);text-decoration:none}
+.tabs a svg{width:22px;height:22px}
+.tabs a.on{color:var(--brass)}
+
+/* sheet */
+.scrim{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:20;display:flex;align-items:flex-end;justify-content:center}
+.sheet{background:var(--bg);border-top:1px solid var(--line-strong);width:100%;max-width:520px;max-height:90vh;overflow:auto;
+  padding:20px max(22px,env(safe-area-inset-right,0px)) calc(24px + env(safe-area-inset-bottom,0px)) max(22px,env(safe-area-inset-left,0px));display:flex;flex-direction:column;gap:18px}
+.who{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.who button{display:flex;align-items:center;gap:10px;padding:10px;border:1px solid var(--line);border-radius:2px;background:var(--surface);text-align:left;min-width:0}
+.who button span:last-child{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.who .ini{width:32px;height:32px;font-size:15px}
+.confirm{border:1px dashed var(--wine-line);padding:14px;display:flex;flex-direction:column;gap:10px}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(92px + env(safe-area-inset-bottom,0px));background:var(--brass);color:var(--on-brass);
+  padding:10px 18px;font-size:11px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;z-index:30;white-space:nowrap}
+.empty{color:var(--faint);font-size:14px;padding:8px 0}
+.demo{font-size:11px;color:var(--faint);display:flex;gap:8px;align-items:center}
+@media (prefers-reduced-motion:no-preference){.sheet{animation:up .25s ease-out}@keyframes up{from{transform:translateY(40px);opacity:.5}}}
+</style>
+
+<style>
+:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+body{margin:0}img{max-width:100%}[hidden]{display:none!important}
+</style>
+</head>
+<body>
+<header class="top"><div class="top-in">
+  <div class="mark"><svg viewBox="0 0 64 24" fill="currentColor" aria-hidden="true"><path d="M32 9.5c-2.6-4.6-8.4-6.6-13.2-4.2-3.8 1.9-5.6 5.6-9.6 5.6-2.8 0-4.6-1.6-5.7-3.6-.4 5.6 4.3 10.4 11 10.4 7.3 0 12.2-4.3 17.5-6 5.3 1.7 10.2 6 17.5 6 6.7 0 11.4-4.8 11-10.4-1.1 2-2.9 3.6-5.7 3.6-4 0-5.8-3.7-9.6-5.6C40.4 2.9 34.6 4.9 32 9.5z"/></svg><span class="wm">Le Moustache <em>Man</em></span></div>
+  <button class="avatar-btn" id="meBtn" data-a="card" aria-label="O meu cartão" hidden></button>
+</div></header>
+<main class="wrap" id="app"></main>
+<nav class="tabs" aria-label="Secções" hidden><div class="tabs-in" id="tabs"></div></nav>
+<div id="layer"></div>
+
+<script>
+(function(){
+'use strict';
+const STACHE='<svg viewBox="0 0 64 24" fill="currentColor" aria-hidden="true"><path d="M32 9.5c-2.6-4.6-8.4-6.6-13.2-4.2-3.8 1.9-5.6 5.6-9.6 5.6-2.8 0-4.6-1.6-5.7-3.6-.4 5.6 4.3 10.4 11 10.4 7.3 0 12.2-4.3 17.5-6 5.3 1.7 10.2 6 17.5 6 6.7 0 11.4-4.8 11-10.4-1.1 2-2.9 3.6-5.7 3.6-4 0-5.8-3.7-9.6-5.6C40.4 2.9 34.6 4.9 32 9.5z"/></svg>';
+
+/* ======================================================================
+   DATA LAYER
+   Every change goes through set(path, value). Right now it saves on this
+   device (demo mode). When we go online, only this block changes: the same
+   paths become Firebase field updates, so two people voting at once never
+   overwrite each other.
+   ====================================================================== */
+const KEY='bigode-premium-v1', ME_KEY='bigode-premium-me';
+function seed(){
+  const names=['Gil','António','Bruno','Carlos','Diogo','Eduardo','Filipe','Gonçalo','Hugo','João','Luís','Miguel','Nuno','Pedro','Ricardo','Rui','Sérgio','Tiago','Vasco','Zé'];
+  const since=[2019,2019,2019,2020,2019,2021,2019,2022,2019,2020,2023,2019,2019,2021,2019,2020,2022,2024,2019,2023];
+  const people={};
+  names.forEach((n,i)=>people['m'+(i+1)]={name:n,no:i+1,role:'membro',since:since[i],dinners:Math.max(1,2026-since[i]-(i%3===0?1:0)),committee:i<3,admin:i===0,strikes:i===16?1:0});
+  people.g1={name:'Martim',role:'mascote',since:2023,dinners:3,mascotYear:2023};
+  people.g2={name:'Duarte',role:'mascote',since:2024,dinners:2,mascotYear:2024};
+  people.g3={name:'Francisco',role:'mascote',since:2025,dinners:1,mascotYear:2025};
+  const rsvp={};
+  ['m1','m2','m3','m4','m6','m7','m9','m10','m12','m13','m15','m19','g1','g3'].forEach(id=>rsvp[id]={s:'vou'});
+  rsvp.m5={s:'nao',reason:'Casamento da minha irmã no mesmo dia.',j:'aceite'};
+  rsvp.m14={s:'nao',reason:'Turno no hospital, tentei trocar mas não consegui.',j:'pendente'};
+  const ballot=(c)=>({cands:c||[],open:false,revealed:false,votes:{},round:1});
+  people.c1={name:'Sr. Armando da tasca',note:'bigode à antiga, nunca o cortou',role:'convidado',nominatedBy:'m3',since:2026,dinners:0};
+  people.c2={name:'Tio Zé Manel',note:'barba de capitão de navio',role:'convidado',nominatedBy:'m9',since:2026,dinners:0};
+  const notes={n1:{year:2026,text:'O restaurante será anunciado até ao fim do mês. Reservem a data.',by:'m1',at:Date.now()-864e5*2}};
+  return seedAttendance({people,rsvp,present:{},notes,files:{},media:{},
+    edition:{year:2026,date:'2026-12-12',time:'20:00',place:'Restaurante a confirmar',city:'Caldas da Rainha',
+      dress:'Cavalheiro clássico. Colete ou suspensórios, laço ou gravata.',deadline:'2026-11-28',phase:'convocatoria'},
+    ballots:{bigode:ballot(),mascote:ballot(['c1','c2'])},
+    history:[{year:2023,date:'2023-12-09',bigode:'m15',mascote:'g1'},{year:2024,date:'2024-12-14',bigode:'m9',mascote:'g2'},{year:2025,date:'2025-12-13',bigode:'m13',mascote:'g3',prize:'Le Moustache Man',proposed:[
+      {name:'Francisco',note:'o bigode mais branco de Óbidos',by:'m2',votes:9,won:true},
+      {name:'Sr. Joaquim do talho',note:'bigode de guiador',by:'m4',votes:4},
+      {name:'Professor Lemos',note:'barba de filósofo',by:'m12',votes:2}]}]});
+}
+// Example attendance for past dinners (the real app records it when an edition is closed)
+function seedAttendance(st){
+  st.history.forEach(h=>{
+    h.attended=[];h.absent=[];h.silent=[];
+    Object.entries(st.people).forEach(([id,p])=>{
+      if(p.role==='membro'&&p.since<=h.year){
+        const r=((p.no||1)*7+h.year)%9;
+        if(id===h.bigode||r>2)h.attended.push(id);else if(r===0)h.silent.push(id);else h.absent.push(id);
+      }else if(p.role==='mascote'&&p.mascotYear<=h.year)h.attended.push(id);
+    });
+  });
+  return st;
+}
+let S, ME=null;
+// ONLINE when firebase-config.js provides a config; otherwise the app runs in test mode on this device.
+const ONLINE=!!(window.FIREBASE_CONFIG&&window.FIREBASE_CONFIG.apiKey);
+const TOKEN_KEY='lmm-token';
+function getPath(path){return path.split('.').reduce((o,k)=>o==null?undefined:o[k],S)}
+function applyLocal(path,value){
+  const ks=path.split('.');let o=S;
+  for(let i=0;i<ks.length-1;i++){if(o[ks[i]]==null||typeof o[ks[i]]!=='object')o[ks[i]]={};o=o[ks[i]]}
+  const last=ks[ks.length-1];
+  if(value===undefined)delete o[last];else o[last]=JSON.parse(JSON.stringify(value));
+}
+const Store={
+  load(){
+    if(ONLINE){S={people:{},rsvp:{},present:{},media:{},files:{},notes:{},history:[]};return}
+    try{const r=localStorage.getItem(KEY);S=r?JSON.parse(r):seed()}catch(e){S=seed()}
+    try{ME=localStorage.getItem(ME_KEY)}catch(e){ME=null}},
+  set(path,value){applyLocal(path,value);if(ONLINE)Remote.queue.push(path)},
+  persist(){
+    if(ONLINE)return Remote.flush();
+    try{localStorage.setItem(KEY,JSON.stringify(S));return true}catch(e){return false}},
+  setMany(obj){Object.entries(obj).forEach(([p,v])=>Store.set(p,v));Store.persist();render()},
+  one(p,v){Store.setMany({[p]:v})},
+  setMe(id){ME=id;if(ONLINE)return;try{id?localStorage.setItem(ME_KEY,id):localStorage.removeItem(ME_KEY)}catch(e){}},
+  reset(){if(ONLINE)return;S=seed();Store.persist()}
+};
+function emptyState(){const b=()=>({cands:[],open:false,revealed:false,votes:{},round:1});
+  return {people:{},rsvp:{},present:{},notes:{},files:{},media:{},history:[],ballots:{bigode:b(),mascote:b()},
+    edition:{year:new Date().getFullYear(),date:iso(new Date()),time:'20:00',place:'Restaurante a confirmar',city:'',dress:'',deadline:iso(new Date()),phase:'convocatoria'}}}
+
+/* ======================================================================
+   ONLINE (Firebase). Layout in the database:
+   app/state    everything shared except heavy files (people, replies, votes, history…)
+   app/meta     marks the brotherhood as set up
+   media/{id}   album photos       files/{id}  Committee documents
+   photos/{id}  profile photos     keys/{token} personal links → member
+   sessions/{uid} which member this phone is (created from a personal link)
+   The same path-based changes as test mode are turned into field updates,
+   so two people voting at the same time never overwrite each other.
+   ====================================================================== */
+const Remote={db:null,auth:null,FV:null,queue:[],ready:false,screen:'loading',keys:{},uid:null,token:null,_photos:{},_core:null,
+  loadSDK(){
+    const v='10.14.1',base=`https://www.gstatic.com/firebasejs/${v}/`;
+    const one=f=>new Promise((res,rej)=>{const s=document.createElement('script');s.src=base+f;s.onload=res;s.onerror=rej;document.head.appendChild(s)});
+    return one('firebase-app-compat.js').then(()=>Promise.all([one('firebase-auth-compat.js'),one('firebase-firestore-compat.js')]));
+  },
+  async start(){
+    try{await this.loadSDK()}catch(e){this.screen='error';render();return}
+    firebase.initializeApp(window.FIREBASE_CONFIG);
+    this.db=firebase.firestore();this.auth=firebase.auth();this.FV=firebase.firestore.FieldValue;
+    try{await this.auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL)}catch(e){}
+    try{if(!this.auth.currentUser)await this.auth.signInAnonymously()}catch(e){this.screen='error';render();return}
+    this.uid=this.auth.currentUser.uid;
+    // A personal link looks like https://…/?k=TOKEN — remember it and tidy the address bar
+    const url=new URL(location.href);let tok=url.searchParams.get('k');
+    if(tok){try{localStorage.setItem(TOKEN_KEY,tok)}catch(e){}url.searchParams.delete('k');history.replaceState(null,'',url.pathname+(url.search||'')+url.hash)}
+    else{try{tok=localStorage.getItem(TOKEN_KEY)}catch(e){}}
+    this.token=tok;
+    const meta=await this.db.doc('app/meta').get().catch(()=>null);
+    if(!meta||!meta.exists){this.screen='setup';render();return}
+    let member=null;
+    const sess=await this.db.doc('sessions/'+this.uid).get().catch(()=>null);
+    if(sess&&sess.exists&&(!tok||sess.data().key===tok))member=sess.data().member;
+    else if(tok){
+      const k=await this.db.doc('keys/'+tok).get().catch(()=>null);
+      if(k&&k.exists){member=k.data().member;await this.db.doc('sessions/'+this.uid).set({member,key:tok}).catch(()=>{member=null})}
+      else{this.screen='badlink';render();return}
+    }
+    if(!member){this.screen='nolink';render();return}
+    ME=member;this.subscribe();
+  },
+  subscribe(){
+    const db=this.db;
+    db.doc('app/state').onSnapshot(snap=>{
+      if(!snap.exists)return;
+      const d=snap.data();this._core=d;
+      S=Object.assign(emptyState(),d,{media:S.media||{},files:S.files||{}});
+      Object.entries(this._photos).forEach(([id,ph])=>{if(S.people[id])S.people[id].photo=ph});
+      if(!S.people[ME]){this.screen='badlink';this.ready=false;render();return}
+      const first=!this.ready;this.ready=true;
+      if(first&&me().committee)this.watchKeys();
+      Remote.render();
+    },err=>{console.error(err);this.screen='error';this.ready=false;render()});
+    db.collection('media').onSnapshot(q=>{const m={};q.forEach(d=>m[d.id]=d.data());S.media=m;Remote.render()},e=>console.error(e));
+    db.collection('files').onSnapshot(q=>{const m={};q.forEach(d=>m[d.id]=d.data());S.files=m;Remote.render()},e=>console.error(e));
+    db.collection('photos').onSnapshot(q=>{const m={};q.forEach(d=>m[d.id]=d.data().data);this._photos=m;
+      Object.keys(S.people||{}).forEach(id=>{if(m[id])S.people[id].photo=m[id];else delete S.people[id].photo});Remote.render()},e=>console.error(e));
+  },
+  watchKeys(){if(this._kw)return;this._kw=this.db.collection('keys').onSnapshot(q=>{const m={};q.forEach(d=>{m[d.data().member]=d.id});this.keys=m;Remote.render()},()=>{})},
+  // Re-render, but never while someone is typing (an update from another phone would wipe their text)
+  render(){
+    const a=document.activeElement;
+    if(a&&$('#app').contains(a)&&/^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName)&&a.type!=='file'){
+      if(!this._deferred){this._deferred=true;a.addEventListener('blur',()=>{this._deferred=false;setTimeout(render,50)},{once:true})}return}
+    if(this._raf)return;this._raf=requestAnimationFrame(()=>{this._raf=null;render()});
+  },
+  flush(){
+    const paths=[...new Set(this.queue.splice(0))];if(!paths.length)return true;
+    // If both "a" and "a.b" changed, send "a" whole (Firestore rejects overlapping paths)
+    const keep=paths.filter(p=>!paths.some(q=>q!==p&&p.startsWith(q+'.')));
+    const db=this.db,FV=this.FV,batch=db.batch(),state={};let ok=true,ops=0;
+    for(const p of keep){
+      const ks=p.split('.'),v=getPath(p);
+      if((ks[0]==='media'||ks[0]==='files')&&ks.length>=2){
+        const ref=db.collection(ks[0]).doc(ks[1]);
+        if(ks.length===2){if(v===undefined)batch.delete(ref);else{if(JSON.stringify(v).length>950000){ok=false;applyLocal(p,undefined);continue}batch.set(ref,v)}}
+        else batch.update(ref,{[ks.slice(2).join('.')]:v===undefined?FV.delete():v});
+        ops++;continue;
+      }
+      if(ks[0]==='people'&&ks.length===3&&ks[2]==='photo'){const ref=db.collection('photos').doc(ks[1]);v===undefined?batch.delete(ref):batch.set(ref,{data:v});ops++;continue}
+      if(ks[0]==='people'&&ks.length===2&&v===undefined){batch.delete(db.collection('photos').doc(ks[1]));ops++}
+      let val=v===undefined?FV.delete():JSON.parse(JSON.stringify(v));
+      if(p==='people'&&val&&typeof val==='object'){Object.values(val).forEach(x=>{if(x)delete x.photo})}
+      if(ks[0]==='people'&&ks.length===2&&val&&val.photo)delete val.photo;
+      state[p]=val;
+    }
+    if(Object.keys(state).length){batch.update(db.doc('app/state'),state);ops++}
+    if(ops)batch.commit().catch(e=>{console.error(e);toast(e.code==='permission-denied'?'Sem permissão para isso':'Sem ligação: tente de novo')});
+    return ok;
+  },
+  newToken(){const a=new Uint8Array(12);crypto.getRandomValues(a);return Array.from(a,b=>b.toString(16).padStart(2,'0')).join('')},
+  linkFor(token){return location.origin+location.pathname+'?k='+token},
+  async addKey(member){const t=this.newToken();await this.db.doc('keys/'+t).set({member});return t},
+  async dropKeys(member){const q=await this.db.collection('keys').where('member','==',member).get();const b=this.db.batch();q.forEach(d=>b.delete(d.ref));await b.commit()},
+  async setup(adminName,others,date){
+    const y=Number(date.slice(0,4)),people={},keys={};let no=1;
+    const add=(name,com,admin)=>{const id='m'+no;people[id]={name,no,role:'membro',since:y,dinners:0,committee:!!com,admin:!!admin,strikes:0};no++;return id};
+    const adminId=add(adminName,true,true);
+    others.split('\n').map(s=>s.trim()).filter(Boolean).forEach(l=>{const com=/\*/.test(l);add(l.replace(/\*/g,'').trim(),com,false)});
+    const dl=D(date);dl.setDate(dl.getDate()-14);
+    const st=emptyState();st.people=people;
+    st.edition=Object.assign(st.edition,{year:y,date,deadline:iso(dl),dress:'Cavalheiro clássico. Colete ou suspensórios, laço ou gravata. Bigode natural.'});
+    delete st.media;delete st.files;
+    const b=this.db.batch();
+    b.set(this.db.doc('app/state'),st);
+    Object.keys(people).forEach(id=>{const t=this.newToken();keys[id]=t;b.set(this.db.doc('keys/'+t),{member:id})});
+    b.set(this.db.doc('app/meta'),{createdAt:Date.now(),by:this.uid});
+    b.set(this.db.doc('sessions/'+this.uid),{member:adminId,key:keys[adminId]});
+    await b.commit();
+    try{localStorage.setItem(TOKEN_KEY,keys[adminId])}catch(e){}
+    this.token=keys[adminId];ME=adminId;this.screen='loading';this.subscribe();
+  },
+  async signOut(){try{localStorage.removeItem(TOKEN_KEY)}catch(e){}try{await this.db.doc('sessions/'+this.uid).delete()}catch(e){}location.reload()},
+  view(){
+    const box=(t1,t2,body)=>`<div class="head"><span class="eyebrow">Le Moustache Man · Irmandade do Bigode</span><h1 class="title">${t1}<br><em>${t2}</em></h1></div>${body}`;
+    if(this.screen==='setup')return box('Fundar a','Irmandade',`
+      <p class="muted">Primeira vez: crie a Irmandade. Quem preencher isto fica como administrador e na Comissão.</p>
+      <label class="f" for="su-admin">O seu nome<input type="text" id="su-admin" maxlength="40" placeholder="Ex.: Gil"></label>
+      <label class="f" for="su-others">Outros membros (um por linha; * para a Comissão)<textarea id="su-others" style="min-height:180px" placeholder="António *&#10;Bruno *&#10;Carlos&#10;Diogo"></textarea></label>
+      <label class="f" for="su-date">Data do próximo jantar<input type="date" id="su-date" value="${iso(new Date(new Date().getFullYear(),11,12))}"></label>
+      <button class="btn brass" data-a="setupok">Fundar a Irmandade</button>
+      <p class="note">Depois, na Comissão → Pessoas, copia o link pessoal de cada membro para enviar no WhatsApp.</p>`);
+    if(this.screen==='nolink')return box('Precisa do','seu link',`<p class="muted">Esta app é só para a Irmandade. Peça à Comissão o seu link pessoal e abra-o neste telemóvel. Só precisa de o fazer uma vez.</p>`);
+    if(this.screen==='badlink')return box('Link','inválido',`<p class="muted">Este link já não é válido. Peça um novo à Comissão.</p>`);
+    if(this.screen==='error')return box('Sem','ligação',`<p class="muted">Não foi possível ligar à Irmandade. Verifique a internet e tente outra vez.</p><button class="btn" data-a="reload">Tentar outra vez</button>`);
+    return `<div class="head" style="padding-top:30vh;align-items:center;text-align:center"><span class="eyebrow">A abrir a Irmandade…</span></div>`;
+  }
+};
+
+Store.load();
+// Upgrade data saved by earlier test versions (test mode only)
+if(!ONLINE)(function migrate(){
+  S.notes=S.notes||{};S.files=S.files||{};S.media=S.media||{};
+  if(S.history.some(h=>!Array.isArray(h.attended)))seedAttendance(S);
+  if(!Object.values(S.people).some(p=>p.admin)){const c=S.people.m1||Object.values(S.people).find(p=>p.committee);if(c){c.admin=true;c.committee=true}}
+  Store.persist();
+})();
+
+/* ====================================================================== helpers */
+const $=s=>document.querySelector(s);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const P=id=>S.people[id]?Object.assign({id},S.people[id]):null;
+const all=()=>Object.keys(S.people).map(P);
+const me=()=>P(ME);
+const ini=n=>n.trim().split(/\s+/).map(w=>w[0]).slice(0,2).join('').toUpperCase();
+const holderId=()=>{const h=S.history[S.history.length-1];return h?h.bigode:null};
+const tier=p=>p.id===holderId()?'vencedor':(p.role==='mascote'?'mascote':'membro');
+const tierName={membro:'Membro da Irmandade',mascote:'Mascote do Bigode',vencedor:'Laço-Testemunho'};
+const avatar=p=>p.photo?`<span class="ini ${tier(p)}"><img src="${p.photo}" alt=""></span>`:`<span class="ini ${tier(p)}">${esc(ini(p.name))}</span>`;
+const portrait=(p,cls)=>`<span class="portrait ${cls||''}"><span class="in">${p&&p.photo?`<img src="${p.photo}" alt="${esc(p.name)}">`:esc(p?ini(p.name):'?')}</span></span>`;
+const passPhoto=p=>p&&p.photo?`<span class="pass-photo"><img src="${p.photo}" alt=""></span>`:'';
+const photoControls=p=>`<div class="btn-row"><label class="btn sm" for="photo-in-${p.id}" style="display:inline-flex;align-items:center;cursor:pointer">${p.photo?'Mudar fotografia':'Adicionar fotografia'}</label><input type="file" id="photo-in-${p.id}" data-photo="${p.id}" accept="image/*" hidden>${p.photo?`<button class="btn sm" data-a="rmphoto" data-id="${p.id}">Remover fotografia</button>`:''}</div>`;
+const invited=()=>all().filter(p=>p.role==='membro'||p.role==='mascote').sort((a,b)=>a.name.localeCompare(b.name,'pt'));
+const roman=n=>{const m=[[1000,'M'],[900,'CM'],[500,'D'],[400,'CD'],[100,'C'],[90,'XC'],[50,'L'],[40,'XL'],[10,'X'],[9,'IX'],[5,'V'],[4,'IV'],[1,'I']];let r='';m.forEach(([v,s])=>{while(n>=v){r+=s;n-=v}});return r};
+const today=()=>{const d=new Date();d.setHours(0,0,0,0);return d};
+const D=s=>{const [y,m,d]=s.split('-').map(Number);return new Date(y,m-1,d)};
+const iso=d=>`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+const deadlinePassed=()=>today()>D(S.edition.deadline);
+const daysLeft=()=>Math.round((D(S.edition.deadline)-today())/864e5);
+const cap=s=>s.charAt(0).toUpperCase()+s.slice(1);
+const fmtLong=s=>cap(D(s).toLocaleDateString('pt-PT',{weekday:'long',day:'numeric',month:'long'}));
+const MES=['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];
+const dm=d=>d.getDate()+' '+MES[d.getMonth()];
+const fmtShort=s=>dm(D(s));
+const presentIds=()=>Object.keys(S.present).filter(k=>S.present[k]&&S.people[k]);
+function status(id){const r=S.rsvp[id];if(r&&r.s==='vou')return 'vou';if(r&&r.s==='nao')return 'nao';return deadlinePassed()?'excluido':'pendente'}
+function tally(b){const c={};b.cands.forEach(id=>c[id]=0);Object.values(b.votes||{}).forEach(v=>{if(v in c)c[v]++});return c}
+function leaders(b){const c=tally(b);const mx=Math.max(0,...Object.values(c));return mx===0?[]:Object.keys(c).filter(k=>c[k]===mx)}
+let toastT;function toast(m){document.querySelectorAll('.toast').forEach(t=>t.remove());const t=document.createElement('div');t.className='toast';t.textContent=m;document.body.appendChild(t);clearTimeout(toastT);toastT=setTimeout(()=>t.remove(),2200)}
+const BALLOT={bigode:{t1:'Melhor Bigode',t2:'do Ano',art:'Artigo 12.º',prize:'recebe o Laço-Testemunho'},mascote:{t1:'Mascote',t2:'do Bigode',art:'Artigo 7.º',prize:'é a nova Mascote do Bigode, com convite vitalício'}};
+const proposer=p=>p.nominatedBy&&S.people[p.nominatedBy]?S.people[p.nominatedBy].name:null;
+const candSub=p=>p.role==='convidado'?[p.note?'«'+p.note+'»':'',proposer(p)?'proposto por '+proposer(p):''].filter(Boolean).join(' · '):p.role==='mascote'?'Mascote '+roman(p.mascotYear):(()=>{const w=S.history.filter(h=>h.bigode===p.id).map(h=>h.year);return w.length?'Melhor Bigode '+w.join(', '):'Membro desde '+p.since})();
+function nominationsHTML(){
+  const b=S.ballots.mascote,m=me();
+  const rows=b.cands.map(id=>{const p=P(id);if(!p)return '';const can=p.nominatedBy===m.id||m.committee;
+    return `<div class="row" style="align-items:flex-start">${avatar(p)}<div class="nm"><b style="white-space:normal">${esc(p.name)}</b><small style="white-space:normal">${esc(candSub(p))}</small></div>${can?`<button class="txt-btn" data-a="unnominate" data-id="${id}">Retirar</button>`:''}</div>`}).join('');
+  return `<div class="notice"><b>Quem merece ser mascote?</b><span>Pense num senhor mais velho que conheça, de bigode ou barba respeitável. Todos podem propor nomes. A Comissão abre a votação na noite do jantar.</span></div>
+  <div class="list">${rows||'<div class="empty">Ainda ninguém foi proposto. Seja o primeiro.</div>'}</div>
+  <div class="sec" style="gap:10px"><span class="h-serif">Propor um nome</span>
+    <label class="f" for="nom-name">Nome<input type="text" id="nom-name" placeholder="Ex.: Sr. Armando da tasca" maxlength="60"></label>
+    <label class="f" for="nom-note">Porquê? (opcional)<input type="text" id="nom-note" placeholder="Ex.: bigode à antiga, 40 anos sem o cortar" maxlength="90"></label>
+    <button class="btn brass" data-a="nominate">Propor</button></div>`;
+}
+
+/* ====================================================================== UI state (this device only) */
+const UI={voteTab:'bigode',pick:{},q:'',confirm:null,editing:null};
+
+/* ====================================================================== screens */
+const ICON={
+ jantar:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"><rect x="3.5" y="5" width="17" height="15" rx="1"/><path d="M3.5 10h17M8 3v4M16 3v4"/></svg>',
+ votar:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M4 13h16v7H4zM8 13l1-8h6l1 8M10 9l1.6 1.6L14.5 7.5"/></svg>',
+ galeria:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M7 4h10v4a5 5 0 0 1-10 0zM7 6H4a3 3 0 0 0 3 4M17 6h3a3 3 0 0 1-3 4M12 13v4M8 20h8"/></svg>',
+ regras:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h9l4 4v14H6zM14 3v5h5M9 12h7M9 16h7"/></svg>',
+ comissao:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 3v5c0 4.5-3 8-7 10-4-2-7-5.5-7-10V6z"/><path d="M9 12l2 2 4-4"/></svg>'
+};
+const TABS=[['jantar','JANTAR'],['votar','VOTAÇÃO'],['galeria','GALERIA'],['regras','REGRAS'],['comissao','COMISSÃO']];
+function route(){const h=location.hash.slice(1);let r=TABS.some(t=>t[0]===h)||h==='perfil'?h:'jantar';if(r==='comissao'&&!(me()&&me().committee))r='jantar';return r}
+
+/* ---------- Entrada ---------- */
+function vWho(){
+  const ps=invited();
+  return `<div class="head"><span class="eyebrow">Le Moustache Man · Irmandade do Bigode</span><h1 class="title">Quem <em>é você?</em></h1>
+    <p class="muted">Na versão final, cada membro recebe um link pessoal e entra diretamente. Neste teste, escolha um nome. Gil é o administrador; Gil, António e Bruno são da Comissão.</p></div>
+    <div class="who">${ps.map(p=>`<button data-a="pick" data-id="${p.id}">${avatar(p)}<span>${esc(p.name)}</span></button>`).join('')}</div>`;
+}
+
+/* ---------- Jantar ---------- */
+function vJantar(){
+  const e=S.edition,m=me(),st=status(m.id),r=S.rsvp[m.id]||{};
+  const g={vou:[],nao:[],pendente:[],excluido:[]};invited().forEach(p=>g[status(p.id)].push(p));
+  const silent=deadlinePassed()?g.excluido:g.pendente;
+  const eyebrow=e.phase==='noite'?'Esta noite':e.phase==='encerrada'?'Edição encerrada':'Convocatória';
+  let reply='';
+  if(e.phase==='encerrada'){
+    reply=`<div class="notice green"><b>Edição ${e.year} encerrada.</b><span>Os vencedores já estão no Livro de honra.</span></div>`;
+  }else if(e.phase==='noite'){
+    reply=S.present[m.id]?`<div class="notice green"><b>Presença registada.</b><span>A urna está no separador Votação.</span></div>`
+      :`<div class="notice brass"><b>O jantar está a decorrer.</b><span>Peça à Comissão para registar a sua presença. Só os presentes votam.</span></div>`;
+  }else if(st==='excluido'){
+    reply=`<div class="notice wine"><b>Não respondeu dentro do prazo.</b><span>Fica excluído desta edição, salvo decisão em contrário da Comissão. O silêncio não é um bigode (Art. 5.º).</span></div>`;
+  }else{
+    const lock=deadlinePassed();
+    reply=`<div class="sec-row"><span class="h-serif">A sua resposta</span><span class="note">${lock?'prazo terminado':`até ${fmtShort(e.deadline)} · ${daysLeft()===0?'termina hoje':daysLeft()===1?'falta 1 dia':'faltam '+daysLeft()+' dias'}`}</span></div>
+    <div class="btns"><button class="btn ${st==='vou'?'brass':''}" data-a="rsvp" data-v="vou" ${lock?'disabled':''}>Presente</button>
+      <button class="btn ${st==='nao'?'sel':''}" data-a="rsvp" data-v="nao" ${lock?'disabled':''}>Ausente</button></div>`;
+    if(st==='vou')reply+=`<p class="note">Confirmado. Apresente-se com o bigode em condições.</p>`;
+    if(st==='pendente')reply+=`<p class="note">O silêncio não é um bigode. Sem resposta até ${fmtShort(e.deadline)}, fica de fora desta edição.</p>`;
+    if(st==='nao'){
+      const j=r.j==='aceite'?'<span class="tag green">Justificação aceite</span>':r.j==='recusada'?'<span class="tag wine">Justificação recusada</span>':r.reason?'<span class="tag brass">Em apreciação pela Comissão</span>':'';
+      reply+=`<label class="f" for="reason">Motivo da ausência · Art. 6.º<textarea id="reason" placeholder="«Não me apetece» não constitui fundamento bastante.">${esc(r.reason||'')}</textarea></label>
+      <div class="btn-row"><button class="btn sm brass" data-a="reason">Enviar justificação</button>${j}</div>`;
+    }
+  }
+  const grp=(t,arr,open)=>`<details class="grp" ${open?'open':''}><summary>${t} · ${arr.length}</summary><div class="list">${arr.length?arr.map(p=>`<div class="row">${avatar(p)}<div class="nm"><b>${esc(p.name)}</b>${p.role==='mascote'?`<small>Mascote ${roman(p.mascotYear)} · convite vitalício</small>`:''}</div>${e.phase!=='convocatoria'&&S.present[p.id]?'<span class="tag green">Presente</span>':''}</div>`).join(''):'<div class="empty">Ninguém.</div>'}</div></details>`;
+  return `
+  <div class="head"><span class="eyebrow">${eyebrow} · ${roman(e.year)}</span><h1 class="title">O Jantar<br><em>do Bigode</em></h1></div>
+  ${inviteHTML()}
+  <section class="sec">${reply}</section>
+  ${boardHTML(false)}
+  <section class="sec">
+    <div class="stats"><div><b style="color:var(--brass)">${g.vou.length}</b><span>PRESENTES</span></div><div><b>${g.nao.length}</b><span>AUSENTES</span></div><div><b style="color:var(--wine-ink)">${silent.length}</b><span>${deadlinePassed()?'EXCLUÍDOS':'EM SILÊNCIO'}</span></div></div>
+    <div>${grp('Presentes',g.vou,false)}${grp('Ausentes',g.nao)}${grp(deadlinePassed()?'Excluídos':'Em silêncio',silent)}</div>
+  </section>
+  ${albumHTML()}`;
+}
+
+/* ---------- Avisos e documentos (read by all, managed by the Committee) ---------- */
+const fmtSize=b=>b>1048576?(b/1048576).toFixed(1)+' MB':Math.max(1,Math.round(b/1024))+' KB';
+const fmtAgo=t=>dm(new Date(t));
+function edNotes(){return Object.entries(S.notes||{}).filter(([,n])=>n.year===S.edition.year).sort((a,b)=>b[1].at-a[1].at)}
+function edFiles(){return Object.entries(S.files||{}).filter(([,f])=>f.year===S.edition.year).sort((a,b)=>b[1].at-a[1].at)}
+function boardHTML(manage){
+  const ns=edNotes(),fs=edFiles();
+  if(!manage&&!ns.length&&!fs.length)return '';
+  const by=id=>S.people[id]?esc(S.people[id].name):'Comissão';
+  return `<section class="sec"><div class="sec-row"><span class="h-serif">Avisos da Comissão</span>${manage?'':'<span class="note">'+(ns.length+fs.length)+'</span>'}</div>
+    ${ns.length?`<div class="list">${ns.map(([id,n])=>`<div class="row" style="align-items:flex-start"><span class="dot brass" style="margin-top:8px"></span><div class="nm"><span style="font-size:15px;white-space:pre-line">${esc(n.text)}</span><small>${by(n.by)} · ${fmtAgo(n.at)}</small></div>${manage?`<button class="btn sm" data-a="rmnote" data-id="${id}">Apagar</button>`:''}</div>`).join('')}</div>`:(manage?'<div class="empty">Sem avisos.</div>':'')}
+    ${fs.length?`<div class="list">${fs.map(([id,f])=>`<div class="row">${f.type.startsWith('image/')?`<button data-a="viewfile" data-id="${id}" aria-label="Ver ${esc(f.name)}" style="padding:0;border:1px solid var(--line-strong);background:none;width:52px;height:52px;flex:none"><img src="${f.data}" alt="" style="width:100%;height:100%;object-fit:cover;display:block"></button>`:`<span class="ini" style="border-radius:2px;font:600 10px var(--f-sans);letter-spacing:.1em">${esc((f.name.split('.').pop()||'DOC').slice(0,4).toUpperCase())}</span>`}
+      <div class="nm"><b>${esc(f.name)}</b><small>${fmtSize(f.size)} · ${by(f.by)} · ${fmtAgo(f.at)}</small></div>
+      ${f.type.startsWith('image/')?`<button class="btn sm" data-a="viewfile" data-id="${id}">Ver</button>`:''}${manage?`<button class="btn sm" data-a="rmfile" data-id="${id}">Apagar</button>`:''}</div>`).join('')}</div>`:''}
+    ${manage?`<label class="f" for="note-text">Novo aviso<textarea id="note-text" placeholder="Ex.: O restaurante está confirmado. Menu em anexo."></textarea></label>
+      <div class="btn-row"><button class="btn sm brass" data-a="addnote">Publicar aviso</button>
+      <label class="btn sm" for="file-in" style="display:inline-flex;align-items:center;cursor:pointer">Anexar ficheiro</label><input type="file" id="file-in" accept="image/*,application/pdf,.doc,.docx" hidden></div>
+      <p class="note">Imagens e PDF até 1,5 MB (menu, fotografias, convite). Todos os membros veem os avisos e ficheiros no separador Jantar.</p>`:''}
+  </section>`;
+}
+function viewFile(id){
+  const f=S.files[id];if(!f)return;
+  $('#layer').innerHTML=`<div class="scrim" data-a="closesheet"><div class="sheet" role="dialog" aria-label="${esc(f.name)}">
+    <div class="sec-row"><span class="h-serif" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(f.name)}</span><button class="btn sm" data-a="closesheet">Fechar</button></div>
+    <img src="${f.data}" alt="${esc(f.name)}" style="width:100%;height:auto;border:1px solid var(--line)"></div></div>`;
+}
+
+/* ---------- Convite (invitation card) ---------- */
+function inviteHTML(){
+  const e=S.edition,d=D(e.date);
+  const wd=d.toLocaleDateString('pt-PT',{weekday:'short'}).replace('.','').toUpperCase();
+  const mo=d.toLocaleDateString('pt-PT',{month:'short'}).replace('.','').toUpperCase();
+  const diff=Math.round((d-today())/864e5);
+  const when=e.phase==='encerrada'?'Encerrado':diff>1?`Daqui a ${diff} dias`:diff===1?'Amanhã':diff===0?'Esta noite':'Já decorreu';
+  const map='https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(e.place+', '+e.city);
+  return `<div class="invite">
+    <div class="inv-date"><span class="wd">${wd}</span><b>${d.getDate()}</b><span class="mo">${mo}</span><span class="hr">${esc(e.time.replace(':','h'))}</span></div>
+    <div class="inv-body">
+      <div><div class="inv-place">${esc(e.place)}</div><div class="inv-city">${esc(e.city)}</div></div>
+      <div class="inv-dress"><span>TRAJE</span>${esc(e.dress)}</div>
+      <div class="inv-foot"><span class="tag brass">${when}</span><a href="${map}" target="_blank" rel="noopener"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s-7-6.2-7-11.5A7 7 0 0 1 19 9.5C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></svg>Ver no mapa</a></div>
+    </div></div>`;
+}
+
+/* ---------- Álbum (everyone adds photos on the night; Committee any time) ---------- */
+const isDinnerDay=()=>iso(today())===S.edition.date;
+const canUpload=()=>{const m=me();return !!m&&(m.committee||S.edition.phase==='noite'||isDinnerDay())};
+const yearMedia=y=>Object.entries(S.media||{}).filter(([,x])=>x.year===y).sort((a,b)=>a[1].at-b[1].at);
+const fmtPostTime=t=>{const d=new Date(t);return dm(d)+' · '+String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0')};
+const STACHE_LIKE='<svg viewBox="0 0 64 24" aria-hidden="true"><path d="M32 9.5c-2.6-4.6-8.4-6.6-13.2-4.2-3.8 1.9-5.6 5.6-9.6 5.6-2.8 0-4.6-1.6-5.7-3.6-.4 5.6 4.3 10.4 11 10.4 7.3 0 12.2-4.3 17.5-6 5.3 1.7 10.2 6 17.5 6 6.7 0 11.4-4.8 11-10.4-1.1 2-2.9 3.6-5.7 3.6-4 0-5.8-3.7-9.6-5.6C40.4 2.9 34.6 4.9 32 9.5z" fill="FILL" stroke="currentColor" stroke-width="2.2"/></svg>';
+function postHTML(id,x){
+  const m=me(),p=S.people[x.by]?P(x.by):{id:'',name:'Membro',role:'membro'};
+  const likes=Object.keys(x.likes||{}).filter(k=>x.likes[k]),liked=m&&x.likes&&x.likes[m.id];
+  const canRm=m&&(x.by===m.id||m.committee);
+  const names=likes.map(k=>S.people[k]?S.people[k].name:null).filter(Boolean);
+  const likeTxt=!likes.length?'Bigodaço':likes.length===1?`${esc(names[0]||'1')} deu um bigodaço`:`${likes.length} bigodaços`;
+  return `<article class="post">
+    <header>${avatar(p)}<div class="who-n"><b>${esc(p.name)}</b><small>${fmtPostTime(x.at)}</small></div>${canRm?`<button class="txt-btn" data-a="rmmedia" data-id="${id}">Apagar</button>`:''}</header>
+    ${x.type.startsWith('video/')?`<video class="media" src="${x.data}" controls playsinline preload="metadata"></video>`:`<img class="media" src="${x.data}" alt="Fotografia de ${esc(p.name)} no Jantar ${x.year}" loading="lazy">`}
+    <footer><button class="like ${liked?'on':''}" data-a="like" data-id="${id}" aria-pressed="${liked?'true':'false'}">${STACHE_LIKE.replace('FILL',liked?'currentColor':'none')}<span>${likeTxt}</span></button></footer>
+  </article>`;
+}
+function albumHTML(){
+  const ms=yearMedia(S.edition.year).reverse(),open=canUpload();
+  const add=open?`<label class="add-link" for="media-in"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>Adicionar</label><input type="file" id="media-in" accept="${ONLINE?'image/*':'image/*,video/*'}" multiple hidden>`:`<span class="note">${ms.length?ms.length+(ms.length===1?' registo':' registos'):''}</span>`;
+  return `<section class="sec"><div class="sec-row"><span class="h-serif">Álbum do jantar</span>${add}</div>
+    ${ms.length?`<div class="feed">${ms.map(([id,x])=>postHTML(id,x)).join('')}</div>`
+      :`<p class="note">${open?'Ainda sem registos. Partilhe a primeira fotografia da noite.':`As fotografias da noite aparecem aqui. Todos podem partilhar no dia do jantar, ${fmtShort(S.edition.date)}.`}</p>`}
+  </section>`;
+}
+// Archive of one dinner: winners, every mascot proposal (with votes), and the album
+function viewAlbum(y){
+  const ms=yearMedia(y).reverse(),h=S.history.find(x=>x.year===y);
+  const nm=id=>S.people[id]?esc(S.people[id].name):'—';
+  const props=h&&h.proposed?h.proposed.slice().sort((a,b)=>(b.votes||0)-(a.votes||0)):[];
+  const sheetEl=document.querySelector('.sheet');const keep=sheetEl?sheetEl.scrollTop:0;
+  $('#layer').innerHTML=`<div class="scrim" data-a="closesheet"><div class="sheet" role="dialog" aria-label="Jantar ${y}">
+    <div class="sec-row"><div><span class="eyebrow">Arquivo · ${y}</span><div class="title-sm">Jantar <em>${roman(y)}</em></div></div><button class="btn sm" data-a="closesheet">Fechar</button></div>
+    ${h?`<div class="ledger">
+      <div><span class="k">BIGODE</span><span class="v">${nm(h.bigode)}${h.prize?`<small>«${esc(h.prize)}»</small>`:''}</span></div>
+      <div><span class="k">MASCOTE</span><span class="v">${nm(h.mascote)}</span></div></div>`:''}
+    ${props.length?`<section class="sec"><div class="sec-row"><span class="h-serif">Propostas de mascote</span><span class="note">${props.length}</span></div>
+      <div class="list">${props.map(p=>`<div class="row" style="align-items:flex-start"><span style="font:500 20px var(--f-serif);width:28px;flex:none;color:${p.won?'var(--brass)':'var(--faint)'}">${p.votes||0}</span>
+        <div class="nm"><b style="white-space:normal;${p.won?'color:var(--brass)':''}">${esc(p.name)}</b><small style="white-space:normal">${[p.note?'«'+esc(p.note)+'»':'',p.by&&S.people[p.by]?'proposto por '+nm(p.by):''].filter(Boolean).join(' · ')}</small></div>
+        ${p.won?'<span class="tag brass">Eleito</span>':''}</div>`).join('')}</div>
+      <p class="note">Quem não foi eleito pode ser proposto de novo noutro ano.</p></section>`:''}
+    <section class="sec"><span class="h-serif">Álbum</span>
+      ${ms.length?`<div class="feed">${ms.map(([id,x])=>postHTML(id,x)).join('')}</div>`:'<p class="note">Sem fotografias deste jantar.</p>'}</section>
+  </div></div>`;
+  const ns=document.querySelector('.sheet');if(ns&&keep)ns.scrollTop=keep;
+}
+// Shrink phone photos before saving (max 1600px, JPEG) so they load fast for everyone
+function shrinkImage(file){return new Promise((res,rej)=>{const url=URL.createObjectURL(file);const img=new Image();
+  img.onload=()=>{const mx=ONLINE?1400:1600,s=Math.min(1,mx/Math.max(img.width,img.height));const c=document.createElement('canvas');c.width=Math.round(img.width*s);c.height=Math.round(img.height*s);
+    c.getContext('2d').drawImage(img,0,0,c.width,c.height);URL.revokeObjectURL(url);
+    let q=0.8,out=c.toDataURL('image/jpeg',q);while(out.length>900000&&q>0.4){q-=0.1;out=c.toDataURL('image/jpeg',q)}res(out)};
+  img.onerror=()=>{URL.revokeObjectURL(url);rej()};img.src=url})}
+const readData=f=>new Promise(r=>{const fr=new FileReader();fr.onload=()=>r(fr.result);fr.readAsDataURL(f)});
+async function addMedia(files){
+  const m=me();if(!canUpload()){toast('O álbum abre no dia do jantar');return}
+  let ok=0,skip=0;
+  for(const f of files){
+    try{
+      let data,type=f.type;
+      if(type.startsWith('image/')){data=await shrinkImage(f);type='image/jpeg'}
+      else if(type.startsWith('video/')){if(ONLINE||f.size>3*1048576){skip++;continue}data=await readData(f)}
+      else{skip++;continue}
+      const id='p'+Date.now().toString(36)+Math.random().toString(36).slice(2,5);
+      Store.set('media.'+id,{year:S.edition.year,type,data,by:m.id,at:Date.now()});
+      if(!Store.persist()){Store.set('media.'+id,undefined);Store.persist();skip++;break}
+      ok++;
+    }catch(e){skip++}
+  }
+  render();
+  toast(ok?(ok===1?'1 registo adicionado':ok+' registos adicionados')+(skip?` · ${skip} não cabem no modo de teste`:''):'Não foi possível adicionar');
+}
+
+/* ---------- Votação ---------- */
+// One page, two ballots in the order of the ceremony (Annex: mascot first, then Best Moustache).
+// The Mascot list is open all year; Best Moustache only exists on the night.
+function vVotar(){
+  const e=S.edition,bb=S.ballots.bigode;
+  const night=e.phase==='noite';
+  const bigodeLive=night||bb.open||bb.revealed;
+  const teaser=`<section class="ballot"><div class="panel" style="flex-direction:row;align-items:center;gap:16px">
+      <span style="font:500 44px/.9 var(--f-serif);color:var(--brass);flex:none">${D(e.date).getDate()}</span>
+      <div style="min-width:0;display:flex;flex-direction:column;gap:2px"><span class="eyebrow">Artigo 12.º · Só na noite do jantar</span>
+      <span style="font:500 22px/1.15 var(--f-serif)">Melhor Bigode <em style="color:var(--brass)">do Ano</em></span>
+      <span class="note">A urna abre a ${fmtShort(e.date)}, durante o jantar. Votam os presentes; o vencedor recebe o Laço-Testemunho.</span></div></div></section>`;
+  return `
+  <div class="head"><span class="eyebrow">Votação secreta · ${roman(e.year)}</span><h1 class="title">As <em>Urnas</em></h1></div>
+  ${ballotSection('mascote')}
+  ${bigodeLive?ballotSection('bigode'):teaser}
+  <p class="motto">«Pelo bigode, pela palavra e pela mesa.»</p>`;
+}
+function ballotSection(k){
+  const b=S.ballots[k],m=me(),B=BALLOT[k];
+  const present=!!S.present[m.id],np=presentIds().length,nv=Object.keys(b.votes||{}).length;
+  const st=b.revealed?['wine','Urna selada · resultados']:b.open?['on',`Urna aberta · ${nv} de ${np} votaram`]:k==='mascote'?['brass',`Propostas abertas · ${b.cands.length} ${b.cands.length===1?'nome':'nomes'}`]:['','Urna fechada'];
+  let body='';
+  if(b.revealed){
+    const c=tally(b),tot=Math.max(1,nv),L=leaders(b);
+    const zero=b.cands.filter(id=>!c[id]&&S.people[id]);
+    body=`<div class="list" style="gap:16px">${b.cands.filter(id=>c[id]&&S.people[id]).sort((x,y)=>c[y]-c[x]).map(id=>`<div class="bar ${L.length===1&&L[0]===id?'win':''}"><div class="lab"><span>${esc(P(id).name)}</span><b>${c[id]}</b></div><div class="track"><div class="fill" style="width:${c[id]/tot*100}%"></div></div></div>`).join('')}</div>`;
+    if(zero.length)body+=`<p class="note">Sem votos: ${zero.map(id=>esc(S.people[id].name)).join(', ')}.</p>`;
+    body+=L.length>1?`<div class="notice brass"><b>Empate entre ${L.map(id=>esc(P(id).name)).join(' e ')}.</b><span>Prevalece o bom senso; na sua falta, nova votação (Art. 16.º). A Comissão decide.</span></div>`
+      :L.length===1?(L[0]===m.id?`<div class="notice brass" style="border-color:var(--brass)"><b>Parabéns, ${esc(m.name)}! É você.</b><span>${cap(B.prize.replace(/^recebe/,'Recebe').replace(/^é a nova/,'É a nova'))}.</span></div>`:`<div class="notice green"><b>${esc(P(L[0]).name)} vence.</b><span>${cap(B.prize)}.</span></div>`):'';
+    body+=`<button class="txt-btn" data-a="replay" data-k="${k}" style="align-self:flex-start;color:var(--brass)">Rever a revelação</button>`;
+  }else if(!b.open&&k==='mascote'){
+    body=nominationsHTML();
+  }else if(!b.open){
+    body=`<div class="notice"><b>A urna abre durante o jantar.</b><span>${b.cands.length?b.cands.length+' candidatos nomeados. ':''}A Comissão regista as presenças e abre a votação. Só os presentes votam.</span></div>`;
+  }else if(!present){
+    body=`<div class="notice brass"><b>Presença por registar.</b><span>Só quem está presente pode votar. Peça à Comissão.</span></div>`;
+  }else if(b.votes[m.id]){
+    body=`<div class="notice green"><b>Voto depositado.</b><span>É secreto até a Comissão selar a urna e revelar os resultados.</span></div>`;
+  }else{
+    const pk=UI.pick[k];
+    body=`<div class="list" style="gap:10px">${b.cands.map((id,i)=>{const p=P(id);return `<button class="cand ${pk===id?'on':''}" data-a="pickcand" data-k="${k}" data-id="${id}"><span class="n">${roman(i+1)}</span>${avatar(p)}<span class="nm" style="flex:1;display:flex;flex-direction:column"><b style="font-weight:600">${esc(p.name)}</b><small class="note">${esc(candSub(p))}</small></span><span class="radio"></span></button>`}).join('')}</div>
+    <button class="btn brass" data-a="vote" data-k="${k}" ${pk?'':'disabled'}>${pk?'Depositar voto · '+esc(P(pk).name):'Escolha um candidato'}</button>`;
+  }
+  return `<section class="ballot" id="urna-${k}">
+    <div class="head" style="gap:8px"><span class="eyebrow">${B.art} · ${k==='mascote'&&!b.open&&!b.revealed?'Aberta todo o ano':k==='mascote'?'Eleição anual':'Prémio da noite'}${b.round>1?' · Desempate':''}</span>
+      <h2 class="title-sm">${B.t1} <em>${B.t2}</em></h2>
+      <div class="status"><span class="dot ${st[0]}"></span>${st[1]}</div></div>
+    <div class="sec">${body}</div></section>`;
+}
+
+/* ---------- Galeria ---------- */
+function vGaleria(){
+  const cur=S.history[S.history.length-1];
+  const cp=cur&&P(cur.bigode);
+  const hs=S.history.slice().reverse(),feat=hs[0],older=hs.slice(1);
+  const nameOf=id=>S.people[id]?esc(S.people[id].name):'—';
+  const hp=(id,lbl)=>{const p=P(id);return `<div class="hp">${p?avatar(p):''}<div><b>${nameOf(id)}</b><small>${lbl}</small></div></div>`};
+  const featDate=h=>h.date?cap(D(h.date).toLocaleDateString('pt-PT',{weekday:'long'}))+', '+fmtShort(h.date):'';
+  const honour=!feat?'<div class="empty">Ainda sem registos.</div>':`
+    <article class="hon-feat">
+      <div class="hon-date"><b>${feat.year}</b><span>${featDate(feat)}</span></div>
+      <div class="hon-pair">
+        <div class="hon-p">${portrait(P(feat.bigode))}<span class="tag brass">Melhor Bigode</span><b>${nameOf(feat.bigode)}</b>${feat.prize?`<small>«${esc(feat.prize)}»</small>`:''}</div>
+        <div class="hon-p">${portrait(P(feat.mascote),'green')}<span class="tag green">Mascote</span><b>${nameOf(feat.mascote)}</b></div>
+      </div></article>
+    ${older.length?`<div class="list">${older.map(h=>`<div class="hon-row"><div class="hy"><b>${h.year}</b><small>${h.date?fmtShort(h.date):''}</small></div>${hp(h.bigode,'Bigode')}${hp(h.mascote,'Mascote')}</div>`).join('')}</div>`:''}`;
+  return `
+  <div class="head"><span class="eyebrow">Galeria da Irmandade</span><h1 class="title">Os <em>Bigodes</em></h1></div>
+  ${cp?`<div class="pass vencedor"><span class="ghost">${STACHE}</span>
+    <div class="top-row"><span class="lbl">Laço-Testemunho</span><span class="no">${cp.no?'Nº '+String(cp.no).padStart(3,'0'):''}</span></div>
+    <div style="display:flex;align-items:center;gap:14px">${passPhoto(cp)}<div><div class="name">${esc(cp.name)}</div><div class="sub">Melhor Bigode ${cur.year}${cur.prize?' · «'+esc(cur.prize)+'»':''}</div></div></div>
+    <div class="meta"><div><div>DESDE</div><div>${cp.since}</div></div><div><div>JANTARES</div><div>${cp.dinners}</div></div><div><div>ENTREGA EM</div><div>${roman(cur.year+1)}</div></div></div></div>`:''}
+  <section class="sec"><div class="sec-row"><span class="h-serif">Livro de honra</span><span class="note">Art. 14.º</span></div>${honour}</section>
+  ${(()=>{const ys=[...new Set(S.history.map(h=>h.year).concat(Object.values(S.media||{}).map(x=>x.year)))].sort((a,b)=>b-a);
+    return `<section class="sec"><div class="sec-row"><span class="h-serif">Arquivo dos jantares</span><span class="note">fotografias e propostas</span></div>
+    <div class="list">${ys.map(y=>{const ms=yearMedia(y),h=S.history.find(x=>x.year===y),np=h&&h.proposed?h.proposed.length:0;
+      const bits=[ms.length?ms.length+(ms.length===1?' registo':' registos'):'',np?np+(np===1?' proposta de mascote':' propostas de mascote'):''].filter(Boolean).join(' · ')||(y===S.edition.year?'A decorrer':'Sem registos');
+      return `<button class="row" data-a="openarchive" data-v="${y}" style="background:none;border-left:0;border-right:0;border-bottom:0;text-align:left;width:100%">
+      <span style="font:500 20px var(--f-serif);color:var(--brass);width:52px;flex:none">${y}</span>
+      <span class="nm"><b>Jantar ${roman(y)}</b><small>${bits}</small></span>
+      <span style="display:flex;gap:3px">${ms.filter(([,x])=>x.type.startsWith('image/')).slice(0,3).map(([,x])=>`<img src="${x.data}" alt="" style="width:40px;height:40px;object-fit:cover">`).join('')}</span>
+      <span style="color:var(--brass);font:20px var(--f-serif)">›</span></button>`}).join('')}</div></section>`})()}
+  <p class="demo"><span class="dot brass"></span>Nomes e anos de exemplo. A Comissão substitui pelos verdadeiros.</p>`;
+}
+
+/* ---------- Regras ---------- */
+const RULES=[
+ ['Das Instituições',[
+  ['1.º','Da Irmandade do Bigode','A Irmandade do Bigode é constituída pelos participantes reconhecidos do jantar. Aos seus membros compete comparecer, conviver, preservar a tradição e respeitar as deliberações tomadas nos termos desta legislação.'],
+  ['2.º','Da Comissão do Bigode','A Comissão do Bigode é o órgão organizador do jantar. Cabe-lhe escolher data e local, emitir convocatórias, fixar prazos de resposta, organizar as votações, gerir os distintivos e decidir as matérias omissas, preferencialmente com solenidade desproporcionada à importância do assunto.'],
+  ['3.º','Da Legislação do Bigode','A presente Legislação do Bigode constitui o conjunto de regras oficiais da Irmandade. A sua alteração exige deliberação da Comissão do Bigode, podendo a Irmandade apresentar propostas devidamente fundamentadas, ainda que redigidas num guardanapo.']]],
+ ['Da Convocatória e da Presença',[
+  ['4.º','Da convocatória','A convocatória deve indicar, sempre que possível, a data, o local, o dress code e o prazo de confirmação. A ausência de resposta dentro do prazo constitui falta grave de etiqueta bigodística.'],
+  ['5.º','Da falta de resposta e da expulsão','Quem não responder à convocatória no prazo determinado considera-se excluído dessa edição do jantar, salvo decisão expressa em contrário da Comissão. A reincidência poderá fundamentar expulsão da Irmandade, sujeita a deliberação da Comissão. A regra é simples: o silêncio não é um bigode.'],
+  ['6.º','Das faltas justificadas','Só são aceites ausências devidamente comunicadas e acompanhadas de motivo plausível. A Comissão aprecia as justificações caso a caso, com rigor institucional e alguma humanidade. «Não me apetece» não constitui, por si só, fundamento bastante.']]],
+ ['Das Mascotes',[
+  ['7.º','Da eleição anual','Em cada edição é eleita, por votação dos participantes com direito a voto, uma nova Mascote do Bigode. A Comissão define previamente as regras de nomeação, votação e desempate.'],
+  ['8.º','Do estatuto vitalício de mascote','A mascote eleita passa a integrar o quadro histórico das Mascotes do Bigode. As mascotes de edições anteriores mantêm o direito a convite nas edições seguintes, sem necessidade de nova eleição, ficando igualmente sujeitas às regras de confirmação e boa conduta.'],
+  ['9.º','Do laço oficial das mascotes','Cada mascote terá direito a usar o Laço Oficial das Mascotes, distinto do traje comum da Irmandade. Propõe-se laço verde-escuro com detalhe dourado e emblema do bigode. O laço constitui sinal de distinção e não confere imunidade perante a Comissão.']]],
+ ['Do Traje e das Insígnias',[
+  ['10.º','Do dress code','O traje recomendado é o de cavalheiro clássico, com interpretação bem-humorada: camisa, colete, suspensórios, gravata ou laço, podendo acrescentar-se boina ou blazer. O bigode, natural, é o elemento identitário do jantar. A Comissão pode anunciar um tema específico em cada edição.'],
+  ['11.º','Da hierarquia dos laços','Distinguem-se: a) laço livre dos membros da Irmandade; b) Laço Oficial das Mascotes, exclusivo dos eleitos; c) Laço-Testemunho do Melhor Bigode, usado pelo vencedor em funções.']]],
+ ['Do Melhor Bigode',[
+  ['12.º','Do prémio anual','Em cada edição é atribuído o título de Melhor Bigode do Ano, por votação nos termos anunciados pela Comissão. O prémio físico poderá manter a designação «Le Moustache Man», em continuidade com a peça atribuída na edição anterior.'],
+  ['13.º','Do Laço-Testemunho','O vencedor recebe o Laço-Testemunho, peça cerimonial de uso temporário, que deverá conservar em bom estado e entregar ao vencedor da edição seguinte. Propõe-se laço de veludo cor de vinho, com bordado dourado e medalha de identificação.'],
+  ['14.º','Do registo dos vencedores','A Comissão manterá um registo anual dos vencedores do Melhor Bigode, com ano, nome e, quando aplicável, fotografia. O registo pode acompanhar o Laço-Testemunho através de medalhas ou placas identificativas, sem comprometer a sua utilização futura.']]],
+ ['Disposições Finais',[
+  ['15.º','Das infrações e sanções','O incumprimento do traje, a falta de resposta, a perda de insígnias ou a tentativa de subverter uma votação poderão originar advertência, multa simbólica, prova de penitência recreativa ou outras medidas proporcionais definidas pela Comissão. Qualquer sanção deverá respeitar o bom ambiente entre amigos.'],
+  ['16.º','Dos casos omissos','Todas as situações não previstas serão resolvidas pela Comissão do Bigode, ouvindo a Irmandade quando tal se revelar conveniente. Em caso de empate, prevalecerá o bom senso; na sua falta, uma nova votação.'],
+  ['17.º','Da entrada em vigor','A presente legislação entra em vigor após aprovação pela Comissão do Bigode e comunicação à Irmandade. As regras poderão ser revistas em cada edição, sem prejuízo da tradição das mascotes e da passagem anual do Laço-Testemunho.']]]
+];
+const PROTOCOL=['Abertura oficial do Jantar pela Comissão do Bigode.','Chamada e reconhecimento das mascotes históricas presentes.','Apresentação dos candidatos e eleição da nova mascote.','Entrega do Laço Oficial à mascote recém-eleita.','Votação e proclamação do Melhor Bigode do Ano.','Passagem do Laço-Testemunho pelo vencedor cessante ao novo vencedor.','Fotografia oficial da Irmandade, da Comissão e das mascotes.'];
+function rulesList(){
+  const q=UI.q.trim().toLowerCase();
+  const hl=t=>{const s=esc(t);if(!q)return s;const re=new RegExp('('+esc(q).replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+')','gi');return s.replace(re,'<mark>$1</mark>')};
+  const out=RULES.map(([t,arts],i)=>{
+    const a=arts.filter(x=>!q||(x[1]+' '+x[2]).toLowerCase().includes(q));
+    if(!a.length)return '';
+    return `<details class="ch" ${q?'open':''}><summary><span class="rn">${roman(i+1)}</span><h2>${t}</h2></summary>${a.map(x=>`<div class="art"><span class="n">${x[0]}</span><div style="min-width:0"><h3>${hl(x[1])}</h3><p>${hl(x[2])}</p></div></div>`).join('')}</details>`;
+  }).join('');
+  return out||'<div class="empty">Nenhum artigo encontrado.</div>';
+}
+function vRegras(){
+  return `<div class="head"><span class="eyebrow">Legislação do Bigode</span><h1 class="title">Estatutos<br><em>da Irmandade</em></h1></div>
+  <p class="muted" style="font:italic 18px/1.5 var(--f-serif);color:var(--muted)">Considerando que o Jantar do Bigode nasceu da amizade, cresceu à mesa e se mantém por força do convívio, do compromisso e de uma saudável falta de juízo, institui-se a presente Legislação do Bigode.</p>
+  <input type="text" id="q" placeholder="Procurar: prazo, laço, empate…" value="${esc(UI.q)}" aria-label="Procurar nas regras">
+  <div id="rules">${rulesList()}</div>
+  <section class="sec"><div class="sec-row"><span class="h-serif">Protocolo cerimonial</span><span class="note">Anexo</span></div><div class="protocol">${PROTOCOL.map(x=>`<div>${x}</div>`).join('')}</div></section>
+  <p class="motto">«Pelo bigode, pela palavra e pela mesa.»</p>`;
+}
+
+/* ---------- Comissão ---------- */
+function confirmBox(id,question,okLabel,okAction,extra){
+  return UI.confirm===id?`<div class="confirm"><b>${question}</b><div class="btn-row"><button class="btn sm wine" data-a="${okAction}" ${extra||''}>${okLabel}</button><button class="btn sm" data-a="cancel">Cancelar</button></div></div>`:'';
+}
+const linkBtns=p=>ONLINE?`<button class="txt-btn" data-a="copylink" data-id="${p.id}" style="color:var(--brass)">Link</button>`:'';
+const showLink=p=>`<div class="notice" style="margin:4px 0 10px"><b>Link de ${esc(p.name)}</b><span style="word-break:break-all;user-select:all">${esc(Remote.keys[p.id]?Remote.linkFor(Remote.keys[p.id]):'')}</span><div class="btn-row"><button class="btn sm" data-a="newlink" data-id="${p.id}">Novo link</button></div></div>`;
+function vComissao(){
+  const e=S.edition;
+  const just=Object.keys(S.rsvp).filter(id=>S.people[id]&&S.rsvp[id].s==='nao'&&S.rsvp[id].reason);
+  const goers=invited().filter(p=>status(p.id)==='vou'),others=invited().filter(p=>status(p.id)!=='vou');
+  const members=all().filter(p=>p.role==='membro').sort((a,b)=>(a.no||0)-(b.no||0));
+  const ballot=k=>{
+    const b=S.ballots[k],L=leaders(b),B=BALLOT[k];
+    const pool=(k==='mascote'?all().filter(p=>p.role!=='mascote'):all().filter(p=>S.present[p.id])).filter(p=>!b.cands.includes(p.id)).sort((a,c)=>a.name.localeCompare(c.name,'pt'));
+    const editable=!b.open&&!b.revealed;
+    return `<div class="panel">
+      <div class="sec-row"><span class="h-serif" style="font-size:20px">${B.t1} ${B.t2}</span><span class="status"><span class="dot ${b.revealed?'wine':b.open?'on':''}"></span>${b.revealed?'Revelada':b.open?'Aberta':'Fechada'}</span></div>
+      <div class="list">${b.cands.map(id=>`<div class="row">${avatar(P(id))}<div class="nm"><b>${esc(P(id).name)}</b>${k==='mascote'?`<small style="white-space:normal">${esc(candSub(P(id)))}</small>`:''}</div>${editable?`<button class="btn sm" data-a="rmcand" data-k="${k}" data-id="${id}">Retirar</button>`:''}</div>`).join('')||`<div class="empty">${k==='mascote'?'Ainda sem propostas dos membros.':'Sem candidatos.'}</div>`}</div>
+      ${editable&&k==='bigode'?`<div class="btn-row"><button class="btn sm" data-a="allpresent">Todos os presentes</button>
+        <select id="add-${k}" aria-label="Escolher candidato" style="flex:1;min-width:150px;padding:8px 10px"><option value="">Escolher…</option>${pool.map(p=>`<option value="${p.id}">${esc(p.name)}</option>`).join('')}</select>
+        <button class="btn sm" data-a="addcand" data-k="${k}">Nomear</button></div>`:''}
+      ${editable&&k==='mascote'?`<p class="note">Os membros propõem nomes no separador Votação. Ao abrir a urna, as propostas fecham. Sem prémio: o eleito torna-se Mascote do Bigode, com convite vitalício.</p>`:''}
+      <div class="btn-row">
+        ${editable?`<button class="btn sm brass" data-a="open" data-k="${k}" ${!canOpen(k)?'disabled':''}>Abrir urna</button>`:''}
+        ${b.open?`<button class="btn sm wine" data-a="reveal" data-k="${k}">Selar e revelar</button>`:''}
+        ${b.revealed&&L.length>1?`<button class="btn sm brass" data-a="tiebreak" data-k="${k}">Desempate</button>`:''}
+        ${b.revealed||b.open?`<button class="btn sm" data-a="resetb" data-k="${k}">Recomeçar</button>`:''}
+      </div>
+      <p class="note">${editable?openHint(k):''}${b.open||b.revealed?Object.keys(b.votes||{}).length+' votos recebidos.':''}</p></div>`;
+  };
+  // Why a ballot can or cannot open yet, in plain words
+  const bigodePool=()=>presentIds().filter(p=>S.people[p].role==='membro');
+  function canOpen(k){const b=S.ballots[k];if(e.phase!=='noite')return false;return k==='bigode'?(b.cands.length>=2||bigodePool().length>=2):b.cands.length>=2}
+  function openHint(k){const b=S.ballots[k];
+    if(e.phase!=='noite')return 'Abre depois de iniciar a noite. ';
+    if(k==='mascote'&&b.cands.length<2)return `São precisas pelo menos 2 propostas (há ${b.cands.length}). `;
+    if(k==='bigode'&&b.cands.length<2&&bigodePool().length<2)return `Registe pelo menos 2 membros presentes (há ${bigodePool().length}). `;
+    if(k==='bigode'&&b.cands.length<2)return 'Ao abrir, todos os membros presentes passam a candidatos. ';
+    return 'Pronta a abrir. ';}
+  const canClose=['mascote','bigode'].every(k=>S.ballots[k].revealed&&leaders(S.ballots[k]).length===1);
+  const sec={};
+  sec.fase=e.phase==='noite'
+    ?`<section class="panel" style="border-color:var(--green-line)"><div class="sec-row"><span class="h-serif">Noite do jantar</span><span class="status"><span class="dot on"></span>A decorrer</span></div>
+      <p class="note">Presenças e urnas abertas. As respostas à convocatória estão fechadas.</p>
+      ${UI.confirm==='endnight'?confirmBox('endnight','Fechar a noite? As presenças e as urnas deixam de poder ser abertas.','Fechar a noite','endnightok'):`<button class="btn sm" data-a="askendnight" style="align-self:flex-start">Fechar a noite</button>`}</section>`
+    :`<section class="panel"><div class="sec-row"><span class="h-serif">Noite do jantar</span><span class="status"><span class="dot"></span>Fechada</span></div>
+      <p class="note">No dia do jantar, inicie a noite para registar as presenças e abrir as urnas. Até lá, só a convocatória está aberta.</p>
+      <button class="btn brass" data-a="phase" data-v="noite">Iniciar registo de membros</button></section>`;
+  sec.conv=`<section class="sec"><div class="sec-row"><span class="h-serif">Detalhes do jantar</span><span class="note">Art. 4.º</span></div>
+    <div class="grid2"><label class="f" for="f-date">Data<input type="date" id="f-date" value="${e.date}"></label><label class="f" for="f-time">Hora<input type="time" id="f-time" value="${e.time}"></label></div>
+    <label class="f" for="f-place">Local<input type="text" id="f-place" value="${esc(e.place)}"></label>
+    <label class="f" for="f-city">Localidade<input type="text" id="f-city" value="${esc(e.city)}"></label>
+    <label class="f" for="f-dress">Traje<textarea id="f-dress">${esc(e.dress)}</textarea></label>
+    <label class="f" for="f-dead">Prazo de resposta<input type="date" id="f-dead" value="${e.deadline}"></label>
+    <button class="btn brass" data-a="saveed">Guardar convocatória</button>
+    <p class="note">Para testar a exclusão automática, ponha o prazo numa data passada.</p></section>`;
+  sec.just=`<section class="sec"><div class="sec-row"><span class="h-serif">Justificações</span><span class="note">Art. 6.º</span></div>
+    <div class="list">${just.map(id=>{const r=S.rsvp[id];return `<div class="row" style="align-items:flex-start;flex-wrap:wrap">${avatar(P(id))}<div class="nm"><b>${esc(P(id).name)}</b><small style="white-space:normal;font:italic 15px var(--f-serif);color:var(--muted)">«${esc(r.reason)}»</small></div>
+      ${!r.j||r.j==='pendente'?`<div class="btn-row" style="width:100%;padding-left:52px"><button class="btn sm brass" data-a="just" data-id="${id}" data-v="aceite">Aceitar</button><button class="btn sm" data-a="just" data-id="${id}" data-v="recusada">Recusar</button></div>`:`<span class="tag ${r.j==='aceite'?'green':'wine'}">${r.j==='aceite'?'Aceite':'Recusada'}</span>`}</div>`}).join('')||'<div class="empty">Nenhuma justificação por apreciar.</div>'}</div></section>`;
+  sec.pres=`<section class="sec"><div class="sec-row"><span class="h-serif">Presenças</span><span class="note">${presentIds().length} presentes</span></div>
+    <p class="note">Só quem está presente pode votar.</p>
+    <div class="list">${goers.map(p=>`<div class="row">${avatar(p)}<div class="nm"><b>${esc(p.name)}</b></div><button class="btn sm ${S.present[p.id]?'brass':''}" data-a="present" data-id="${p.id}">${S.present[p.id]?'Presente':'Registar'}</button></div>`).join('')||'<div class="empty">Ainda ninguém confirmou.</div>'}</div>
+    <details class="grp"><summary>Não confirmaram · ${others.length}</summary><div class="list">${others.map(p=>`<div class="row">${avatar(p)}<div class="nm"><b>${esc(p.name)}</b><small>${{nao:'Ausente',pendente:'Em silêncio',excluido:'Excluído · Art. 5.º'}[status(p.id)]}</small></div><button class="btn sm ${S.present[p.id]?'brass':''}" data-a="present" data-id="${p.id}">${S.present[p.id]?'Presente':'Registar'}</button></div>`).join('')}</div></details></section>`;
+  sec.urnas=`<section class="sec"><span class="h-serif">Urnas</span>${ballot('mascote')}${ballot('bigode')}</section>`;
+  sec.membros=`<section class="sec"><div class="sec-row"><span class="h-serif">Membros</span><span class="note">${members.length} membros · ${members.filter(p=>p.committee).length} na Comissão</span></div>
+    <p class="note">${me().admin?'Como administrador, define quem faz parte da Comissão em «Editar».':'Só o administrador define quem faz parte da Comissão.'}</p>
+    <div class="list">${members.map(p=>UI.editing===p.id?`<div class="row" style="flex-wrap:wrap">
+        ${avatar(p)}<input type="text" id="ed-name" value="${esc(p.name)}" aria-label="Nome" style="flex:1;min-width:150px;padding:8px 10px">
+        <label style="display:flex;gap:6px;align-items:center;font-size:13px;${me().admin&&!p.admin?'':'opacity:.5'}"><input type="checkbox" id="ed-com" ${p.committee?'checked':''} ${me().admin&&!p.admin?'':'disabled'}> Comissão</label>
+        ${me().admin?'':'<p class="note" style="width:100%">Só o administrador define quem faz parte da Comissão.</p>'}
+        <div style="width:100%">${photoControls(p)}</div>
+        <div class="btn-row" style="width:100%"><button class="btn sm brass" data-a="saveedit" data-id="${p.id}">Guardar</button><button class="btn sm" data-a="cancel">Cancelar</button><button class="btn sm" data-a="askrm" data-id="${p.id}" ${p.id===ME||p.admin?'disabled':''}>Remover</button></div>
+        ${confirmBox('rm-'+p.id,`Remover ${esc(p.name)} da Irmandade (Art. 5.º)?`,'Remover','rmok',`data-id="${p.id}"`)}</div>`
+      :`<div class="row"><span class="tag brass" style="width:34px">${String(p.no||'').padStart(3,'0')}</span>${avatar(p)}<div class="nm"><b>${esc(p.name)}</b><small>${[p.admin?'Administrador':p.committee?'Comissão':'',p.strikes?p.strikes+(p.strikes>1?' faltas':' falta')+' sem resposta':''].filter(Boolean).join(' · ')||'Desde '+p.since}</small></div>${p.strikes>1?'<span class="tag wine">Reincidente</span>':''}${linkBtns(p)}<button class="btn sm" data-a="edit" data-id="${p.id}">Editar</button></div>${UI.showLink===p.id?showLink(p):''}`).join('')}</div>
+    <div class="btn-row"><input type="text" id="new-member" placeholder="Nome do novo membro" style="flex:1;min-width:150px;padding:10px 12px"><button class="btn sm brass" data-a="addmember">Admitir</button></div></section>`;
+  sec.mascotes=`<section class="sec"><div class="sec-row"><span class="h-serif">Mascotes</span><span class="note">convite vitalício · Art. 8.º</span></div>
+    <div class="list">${all().filter(p=>p.role==='mascote').sort((a,b)=>(b.mascotYear||0)-(a.mascotYear||0)).map(p=>UI.editing===p.id?`<div class="row" style="flex-wrap:wrap">
+        ${avatar(p)}<input type="text" id="ed-name" value="${esc(p.name)}" aria-label="Nome" style="flex:1;min-width:150px;padding:8px 10px">
+        <div style="width:100%">${photoControls(p)}</div>
+        <div class="btn-row" style="width:100%"><button class="btn sm brass" data-a="saveedit" data-id="${p.id}">Guardar</button><button class="btn sm" data-a="cancel">Cancelar</button></div></div>`
+      :`<div class="row"><span class="tag green" style="width:34px">${p.mascotYear||''}</span>${avatar(p)}<div class="nm"><b>${esc(p.name)}</b><small>${p.photo?'Com fotografia':'Sem fotografia'}</small></div>${linkBtns(p)}<button class="btn sm" data-a="edit" data-id="${p.id}">Editar</button></div>${UI.showLink===p.id?showLink(p):''}`).join('')||'<div class="empty">Ainda não há mascotes.</div>'}</div>
+    <p class="note">As mascotes não precisam de entrar na app; a Comissão pode pôr-lhes a fotografia para o Livro de honra.</p></section>`;
+  sec.close=`<section class="sec"><span class="h-serif">Encerrar edição ${roman(e.year)}</span>
+    <p class="note">Passa os vencedores para o Livro de honra, dá o estatuto de mascote ao eleito, conta o jantar a quem esteve presente, regista uma falta a quem não respondeu e prepara a convocatória de ${e.year+1}.</p>
+    ${UI.confirm==='close'?confirmBox('close',`Encerrar a edição ${e.year}? Não é possível desfazer.`,'Encerrar','closeok'):`<button class="btn wine" data-a="askclose" ${canClose?'':'disabled'}>Encerrar edição</button>${canClose?'':'<p class="note">Primeiro revele as duas urnas, com um vencedor em cada.</p>'}`}</section>`;
+  sec.test=ONLINE?`<section class="sec"><span class="h-serif">Links pessoais</span><p class="note">Cada membro entra com o seu link. Use «Link» para copiar a mensagem pronta para o WhatsApp. «Novo link» desativa o anterior (útil se alguém o partilhar).</p></section>`:`<section class="sec"><span class="h-serif">Modo de teste</span>
+    <p class="note">Por agora os dados ficam só neste aparelho. Para ver a app como outro membro, toque na inicial no topo.</p>
+    ${UI.confirm==='reset'?confirmBox('reset','Apagar tudo e voltar aos dados de exemplo?','Repor','resetok'):`<button class="btn" data-a="askreset">Repor dados de exemplo</button>`}</section>`;
+
+  // Responses overview
+  const g={vou:[],nao:[],pendente:[],excluido:[]};invited().forEach(p=>g[status(p.id)].push(p));
+  const silent=deadlinePassed()?g.excluido:g.pendente;
+  sec.resumo=`<section class="sec"><div class="sec-row"><span class="h-serif">Respostas</span><span class="note">${deadlinePassed()?'prazo terminado':'prazo: '+fmtShort(e.deadline)}</span></div>
+    <div class="stats"><div><b style="color:var(--brass)">${g.vou.length}</b><span>PRESENTES</span></div><div><b>${g.nao.length}</b><span>AUSENTES</span></div><div><b style="color:var(--wine-ink)">${silent.length}</b><span>${deadlinePassed()?'EXCLUÍDOS':'EM SILÊNCIO'}</span></div></div>
+    ${silent.length?`<details class="grp"><summary>${deadlinePassed()?'Excluídos (Art. 5.º)':'Ainda sem resposta'} · ${silent.length}</summary><div class="list">${silent.map(p=>`<div class="row">${avatar(p)}<div class="nm"><b>${esc(p.name)}</b>${p.strikes?`<small>${p.strikes} ${p.strikes>1?'faltas':'falta'} anteriores</small>`:''}</div></div>`).join('')}</div></details>`:''}</section>`;
+
+  // What needs attention, with a shortcut to the right section
+  const pendJ=just.filter(id=>!S.rsvp[id].j||S.rsvp[id].j==='pendente').length;
+  const todo=[];
+  if(pendJ)todo.push(['respostas',`${pendJ} ${pendJ>1?'justificações':'justificação'} por apreciar`,'wine']);
+  if(e.phase==='noite'&&!presentIds().length)todo.push(['jantar','Registar as presenças da noite','brass']);
+  ['mascote','bigode'].forEach(k=>{const b=S.ballots[k];if(b.open)todo.push(['jantar',`Urna ${k==='mascote'?'da Mascote':'do Melhor Bigode'} aberta · ${Object.keys(b.votes||{}).length} votos`,'on']);
+    else if(b.revealed&&leaders(b).length>1)todo.push(['jantar',`Empate na urna ${k==='mascote'?'da Mascote':'do Melhor Bigode'}`,'brass']);
+    else if(e.phase==='noite'&&!b.revealed&&canOpen(k))todo.push(['jantar',`Urna ${k==='mascote'?'da Mascote':'do Melhor Bigode'} pronta a abrir`,'brass'])});
+  if(canClose)todo.push(['jantar',`Pronto para encerrar a edição ${e.year}`,'brass']);
+  if(e.phase==='convocatoria'&&!deadlinePassed()&&silent.length)todo.push(['respostas',`${silent.length} membros ainda em silêncio`,'']);
+
+  const tabs=[['jantar','Jantar'],['respostas','Respostas'],['pessoas','Pessoas']];
+  if(!UI.ctab||UI.ctab==='noite')UI.ctab='jantar';
+  const t=UI.ctab;
+  // Jantar: before the night, the details come first; during the night, the night tools come first and the details fold away
+  const jantar=e.phase==='noite'
+    ?sec.fase+sec.pres+sec.urnas+sec.close+`<details class="grp"><summary>Detalhes, avisos e documentos</summary><div class="sec" style="gap:24px;padding-bottom:16px">${sec.conv}${boardHTML(true)}</div></details>`
+    :sec.fase+sec.conv+boardHTML(true);
+  const body={jantar,respostas:sec.resumo+sec.just,pessoas:sec.membros+sec.mascotes+sec.test}[t];
+  return `
+  <div class="head"><span class="eyebrow">Órgão organizador · Art. 2.º</span><h1 class="title">A <em>Comissão</em></h1></div>
+  <section class="sec" style="gap:0"><span class="eyebrow" style="color:var(--muted);margin-bottom:6px">Para tratar</span>
+    ${todo.length?`<div class="list">${todo.map(([tab,txt,dot])=>`<button class="row" data-a="ctab" data-v="${tab}" style="background:none;border-left:0;border-right:0;border-bottom:0;width:100%;text-align:left;padding:11px 0"><span class="dot ${dot}"></span><span style="flex:1;font-size:14px">${txt}</span><span style="color:var(--brass);font:20px var(--f-serif)">›</span></button>`).join('')}</div>`
+      :'<p class="note" style="padding:8px 0">Nada pendente.</p>'}</section>
+  <div class="seg four" role="tablist" aria-label="Secções da Comissão">${tabs.map(([k,l])=>`<button role="tab" aria-selected="${t===k}" class="${t===k?'on':''}" data-a="ctab" data-v="${k}">${l}${k==='respostas'&&pendJ?` <span class="badge">${pendJ}</span>`:''}</button>`).join('')}</div>
+  ${body}`;
+}
+
+/* ---------- Cartão ---------- */
+function sheet(){
+  const m=me(),t=tier(m);
+  const h=S.history.filter(x=>x.bigode===m.id).map(x=>x.year);
+  const sub=t==='vencedor'?`Melhor Bigode ${S.history[S.history.length-1].year}`:t==='mascote'?`Eleita em ${m.mascotYear} · convite vitalício`:(h.length?'Melhor Bigode '+h.join(', '):'Laço livre da Irmandade');
+  $('#layer').innerHTML=`<div class="scrim" data-a="closesheet"><div class="sheet" role="dialog" aria-label="Cartão de membro">
+    <div class="sec-row"><span class="h-serif">O seu cartão</span><button class="btn sm" data-a="closesheet">Fechar</button></div>
+    <div class="pass ${t}"><span class="ghost">${STACHE}</span>
+      <div class="top-row"><span class="lbl">${tierName[t]}</span><span class="no">${m.no?'Nº '+String(m.no).padStart(3,'0'):roman(m.mascotYear||m.since)}</span></div>
+      <div style="display:flex;align-items:center;gap:14px">${passPhoto(m)}<div><div class="name">${esc(m.name)}</div><div class="sub">${esc(sub)}</div></div></div>
+      <div class="meta"><div><div>DESDE</div><div>${m.since}</div></div><div><div>JANTARES</div><div>${m.dinners||0}</div></div>${m.committee?'<div><div>CARGO</div><div>Comissão</div></div>':''}</div>
+    </div>
+    ${photoControls(m)}
+    <p class="note">A cor segue a hierarquia dos laços (Art. 11.º): carvão para membros, verde para mascotes, vinho para o Melhor Bigode em funções.</p>
+    ${ONLINE?'':`<details class="grp"><summary>Ver como outro membro (teste)</summary><div class="who" style="padding-bottom:14px">${invited().map(p=>`<button data-a="pick" data-id="${p.id}">${avatar(p)}<span>${esc(p.name)}</span></button>`).join('')}</div></details>`}
+    <button class="btn" data-a="logout">${ONLINE?'Sair deste telemóvel':'Sair'}</button>
+  </div></div>`;
+}
+
+/* ---------- Revelação (reveal ceremony) ----------
+   Plays once per phone for each sealed ballot, in ceremony order (mascot, then Best Moustache).
+   Online, it will pop up on every phone the moment the Committee seals the vote. */
+const SEEN_KEY='bigode-premium-seen';
+function seenSet(){try{return new Set(JSON.parse(localStorage.getItem(SEEN_KEY)||'[]'))}catch(e){return UI.seenMem||(UI.seenMem=new Set())}}
+function markSeen(key){const s=seenSet();s.add(key);try{localStorage.setItem(SEEN_KEY,JSON.stringify([...s]))}catch(e){UI.seenMem=s}}
+const revealKey=k=>`${ME}-${S.edition.year}-${k}-${S.ballots[k].round||1}-${Object.keys(S.ballots[k].votes||{}).length}`;
+let ceremonyOn=false;
+function checkReveals(){
+  if(ceremonyOn||!me())return;
+  for(const k of ['mascote','bigode']){const b=S.ballots[k];if(b.revealed&&!seenSet().has(revealKey(k))){playReveal(k);return}}
+}
+const STACHE_PATH='M32 9.5c-2.6-4.6-8.4-6.6-13.2-4.2-3.8 1.9-5.6 5.6-9.6 5.6-2.8 0-4.6-1.6-5.7-3.6-.4 5.6 4.3 10.4 11 10.4 7.3 0 12.2-4.3 17.5-6 5.3 1.7 10.2 6 17.5 6 6.7 0 11.4-4.8 11-10.4-1.1 2-2.9 3.6-5.7 3.6-4 0-5.8-3.7-9.6-5.6C40.4 2.9 34.6 4.9 32 9.5z';
+function confetti(canvas,amount,dur){
+  const ctx=canvas.getContext('2d'),dpr=window.devicePixelRatio||1,W=canvas.clientWidth,H=canvas.clientHeight;
+  canvas.width=W*dpr;canvas.height=H*dpr;ctx.scale(dpr,dpr);
+  const st=new Path2D(STACHE_PATH),cols=['#C9A45C','#E2C27F','#ECE4D3','#B33A4C'];
+  const ps=Array.from({length:amount},()=>({x:Math.random()*W,y:-30-Math.random()*H*.7,vx:(Math.random()-.5)*1.4,vy:1.6+Math.random()*2.6,r:Math.random()*6.3,vr:(Math.random()-.5)*.12,
+    s:.3+Math.random()*.4,stache:Math.random()<.4,c:cols[Math.floor(Math.random()*cols.length)],w:4+Math.random()*5,h:9+Math.random()*9,sw:Math.random()*6.3}));
+  const t0=performance.now();
+  (function f(t){const el=t-t0;ctx.clearRect(0,0,W,H);
+    ps.forEach(p=>{p.sw+=.05;p.x+=p.vx+Math.sin(p.sw)*.7;p.y+=p.vy;p.r+=p.vr;
+      if(p.y>H+30&&el<dur-1800){p.y=-30;p.x=Math.random()*W}
+      ctx.save();ctx.globalAlpha=Math.max(0,Math.min(1,(dur-el)/700));ctx.translate(p.x,p.y);ctx.rotate(p.r);ctx.fillStyle=p.c;
+      if(p.stache){ctx.scale(p.s,p.s);ctx.translate(-32,-12);ctx.fill(st)}else{ctx.scale(1,Math.cos(p.sw*2));ctx.fillRect(-p.w/2,-p.h/2,p.w,p.h)}
+      ctx.restore()});
+    if(el<dur&&canvas.isConnected)requestAnimationFrame(f);else ctx.clearRect(0,0,W,H)})(t0);
+}
+async function playReveal(k,replay){
+  ceremonyOn=true;
+  const b=S.ballots[k],B=BALLOT[k],c=tally(b),L=leaders(b),tie=L.length!==1,win=tie?null:P(L[0]),m=me(),mine=!!win&&win.id===m.id;
+  const rows=b.cands.filter(id=>c[id]&&S.people[id]).sort((x,y)=>c[x]-c[y]);
+  const max=Math.max(1,...rows.map(id=>c[id])),total=Object.keys(b.votes||{}).length;
+  const reduce=window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const el=document.createElement('div');el.className='ceremony';el.setAttribute('role','dialog');el.setAttribute('aria-modal','true');el.setAttribute('aria-label','Revelação: '+B.t1+' '+B.t2);
+  const barHTML=id=>`<div class="cer-bar" data-id="${id}"><div class="lab"><span>${esc(S.people[id].name)}</span><b>0</b></div><div class="track"><div class="fill"></div></div></div>`;
+  el.innerHTML=`<canvas class="confetti" aria-hidden="true"></canvas><button class="txt-btn cer-skip" data-cer="skip">Saltar</button>
+    <div class="cer-in">
+      <div class="cer-head"><span class="eyebrow">A urna foi selada · ${B.art}</span><h2 class="title-sm">${B.t1} <em>${B.t2}</em></h2><span class="note">${total} ${total===1?'voto':'votos'}</span></div>
+      <div class="cer-bars">${rows.map(barHTML).join('')}</div>
+      <div class="cer-stage"></div>
+    </div>`;
+  document.body.appendChild(el);
+  let skipped=false;const waiters=[];
+  const wait=ms=>new Promise(r=>{if(skipped||reduce)return r();const t=setTimeout(r,ms);waiters.push(()=>{clearTimeout(t);r()})});
+  const bars=el.querySelector('.cer-bars'),stage=el.querySelector('.cer-stage');
+  const fillBar=(id,instant)=>{const bar=bars.querySelector(`[data-id="${id}"]`);if(!bar)return;const n=c[id];bar.querySelector('.fill').style.width=(n/max*100)+'%';
+    const out=bar.querySelector('b');if(instant){out.textContent=n;return}const t0=performance.now();
+    (function step(t){const q=Math.min(1,(t-t0)/850);out.textContent=Math.round(n*q);if(q<1&&!skipped)requestAnimationFrame(step);else out.textContent=n})(t0)};
+  const finish=()=>{
+    rows.forEach(id=>fillBar(id,true));
+    L.forEach(id=>{const x=bars.querySelector(`[data-id="${id}"]`);if(x)x.classList.add('lead')});
+    bars.classList.remove('dim');bars.classList.add('final');
+    if(tie){stage.innerHTML=`<div class="cer-win"><div class="cer-tie">Empate!</div><div class="cer-sub">${L.map(id=>esc(S.people[id].name)).join(' · ')}</div><p class="note">Prevalece o bom senso; na sua falta, nova votação (Art. 16.º).</p></div>`}
+    else{stage.innerHTML=`<div class="cer-win">${mine?'<span class="cer-you">É você!</span>':''}${portrait(win,k==='mascote'?'green':'')}
+      <div class="cer-name">${esc(win.name)}</div>
+      <div class="cer-sub">${k==='bigode'?'Melhor Bigode do Ano · recebe o Laço-Testemunho':'Nova Mascote do Bigode · convite vitalício'}</div>
+      <div class="cer-votes">${c[win.id]} de ${total} votos</div></div>`;
+      if(!reduce)confetti(el.querySelector('.confetti'),mine?190:120,mine?7000:5200)}
+    stage.after(bars);
+    el.querySelector('.cer-skip').hidden=true;
+    const go=document.createElement('button');go.className='btn brass cer-go';go.dataset.cer='close';go.textContent='Continuar';bars.after(go);go.focus({preventScroll:true});
+  };
+  el.addEventListener('click',ev=>{const a=ev.target.closest('[data-cer]');if(!a)return;
+    if(a.dataset.cer==='skip'){skipped=true;waiters.splice(0).forEach(f=>f())}
+    if(a.dataset.cer==='close'){if(!replay)markSeen(revealKey(k));el.remove();ceremonyOn=false;render();}});
+  // The sequence: lowest votes first, building suspense towards the top
+  await wait(900);
+  for(const id of rows){if(skipped)break;fillBar(id);await wait(rows.length>5?650:1000)}
+  if(!skipped&&!reduce){await wait(700);bars.classList.add('dim');
+    stage.innerHTML=`<div class="cer-drum">${tie?'Temos um':'E o vencedor é'}<i>.</i><i>.</i><i>.</i></div>`;await wait(1900)}
+  finish();
+}
+
+/* ---------- Perfil ---------- */
+function vPerfil(){
+  const m=me(),t=tier(m),e=S.edition;
+  const wins=S.history.filter(h=>h.bigode===m.id).map(h=>h.year);
+  const recorded=S.history.filter(h=>Array.isArray(h.attended)&&h.year>=m.since).slice().sort((a,b)=>b.year-a.year);
+  const went=recorded.filter(h=>h.attended.includes(m.id));
+  const rate=recorded.length?Math.round(went.length/recorded.length*100):null;
+  const legacy=Math.max(0,(m.dinners||0)-went.length);
+  const sub=t==='vencedor'?`Melhor Bigode ${S.history[S.history.length-1].year}`:t==='mascote'?`Mascote ${m.mascotYear} · convite vitalício`:(wins.length?'Melhor Bigode '+wins.join(', '):'Laço livre da Irmandade');
+  const curSt={vou:['Confirmado','green'],nao:['Ausente','wine'],pendente:['Por responder','brass'],excluido:['Excluído · sem resposta','wine']}[status(m.id)];
+  const rows=[`<div class="yr"><b>${e.year}</b><div class="what">Jantar ${roman(e.year)}<small>${e.phase==='noite'?'A decorrer':fmtShort(e.date)}</small></div><span class="tag ${e.phase==='noite'&&S.present[m.id]?'green':curSt[1]}">${e.phase==='noite'&&S.present[m.id]?'Presente':curSt[0]}</span></div>`]
+    .concat(recorded.map(h=>{
+      const here=h.attended.includes(m.id),silent=(h.silent||[]).includes(m.id);
+      const extra=[h.bigode===m.id?'Venceu o Melhor Bigode':'',h.mascote===m.id?'Eleito Mascote':''].filter(Boolean).join(' · ');
+      return `<div class="yr"><b>${h.year}</b><div class="what">Jantar ${roman(h.year)}<small>${extra||(h.date?fmtShort(h.date):'')}</small></div><span class="tag ${here?(h.bigode===m.id?'brass':'green'):silent?'wine':''}">${here?(h.bigode===m.id?'Vencedor':'Presente'):silent?'Sem resposta':'Ausente'}</span></div>`}));
+  if(legacy&&m.role==='membro')rows.push(`<div class="yr"><b style="font-size:13px;line-height:1.2">${m.since}–${(recorded.length?recorded[recorded.length-1].year:e.year)-1}</b><div class="what">${legacy} ${legacy===1?'jantar':'jantares'}<small>Antes do registo na app</small></div><span class="tag">Arquivo</span></div>`);
+  return `
+  <div class="head"><span class="eyebrow">O seu perfil</span><h1 class="title">${esc(m.name.split(' ')[0])}<br><em>${m.committee?'da Comissão':m.role==='mascote'?'Mascote':'da Irmandade'}</em></h1></div>
+
+  <div class="pass ${t}"><span class="ghost">${STACHE}</span>
+    <div class="top-row"><span class="lbl">${tierName[t]}</span><span class="no">${m.no?'Nº '+String(m.no).padStart(3,'0'):roman(m.mascotYear||m.since)}</span></div>
+    <div style="display:flex;align-items:center;gap:14px">${passPhoto(m)}<div><div class="name">${esc(m.name)}</div><div class="sub">${esc(sub)}</div></div></div>
+    <div class="meta"><div><div>DESDE</div><div>${m.since}</div></div><div><div>JANTARES</div><div>${m.dinners||0}</div></div>${m.committee?'<div><div>CARGO</div><div>Comissão</div></div>':''}</div>
+  </div>
+
+  <section class="sec">${m.photo?`<div class="sec-row"><span class="h-serif">Fotografia</span><span class="note">com bigode</span></div>${photoControls(m)}`
+    :`<div class="photo-prompt">${portrait(m)}<div style="display:flex;flex-direction:column;gap:8px;min-width:0"><b style="font-weight:600">Falta a sua fotografia</b><span class="note">Aparece nas listas, nas urnas e no Livro de honra.</span>${photoControls(m)}</div></div>`}
+    <p class="note">Regra da casa: só fotografias de bigode (ou barba digna). Sem bigode, a Comissão retira a fotografia.</p></section>
+
+  <section class="sec"><span class="h-serif">Em números</span>
+    <div class="stats"><div><b style="color:var(--brass)">${m.dinners||0}</b><span>JANTARES</span></div><div><b>${wins.length}</b><span>${wins.length===1?'VITÓRIA':'VITÓRIAS'}</span></div><div><b>${rate===null?'—':rate+'%'}</b><span>ASSIDUIDADE</span></div></div>
+    ${rate!==null?`<p class="note">Assiduidade: ${went.length} de ${recorded.length} ${recorded.length===1?'jantar registado':'jantares registados'} desde que é membro.${m.strikes?` ${m.strikes} ${m.strikes>1?'faltas':'falta'} sem resposta (Art. 5.º).`:''}</p>`:''}</section>
+
+  <section class="sec"><span class="h-serif">Palmarés</span>
+    ${wins.length||m.mascotYear?`<div class="list">${wins.slice().reverse().map(y=>`<div class="row"><span style="font:500 20px var(--f-serif);color:var(--brass);width:52px;flex:none">${y}</span><div class="nm"><b>Melhor Bigode do Ano</b><small>${y===S.history[S.history.length-1].year?'Guarda o Laço-Testemunho':'Laço-Testemunho entregue'}</small></div></div>`).join('')}${m.mascotYear?`<div class="row"><span style="font:500 20px var(--f-serif);color:var(--green);width:52px;flex:none">${m.mascotYear}</span><div class="nm"><b>Mascote do Bigode</b><small>Convite vitalício</small></div></div>`:''}</div>`
+      :'<p class="note">Ainda sem títulos. O Laço-Testemunho está à espera.</p>'}</section>
+
+  <section class="sec"><span class="h-serif">Presenças</span><div class="list">${rows.join('')}</div></section>
+
+  <section class="sec" style="gap:10px">
+    ${ONLINE?'':`<details class="grp"><summary>Ver como outro membro (teste)</summary><div class="who" style="padding-bottom:14px">${invited().map(p=>`<button data-a="pick" data-id="${p.id}">${avatar(p)}<span>${esc(p.name)}</span></button>`).join('')}</div></details>`}
+    <button class="btn" data-a="logout">${ONLINE?'Sair deste telemóvel':'Sair'}</button></section>`;
+}
+
+/* ====================================================================== render */
+function render(){
+  if(ONLINE&&!Remote.ready){$('#meBtn').hidden=true;document.querySelector('.tabs').hidden=true;$('#app').innerHTML=Remote.view();return}
+  const m=me(),r=route();
+  $('#meBtn').hidden=!m;
+  if(m)$('#meBtn').innerHTML=m.photo?`<img src="${m.photo}" alt="">`:esc(ini(m.name).charAt(0));
+  $('#meBtn').classList.toggle('on',r==='perfil');
+  document.querySelector('.tabs').hidden=!m;
+  $('#tabs').innerHTML=m?TABS.filter(([k])=>k!=='comissao'||m.committee).map(([k,l])=>`<a href="#${k}" class="${r===k?'on':''}" ${r===k?'aria-current="page"':''}>${ICON[k]}${l}</a>`).join(''):'';
+  const active=document.activeElement&&document.activeElement.id;
+  $('#app').innerHTML=!m?vWho():({jantar:vJantar,votar:vVotar,galeria:vGaleria,regras:vRegras,comissao:vComissao,perfil:vPerfil}[r])();
+  if(active==='q'){const q=$('#q');if(q){q.focus();q.setSelectionRange(q.value.length,q.value.length)}}
+  if(m)setTimeout(checkReveals,250);
+}
+window.addEventListener('hashchange',()=>{UI.confirm=null;UI.editing=null;render();window.scrollTo(0,0)});
+document.addEventListener('input',ev=>{if(ev.target.id==='q'){UI.q=ev.target.value;$('#rules').innerHTML=rulesList()}});
+
+/* ====================================================================== actions */
+// Everything only the Committee may do. The online version enforces the same list on the server.
+const COMMITTEE_ONLY=new Set(['phase','saveed','just','present','addcand','newcand','rmcand','allpresent','open','reveal','tiebreak','resetb',
+  'edit','saveedit','askrm','rmok','addmember','askclose','closeok','askreset','resetok','addnote','rmnote','rmfile','askendnight','endnightok','copylink','newlink']);
+// Square-crop profile photos to 400px so they stay light
+function squarePhoto(file){return new Promise((res,rej)=>{const url=URL.createObjectURL(file);const img=new Image();
+  img.onload=()=>{const s=Math.min(img.width,img.height),c=document.createElement('canvas');c.width=c.height=400;
+    c.getContext('2d').drawImage(img,(img.width-s)/2,(img.height-s)/2,s,s,0,0,400,400);URL.revokeObjectURL(url);res(c.toDataURL('image/jpeg',0.82))};
+  img.onerror=()=>{URL.revokeObjectURL(url);rej()};img.src=url})}
+document.addEventListener('change',async ev=>{
+  const pid=ev.target.dataset&&ev.target.dataset.photo;
+  if(pid){const f=ev.target.files&&ev.target.files[0];ev.target.value='';if(!f)return;const m=me();
+    if(!(m&&(m.id===pid||m.committee))){toast('Só o próprio ou a Comissão');return}
+    try{const data=await squarePhoto(f);const prev=S.people[pid].photo;Store.set(`people.${pid}.photo`,data);
+      if(!Store.persist()){Store.set(`people.${pid}.photo`,prev);Store.persist();toast('Sem espaço no modo de teste');return}
+      render();if($('#layer').innerHTML&&pid===ME)sheet();toast('Fotografia atualizada')}catch(e){toast('Não foi possível ler a imagem')}
+    return}
+  if(ev.target.id==='media-in'){const fs=[...(ev.target.files||[])];ev.target.value='';if(fs.length)addMedia(fs);return}
+  if(ev.target.id!=='file-in')return;
+  const m=me(),f=ev.target.files&&ev.target.files[0];ev.target.value='';
+  if(!f)return;
+  if(!(m&&m.committee)){toast('Reservado à Comissão');return}
+  const lim=ONLINE?0.65:1.5;if(f.size>lim*1048576){toast(`Ficheiro acima de ${String(lim).replace('.',',')} MB`);return}
+  const r=new FileReader();
+  r.onload=()=>{const fid='f'+Date.now().toString(36);Store.set('files.'+fid,{year:S.edition.year,name:f.name,type:f.type||'application/octet-stream',size:f.size,data:r.result,by:m.id,at:Date.now()});
+    if(!Store.persist()){Store.set('files.'+fid,undefined);Store.persist();toast('Sem espaço no modo de teste');return}
+    render();toast('Ficheiro anexado')};
+  r.readAsDataURL(f);
+});
+document.addEventListener('click',ev=>{
+  const el=ev.target.closest('[data-a]');if(!el)return;
+  const a=el.dataset.a,k=el.dataset.k,id=el.dataset.id,v=el.dataset.v,m=me();
+  const ui=()=>render();
+  if(a==='reload'){location.reload();return}
+  if(a==='setupok'){const n=$('#su-admin').value.trim(),o=$('#su-others').value,d=$('#su-date').value;
+    if(!n||!d){toast('Escreva o seu nome e a data');return}el.disabled=true;el.textContent='A fundar…';
+    Remote.setup(n,o,d).then(()=>toast('Irmandade fundada')).catch(e=>{console.error(e);el.disabled=false;el.textContent='Fundar a Irmandade';toast('Não foi possível. Veja as regras do Firebase.')});return}
+  if(COMMITTEE_ONLY.has(a)&&!(m&&m.committee)){toast('Reservado à Comissão');return}
+  switch(a){
+    case 'viewfile':viewFile(id);return;
+    case 'openarchive':case 'openalbum':viewAlbum(Number(v));return;
+    case 'replay':if(!ceremonyOn)playReveal(k,true);return;
+    case 'ctab':UI.ctab=v;UI.confirm=null;UI.editing=null;ui();{const s=document.querySelector('.seg.four');if(s)s.scrollIntoView({block:'start'});window.scrollBy(0,-70)}return;
+    case 'rmphoto':{if(!(m.id===id||m.committee)){toast('Só o próprio ou a Comissão');return}Store.one(`people.${id}.photo`,undefined);if($('#layer').innerHTML&&id===ME)sheet();toast('Fotografia removida');return}
+    case 'like':{const x=S.media[id];if(!x)return;const on=!(x.likes&&x.likes[m.id]);Store.one(`media.${id}.likes.${m.id}`,on?true:undefined);
+      if($('#layer').innerHTML)viewAlbum(x.year);return}
+    case 'rmmedia':{const x=S.media[id];if(!x||!(x.by===m.id||m.committee)){toast('Só o autor ou a Comissão pode apagar');return}
+      if(UI.confirm!=='rmm-'+id){UI.confirm='rmm-'+id;el.textContent='Confirmar?';el.style.color='var(--wine-ink)';return}
+      UI.confirm=null;const wasSheet=!!$('#layer').innerHTML;Store.one('media.'+id,undefined);if(wasSheet)viewAlbum(x.year);toast('Apagado do álbum');return}
+    case 'addnote':{const t=$('#note-text').value.trim();if(!t){toast('Escreva o aviso');return}Store.one('notes.n'+Date.now().toString(36),{year:S.edition.year,text:t,by:m.id,at:Date.now()});toast('Aviso publicado');return}
+    case 'rmnote':Store.one('notes.'+id,undefined);toast('Aviso apagado');return;
+    case 'rmfile':Store.one('files.'+id,undefined);toast('Ficheiro apagado');return;
+    case 'closesheet':if(ev.target===el||el.tagName==='BUTTON')$('#layer').innerHTML='';return;
+    case 'card':location.hash='perfil';return;
+    case 'pick':Store.setMe(id);$('#layer').innerHTML='';UI.pick={};if(location.hash==='#comissao'&&!P(id).committee)location.hash='jantar';ui();window.scrollTo(0,0);toast('Bem-vindo, '+P(id).name);return;
+    case 'logout':if(ONLINE){Remote.signOut();return}Store.setMe(null);$('#layer').innerHTML='';ui();return;
+    case 'copylink':{const t=Remote.keys[id];if(!t){toast('Link ainda a carregar');return}const link=Remote.linkFor(t),nm=S.people[id]?S.people[id].name:'';
+      const msg=`${nm}, este é o teu link pessoal para a app Le Moustache Man. Abre-o no telemóvel e adiciona ao ecrã principal: ${link}`;
+      const done=()=>{toast('Mensagem com o link copiada');UI.showLink=id;ui()};
+      if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(msg).then(done,()=>{UI.showLink=id;ui()});else{UI.showLink=id;ui()}return}
+    case 'newlink':{Remote.dropKeys(id).then(()=>Remote.addKey(id)).then(()=>toast('Novo link criado; o anterior deixou de funcionar')).catch(()=>toast('Sem permissão'));return}
+    case 'rsvp':{const prev=S.rsvp[m.id]||{};Store.one('rsvp.'+m.id,v==='vou'?{s:'vou'}:Object.assign({},prev.s==='nao'?prev:{},{s:'nao'}));toast(v==='vou'?'Presença confirmada':'Ausência registada');return}
+    case 'reason':{const t=$('#reason').value.trim();if(!t){toast('Escreva o motivo');return}Store.one('rsvp.'+m.id,{s:'nao',reason:t,j:'pendente'});toast('Justificação enviada');return}
+    case 'pickcand':UI.pick[k]=id;ui();return;
+    case 'vote':{const kk=k,pk=UI.pick[kk];if(!pk)return;Store.one(`ballots.${kk}.votes.${m.id}`,pk);delete UI.pick[kk];toast('Voto depositado');return}
+    case 'phase':UI.ctab='jantar';Store.one('edition.phase',v);if(v==='noite')toast('Registo de membros iniciado');return;
+    case 'saveed':Store.setMany({'edition.date':$('#f-date').value||S.edition.date,'edition.time':$('#f-time').value||S.edition.time,'edition.place':$('#f-place').value.trim(),'edition.city':$('#f-city').value.trim(),'edition.dress':$('#f-dress').value.trim(),'edition.deadline':$('#f-dead').value||S.edition.deadline});toast('Convocatória guardada');return;
+    case 'just':Store.one(`rsvp.${id}.j`,v);toast(v==='aceite'?'Justificação aceite':'Justificação recusada');return;
+    case 'present':if(S.edition.phase!=='noite'){toast('Inicie a noite primeiro');return}Store.one('present.'+id,S.present[id]?undefined:true);return;
+    case 'askendnight':UI.confirm='endnight';ui();return;
+    case 'endnightok':UI.confirm=null;Store.one('edition.phase','convocatoria');toast('Noite fechada');return;
+    case 'addcand':{const s=$('#add-'+k).value;if(!s)return;Store.one(`ballots.${k}.cands`,S.ballots[k].cands.concat(s));return}
+    case 'newcand':{const n=$('#new-mascote').value.trim();if(!n)return;const nid='c'+Date.now().toString(36);Store.setMany({['people.'+nid]:{name:n,role:'convidado',since:S.edition.year,dinners:0},'ballots.mascote.cands':S.ballots.mascote.cands.concat(nid)});toast(n+' nomeado');return}
+    case 'rmcand':{const ch={[`ballots.${k}.cands`]:S.ballots[k].cands.filter(x=>x!==id)};if(S.people[id]&&S.people[id].role==='convidado')ch['people.'+id]=undefined;Store.setMany(ch);return}
+    case 'nominate':{const b=S.ballots.mascote;if(b.open||b.revealed){toast('As propostas já fecharam');return}
+      const n=$('#nom-name').value.trim().replace(/\s+/g,' '),note=$('#nom-note').value.trim();if(!n){toast('Escreva um nome');return}
+      if(b.cands.some(c=>S.people[c]&&S.people[c].name.toLowerCase()===n.toLowerCase())){toast(n+' já foi proposto');return}
+      const nid='c'+Date.now().toString(36);
+      Store.setMany({['people.'+nid]:{name:n,note,role:'convidado',nominatedBy:m.id,since:S.edition.year,dinners:0},'ballots.mascote.cands':b.cands.concat(nid)});toast(n+' proposto');return}
+    case 'unnominate':{const p=S.people[id],b=S.ballots.mascote;if(!p||b.open||b.revealed)return;if(!(p.nominatedBy===m.id||m.committee)){toast('Só quem propôs ou a Comissão pode retirar');return}
+      Store.setMany({'ballots.mascote.cands':b.cands.filter(x=>x!==id),['people.'+id]:undefined});toast('Proposta retirada');return}
+    case 'allpresent':Store.one('ballots.bigode.cands',presentIds().filter(p=>S.people[p].role!=='convidado'));return;
+    case 'open':{if(S.edition.phase!=='noite'){toast('Inicie a noite primeiro');return}
+      const ch={[`ballots.${k}.open`]:true};
+      if(k==='bigode'&&S.ballots.bigode.cands.length<2)ch['ballots.bigode.cands']=presentIds().filter(p=>S.people[p].role==='membro');
+      if((ch['ballots.bigode.cands']||S.ballots[k].cands).length<2){toast(k==='mascote'?'São precisas 2 propostas':'Registe 2 membros presentes');return}
+      Store.setMany(ch);toast('Urna aberta');return}
+    case 'reveal':Store.setMany({[`ballots.${k}.open`]:false,[`ballots.${k}.revealed`]:true});toast('Urna selada');return;
+    case 'tiebreak':{const b=S.ballots[k];Store.setMany({[`ballots.${k}`]:{cands:leaders(b),open:true,revealed:false,votes:{},round:(b.round||1)+1}});toast('Desempate aberto');return}
+    case 'resetb':Store.one(`ballots.${k}`,{cands:S.ballots[k].cands,open:false,revealed:false,votes:{},round:1});return;
+    case 'edit':UI.editing=id;UI.confirm=null;ui();return;
+    case 'saveedit':{const n=$('#ed-name').value.trim();if(!n){toast('O nome não pode ficar vazio');return}UI.editing=null;const ch={[`people.${id}.name`]:n};const cb=$('#ed-com');if(cb&&m.admin&&!S.people[id].admin)ch[`people.${id}.committee`]=cb.checked;Store.setMany(ch);toast('Membro atualizado');return}
+    case 'askrm':UI.confirm='rm-'+id;ui();return;
+    case 'rmok':{UI.editing=null;UI.confirm=null;const ch={['people.'+id]:undefined,['rsvp.'+id]:undefined,['present.'+id]:undefined};['bigode','mascote'].forEach(x=>ch[`ballots.${x}.cands`]=S.ballots[x].cands.filter(c=>c!==id));Store.setMany(ch);if(ONLINE)Remote.dropKeys(id).catch(()=>{});toast('Membro removido');return}
+    case 'addmember':{const n=$('#new-member').value.trim();if(!n)return;const no=Math.max(0,...all().map(p=>p.no||0))+1,nid='m'+Date.now().toString(36);Store.one('people.'+nid,{name:n,no,role:'membro',since:S.edition.year,dinners:0,committee:false,strikes:0});if(ONLINE)Remote.addKey(nid).catch(()=>toast('Sem permissão para criar o link'));toast(n+' admitido');return}
+    case 'askclose':UI.confirm='close';ui();return;
+    case 'askreset':UI.confirm='reset';ui();return;
+    case 'cancel':UI.confirm=null;UI.editing=null;ui();return;
+    case 'resetok':UI.confirm=null;Store.reset();ui();toast('Dados de exemplo repostos');return;
+    case 'closeok':{
+      const y=S.edition.year,bw=leaders(S.ballots.bigode)[0],mw=leaders(S.ballots.mascote)[0],ch={};
+      const mt=tally(S.ballots.mascote);
+      const proposed=S.ballots.mascote.cands.filter(c=>S.people[c]).map(c=>{const q=S.people[c];return {name:q.name,note:q.note||'',by:q.nominatedBy||null,votes:mt[c]||0,won:c===mw}});
+      const inv=invited();
+      ch.history=S.history.concat({year:y,date:S.edition.date,bigode:bw,mascote:mw,proposed,
+        attended:presentIds(),absent:inv.filter(p=>status(p.id)==='nao'&&!S.present[p.id]).map(p=>p.id),
+        silent:inv.filter(p=>(status(p.id)==='excluido'||status(p.id)==='pendente')&&!S.present[p.id]).map(p=>p.id)});
+      S.ballots.mascote.cands.forEach(c=>{if(c!==mw&&S.people[c]&&S.people[c].role==='convidado')ch['people.'+c]=undefined});
+      const mp=S.people[mw];ch[`people.${mw}.mascotYear`]=y;if(mp.role!=='membro')ch[`people.${mw}.role`]='mascote';
+      presentIds().forEach(pid=>ch[`people.${pid}.dinners`]=(S.people[pid].dinners||0)+1);
+      invited().forEach(p=>{if(status(p.id)==='excluido')ch[`people.${p.id}.strikes`]=(p.strikes||0)+1});
+      const nd=D(S.edition.date);nd.setFullYear(y+1);const dd=new Date(nd);dd.setDate(dd.getDate()-14);
+      ch.edition=Object.assign({},S.edition,{year:y+1,date:iso(nd),deadline:iso(dd),place:'Restaurante a confirmar',phase:'convocatoria'});
+      ch.rsvp={};ch.present={};
+      ['mascote','bigode'].forEach(x=>ch['ballots.'+x]={cands:[],open:false,revealed:false,votes:{},round:1});
+      UI.confirm=null;Store.setMany(ch);toast('Edição '+y+' encerrada');location.hash='galeria';return}
+  }
+});
+render();
+if(ONLINE)Remote.start();
+})();
+</script>
+</body>
+</html>

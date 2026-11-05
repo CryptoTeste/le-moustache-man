@@ -1,0 +1,95 @@
+rules_version = '2';
+
+// Le Moustache Man — who may read and change what.
+// Paste this whole file into Firebase console → Firestore Database → Rules → Publish.
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ---------- Who is asking ----------
+    function signedIn()    { return request.auth != null; }
+    function sessionPath() { return /databases/$(database)/documents/sessions/$(request.auth.uid); }
+    function statePath()   { return /databases/$(database)/documents/app/state; }
+    function isMember()    { return signedIn() && exists(sessionPath()); }
+    function meId()        { return get(sessionPath()).data.member; }
+    function isCommittee() { return isMember() && get(statePath()).data.people[meId()].committee == true; }
+    function isSetUp()     { return exists(/databases/$(database)/documents/app/meta); }
+
+    // ---------- What an ordinary member may change in the shared state ----------
+    // Their own reply (but not approve their own excuse), their own vote while the ballot is open
+    // and they are marked present, and mascot proposals while proposals are open.
+    function rsvpOk(before, after, me) {
+      let mine = after.rsvp[me];
+      return after.rsvp.diff(before.rsvp).affectedKeys().hasOnly([me])
+        && (!mine.keys().hasAny(['j'])
+            || mine.j == 'pendente'
+            || (before.rsvp.keys().hasAny([me]) && before.rsvp[me].get('j', '') == mine.j));
+    }
+    function voteOk(x0, x1, me, present) {
+      let ch = x1.diff(x0).affectedKeys();
+      return ch.size() == 0
+        || (ch.hasOnly(['votes']) && x0.open == true && present
+            && x1.votes.diff(x0.votes).affectedKeys().hasOnly([me]));
+    }
+    function mascotOk(x0, x1, me, present) {
+      let ch = x1.diff(x0).affectedKeys();
+      return voteOk(x0, x1, me, present)
+        || (ch.hasOnly(['cands']) && x0.open == false && x0.revealed == false);
+    }
+    function ballotsOk(before, after, me) {
+      let present = before.present.get(me, false) == true;
+      return after.ballots.diff(before.ballots).affectedKeys().hasOnly(['bigode', 'mascote'])
+        && voteOk(before.ballots.bigode, after.ballots.bigode, me, present)
+        && mascotOk(before.ballots.mascote, after.ballots.mascote, me, present);
+    }
+    function memberUpdateOk() {
+      let me = meId();
+      let before = resource.data;
+      let after = request.resource.data;
+      let changed = after.diff(before).affectedKeys();
+      return changed.hasOnly(['rsvp', 'ballots', 'people'])
+        && (!changed.hasAny(['rsvp'])    || rsvpOk(before, after, me))
+        && (!changed.hasAny(['ballots']) || ballotsOk(before, after, me))
+        // members may add or withdraw mascot proposals, never edit an existing person
+        && (!changed.hasAny(['people'])  || after.people.diff(before.people).changedKeys().size() == 0);
+    }
+
+    // ---------- Collections ----------
+    match /app/meta {
+      allow get: if signedIn();
+      allow create: if signedIn() && !isSetUp();
+    }
+    match /app/state {
+      allow get: if isMember();
+      allow create: if signedIn() && !isSetUp();
+      allow update: if isCommittee() || (isMember() && memberUpdateOk());
+    }
+    match /media/{id} {
+      allow read: if isMember();
+      allow create: if isMember() && request.resource.data.by == meId();
+      allow update: if isMember()
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['likes'])
+        && request.resource.data.likes.diff(resource.data.get('likes', {})).affectedKeys().hasOnly([meId()]);
+      allow delete: if isCommittee() || (isMember() && resource.data.by == meId());
+    }
+    match /files/{id} {
+      allow read: if isMember();
+      allow write: if isCommittee();
+    }
+    match /photos/{pid} {
+      allow read: if isMember();
+      allow write: if isCommittee() || (isMember() && pid == meId());
+    }
+    // Personal links: anyone holding a link can look it up; only the Committee lists or creates them.
+    match /keys/{token} {
+      allow get: if signedIn();
+      allow list: if isCommittee();
+      allow create, delete: if isCommittee() || (signedIn() && !isSetUp());
+    }
+    // Which member this phone belongs to — only valid with a real personal link.
+    match /sessions/{uid} {
+      allow get, delete: if signedIn() && request.auth.uid == uid;
+      allow create, update: if signedIn() && request.auth.uid == uid
+        && getAfter(/databases/$(database)/documents/keys/$(request.resource.data.key)).data.member == request.resource.data.member;
+    }
+  }
+}
