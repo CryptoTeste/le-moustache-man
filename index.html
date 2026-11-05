@@ -1002,7 +1002,7 @@ function vComissao(){
     else if(b.revealed&&leaders(b).length>1)todo.push(['jantar',`Empate na urna ${k==='mascote'?'da Mascote':'do Melhor Bigode'}`,'brass']);
     else if(e.phase==='noite'&&!b.revealed&&canOpen(k))todo.push(['jantar',`Urna ${k==='mascote'?'da Mascote':'do Melhor Bigode'} pronta a abrir`,'brass'])});
   if(canClose)todo.push(['jantar',`Pronto para encerrar a edição ${e.year}`,'brass']);
-  if(e.phase==='convocatoria'&&!deadlinePassed()&&silent.length)todo.push(['respostas',`${silent.length} membros ainda em silêncio`,'']);
+  if(e.phase==='convocatoria'&&!deadlinePassed()&&silent.length)todo.push(['respostas',`${silent.length} ${silent.length===1?'membro ainda':'membros ainda'} em silêncio`,'']);
 
   const tabs=[['jantar','Jantar'],['respostas','Respostas'],['pessoas','Pessoas']];
   if(!UI.ctab||UI.ctab==='noite')UI.ctab='jantar';
@@ -1050,8 +1050,13 @@ const revealKey=k=>`${ME}-${S.edition.year}-${k}-${S.ballots[k].round||1}-${Obje
 let ceremonyOn=false;
 function checkReveals(){
   if(ceremonyOn||!me())return;
-  for(const k of ['mascote','bigode']){const b=S.ballots[k];if(b.revealed&&!seenSet().has(revealKey(k))){playReveal(k);return}}
+  for(const k of ['mascote','bigode']){const b=S.ballots[k];if(b.revealed&&!seenSet().has(revealKey(k))&&!seenSet().has(yearKey(k,S.edition.year))){playReveal(k);return}}
+  // Missed the live reveal? Show the last closed edition's ceremony once (up to 45 days after closing)
+  const h=S.history[S.history.length-1];
+  if(h&&h.results&&h.closedAt&&Date.now()-h.closedAt<45*864e5)
+    for(const k of ['mascote','bigode']){if(h.results[k]&&!seenSet().has(yearKey(k,h.year))){playReveal(k,false,h);return}}
 }
+const yearKey=(k,y)=>`${ME}-${y}-${k}-seen`;
 const STACHE_PATH='M32 9.5c-2.6-4.6-8.4-6.6-13.2-4.2-3.8 1.9-5.6 5.6-9.6 5.6-2.8 0-4.6-1.6-5.7-3.6-.4 5.6 4.3 10.4 11 10.4 7.3 0 12.2-4.3 17.5-6 5.3 1.7 10.2 6 17.5 6 6.7 0 11.4-4.8 11-10.4-1.1 2-2.9 3.6-5.7 3.6-4 0-5.8-3.7-9.6-5.6C40.4 2.9 34.6 4.9 32 9.5z';
 function confetti(canvas,amount,dur){
   const ctx=canvas.getContext('2d'),dpr=window.devicePixelRatio||1,W=canvas.clientWidth,H=canvas.clientHeight;
@@ -1068,17 +1073,24 @@ function confetti(canvas,amount,dur){
       ctx.restore()});
     if(el<dur&&canvas.isConnected)requestAnimationFrame(f);else ctx.clearRect(0,0,W,H)})(t0);
 }
-async function playReveal(k,replay){
+async function playReveal(k,replay,hist){
   ceremonyOn=true;
-  const b=S.ballots[k],B=BALLOT[k],c=tally(b),L=leaders(b),tie=L.length!==1,win=tie?null:P(L[0]),m=me(),mine=!!win&&win.id===m.id;
-  const rows=b.cands.filter(id=>c[id]&&S.people[id]).sort((x,y)=>c[x]-c[y]);
-  const max=Math.max(1,...rows.map(id=>c[id])),total=Object.keys(b.votes||{}).length;
+  // Live ballot, or the saved result of a closed edition
+  const R=hist?hist.results[k]:null;
+  const c=R?R.counts:tally(S.ballots[k]),names=R?R.names||{}:{};
+  const nameOf=id=>S.people[id]?S.people[id].name:(names[id]||'—');
+  const mx=Math.max(0,...Object.values(c)),L=mx?Object.keys(c).filter(id=>c[id]===mx):[];
+  const B=BALLOT[k],tie=L.length!==1,m=me();
+  const win=tie?null:(P(L[0])||{id:L[0],name:nameOf(L[0])}),mine=!!win&&win.id===m.id;
+  const rows=Object.keys(c).filter(id=>c[id]).sort((x,y)=>c[x]-c[y]);
+  const max=Math.max(1,...rows.map(id=>c[id])),total=Object.values(c).reduce((a,x)=>a+x,0);
+  const seenKey=hist?yearKey(k,hist.year):revealKey(k);
   const reduce=window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches;
   const el=document.createElement('div');el.className='ceremony';el.setAttribute('role','dialog');el.setAttribute('aria-modal','true');el.setAttribute('aria-label','Revelação: '+B.t1+' '+B.t2);
-  const barHTML=id=>`<div class="cer-bar" data-id="${id}"><div class="lab"><span>${esc(S.people[id].name)}</span><b>0</b></div><div class="track"><div class="fill"></div></div></div>`;
+  const barHTML=id=>`<div class="cer-bar" data-id="${id}"><div class="lab"><span>${esc(nameOf(id))}</span><b>0</b></div><div class="track"><div class="fill"></div></div></div>`;
   el.innerHTML=`<canvas class="confetti" aria-hidden="true"></canvas><button class="txt-btn cer-skip" data-cer="skip">Saltar</button>
     <div class="cer-in">
-      <div class="cer-head"><span class="eyebrow">A urna foi selada · ${B.art}</span><h2 class="title-sm">${B.t1} <em>${B.t2}</em></h2><span class="note">${total} ${total===1?'voto':'votos'}</span></div>
+      <div class="cer-head"><span class="eyebrow">${hist?'Jantar '+roman(hist.year)+' · ':''}A urna foi selada · ${B.art}</span><h2 class="title-sm">${B.t1} <em>${B.t2}</em></h2><span class="note">${total} ${total===1?'voto':'votos'}</span></div>
       <div class="cer-bars">${rows.map(barHTML).join('')}</div>
       <div class="cer-stage"></div>
     </div>`;
@@ -1093,7 +1105,7 @@ async function playReveal(k,replay){
     rows.forEach(id=>fillBar(id,true));
     L.forEach(id=>{const x=bars.querySelector(`[data-id="${id}"]`);if(x)x.classList.add('lead')});
     bars.classList.remove('dim');bars.classList.add('final');
-    if(tie){stage.innerHTML=`<div class="cer-win"><div class="cer-tie">Empate!</div><div class="cer-sub">${L.map(id=>esc(S.people[id].name)).join(' · ')}</div><p class="note">Prevalece o bom senso; na sua falta, nova votação (Art. 16.º).</p></div>`}
+    if(tie){stage.innerHTML=`<div class="cer-win"><div class="cer-tie">Empate!</div><div class="cer-sub">${L.map(id=>esc(nameOf(id))).join(' · ')}</div><p class="note">Prevalece o bom senso; na sua falta, nova votação (Art. 16.º).</p></div>`}
     else{stage.innerHTML=`<div class="cer-win">${mine?'<span class="cer-you">É você!</span>':''}${portrait(win,k==='mascote'?'green':'')}
       <div class="cer-name">${esc(win.name)}</div>
       <div class="cer-sub">${k==='bigode'?'Melhor Bigode do Ano · recebe o Laço-Testemunho':'Nova Mascote do Bigode · convite vitalício'}</div>
@@ -1105,7 +1117,7 @@ async function playReveal(k,replay){
   };
   el.addEventListener('click',ev=>{const a=ev.target.closest('[data-cer]');if(!a)return;
     if(a.dataset.cer==='skip'){skipped=true;waiters.splice(0).forEach(f=>f())}
-    if(a.dataset.cer==='close'){if(!replay)markSeen(revealKey(k));el.remove();ceremonyOn=false;render();}});
+    if(a.dataset.cer==='close'){if(!replay){markSeen(seenKey);markSeen(yearKey(k,hist?hist.year:S.edition.year))}el.remove();ceremonyOn=false;render();}});
   // The sequence: lowest votes first, building suspense towards the top
   await wait(900);
   for(const id of rows){if(skipped)break;fillBar(id);await wait(rows.length>5?650:1000)}
@@ -1276,10 +1288,12 @@ document.addEventListener('click',ev=>{
     case 'resetok':UI.confirm=null;Store.reset();ui();toast('Dados de exemplo repostos');return;
     case 'closeok':{
       const y=S.edition.year,bw=leaders(S.ballots.bigode)[0],mw=leaders(S.ballots.mascote)[0],ch={};
-      const mt=tally(S.ballots.mascote);
+      const mt=tally(S.ballots.mascote),bt=tally(S.ballots.bigode);
+      const nm=ids=>Object.fromEntries(ids.filter(i=>S.people[i]).map(i=>[i,S.people[i].name]));
+      const results={mascote:{counts:mt,names:nm(Object.keys(mt))},bigode:{counts:bt,names:nm(Object.keys(bt))}};
       const proposed=S.ballots.mascote.cands.filter(c=>S.people[c]).map(c=>{const q=S.people[c];return {name:q.name,note:q.note||'',by:q.nominatedBy||null,votes:mt[c]||0,won:c===mw}});
       const inv=invited();
-      ch.history=S.history.concat({year:y,date:S.edition.date,bigode:bw,mascote:mw,proposed,
+      ch.history=S.history.concat({year:y,date:S.edition.date,bigode:bw,mascote:mw,proposed,results,closedAt:Date.now(),
         attended:presentIds(),absent:inv.filter(p=>status(p.id)==='nao'&&!S.present[p.id]).map(p=>p.id),
         silent:inv.filter(p=>(status(p.id)==='excluido'||status(p.id)==='pendente')&&!S.present[p.id]).map(p=>p.id)});
       S.ballots.mascote.cands.forEach(c=>{if(c!==mw&&S.people[c]&&S.people[c].role==='convidado')ch['people.'+c]=undefined});
