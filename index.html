@@ -466,7 +466,7 @@ const Remote={db:null,auth:null,FV:null,queue:[],ready:false,screen:'loading',ke
     const a=document.activeElement;
     if(a&&$('#app').contains(a)&&/^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName)&&a.type!=='file'){
       if(!this._deferred){this._deferred=true;a.addEventListener('blur',()=>{this._deferred=false;setTimeout(render,50)},{once:true})}return}
-    if(this._raf)return;this._raf=requestAnimationFrame(()=>{this._raf=null;render()});
+    if(this._raf)return;this._raf=setTimeout(()=>{this._raf=null;render()},30);
   },
   flush(){
     const paths=[...new Set(this.queue.splice(0))];if(!paths.length)return true;
