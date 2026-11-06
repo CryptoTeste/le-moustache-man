@@ -337,6 +337,9 @@ mark{background:var(--mark);color:var(--ink)}
 .tabs a.on{color:var(--brass);font-weight:700}
 .tabs a.on::before{transform:scaleX(1)}
 .tabs a.on svg{stroke-width:1.9;transform:translateY(-1px)}
+.tabs a .new{position:absolute;top:9px;left:calc(50% + 8px);width:8px;height:8px;border-radius:50%;background:var(--wine-ink);box-shadow:0 0 0 2px var(--bg)}
+@media (prefers-reduced-motion:no-preference){.tabs a .new{animation:pop .4s cubic-bezier(.2,1.6,.4,1)}}
+@keyframes pop{from{transform:scale(0)}}
 
 /* sheet */
 .scrim{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:20;display:flex;align-items:flex-end;justify-content:center;transition:background .26s}
@@ -354,8 +357,10 @@ mark{background:var(--mark);color:var(--ink)}
 .who button span:last-child{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .who .ini{width:32px;height:32px;font-size:15px}
 .confirm{border:1px dashed var(--wine-line);padding:14px;display:flex;flex-direction:column;gap:10px}
-.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(92px + env(safe-area-inset-bottom,0px));background:var(--brass);color:var(--on-brass);
-  padding:10px 18px;font-size:11px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;z-index:30;white-space:nowrap}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(96px + env(safe-area-inset-bottom,0px));z-index:30;
+  display:flex;align-items:center;gap:10px;width:max-content;max-width:calc(100% - 32px);padding:12px 18px 12px 14px;border-radius:14px;
+  background:var(--ink);color:var(--bg);font:500 14px/1.35 var(--f-sans);letter-spacing:0;text-transform:none;box-shadow:0 12px 32px rgba(0,0,0,.28)}
+.toast::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--brass);flex:none;box-shadow:0 0 0 4px var(--brass-soft)}
 .empty{color:var(--faint);font-size:14px;padding:8px 0}
 .demo{font-size:11px;color:var(--faint);display:flex;gap:8px;align-items:center}
 /* Gentle motion: sheets rise, pages settle in, buttons answer the touch. All of it off for reduced motion. */
@@ -644,7 +649,7 @@ const presentIds=()=>Object.keys(S.present).filter(k=>S.present[k]&&S.people[k])
 function status(id){const r=S.rsvp[id];if(r&&r.s==='vou')return 'vou';if(r&&r.s==='nao')return 'nao';return deadlinePassed()?'excluido':'pendente'}
 function tally(b){const c={};b.cands.forEach(id=>c[id]=0);Object.values(b.votes||{}).forEach(v=>{if(v in c)c[v]++});return c}
 function leaders(b){const c=tally(b);const mx=Math.max(0,...Object.values(c));return mx===0?[]:Object.keys(c).filter(k=>c[k]===mx)}
-let toastT;function toast(m){document.querySelectorAll('.toast').forEach(t=>t.remove());const t=document.createElement('div');t.className='toast';t.textContent=m;document.body.appendChild(t);clearTimeout(toastT);toastT=setTimeout(()=>t.remove(),2200)}
+let toastT;function toast(m){document.querySelectorAll('.toast').forEach(t=>t.remove());const t=document.createElement('div');t.className='toast';t.setAttribute('role','status');t.setAttribute('aria-live','polite');t.textContent=m;document.body.appendChild(t);clearTimeout(toastT);toastT=setTimeout(()=>t.remove(),2200)}
 const BALLOT={bigode:{t1:'Melhor Bigode',t2:'do Ano',art:'Artigo 12.º',prize:'recebe o Laço-Testemunho'},mascote:{t1:'Mascote',t2:'do Bigode',art:'Artigo 7.º',prize:'é a nova Mascote do Bigode, com convite vitalício'}};
 const proposer=p=>p.nominatedBy&&S.people[p.nominatedBy]?S.people[p.nominatedBy].name:null;
 const candSub=p=>p.role==='convidado'?[p.note?'«'+p.note+'»':'',proposer(p)?'proposto por '+proposer(p):''].filter(Boolean).join(' · '):p.role==='mascote'?'Mascote '+roman(p.mascotYear):(()=>{const w=S.history.filter(h=>h.bigode===p.id).map(h=>h.year);return w.length?'Melhor Bigode '+w.join(', '):'Membro desde '+p.since})();
@@ -884,6 +889,7 @@ async function saveHistForm(btn){
   const n=Object.assign({},old);
   const d=$('#hf-date').value,pl=$('#hf-place').value.trim(),bb=$('#hf-bigode').value;
   d?n.date=d:delete n.date;pl?n.place=pl:delete n.place;bb?n.bigode=bb:delete n.bigode;mascote?n.mascote=mascote:delete n.mascote;
+  n.updatedAt=Date.now();n.updatedBy=m.id;
   ch.history=S.history.filter(h=>h.year!==y).concat(n).sort((a,b)=>a.year-b.year);
   Object.entries(ch).forEach(([p,v])=>Store.set(p,v));
   if(UI.histPhoto!==undefined){
@@ -1268,6 +1274,38 @@ async function playReveal(k,replay,hist){
   finish();
 }
 
+/* ---------- Novidades: a dot on a tab when something new arrived there since you last looked ----------
+   Only things other people did count. Remembered per phone. */
+const SEEN_TABS='lmm-seen-tabs';
+function seenTabs(){try{return JSON.parse(localStorage.getItem(SEEN_TABS)||'null')}catch(e){return UI.seenTabsMem||null}}
+function saveSeenTabs(o){try{localStorage.setItem(SEEN_TABS,JSON.stringify(o))}catch(e){UI.seenTabsMem=o}}
+function latestNews(tab){
+  let t=0;const up=(v,by)=>{if(v&&by!==ME&&v>t)t=v};const y=S.edition.year,e=S.edition;
+  if(tab==='jantar'){
+    Object.values(S.notes||{}).forEach(n=>n.year===y&&up(n.at,n.by));
+    Object.values(S.files||{}).forEach(f=>f.kind!=='group'&&f.year===y&&up(f.at,f.by));
+    Object.values(S.media||{}).forEach(x=>x.year===y&&up(x.at,x.by));
+    up(e.updatedAt,e.updatedBy);
+  }else if(tab==='votar'){
+    Object.values(S.people||{}).forEach(p=>p.role==='convidado'&&up(p.at,p.nominatedBy));
+    ['mascote','bigode'].forEach(k=>{const b=S.ballots[k]||{};up(b.openedAt,b.openedBy);up(b.revealedAt,b.revealedBy)});
+  }else if(tab==='galeria'){
+    (S.history||[]).forEach(h=>{up(h.closedAt,h.closedBy);up(h.updatedAt,h.updatedBy)});
+    Object.values(S.files||{}).forEach(f=>f.kind==='group'&&up(f.at,f.by));
+  }
+  return t;
+}
+function newsTabs(current){
+  let seen=seenTabs();const now=Date.now();
+  if(!seen){seen={jantar:now,votar:now,galeria:now};saveSeenTabs(seen)}   // first visit: start clean
+  if(current&&['jantar','votar','galeria'].includes(current)&&latestNews(current)>=(seen[current]||0)){seen[current]=now;saveSeenTabs(seen)}
+  const out={};['jantar','votar','galeria'].forEach(k=>{out[k]=k!==current&&latestNews(k)>(seen[k]||0)});
+  // The number on the home-screen icon (where the phone allows it)
+  const n=Object.values(out).filter(Boolean).length;
+  try{if(navigator.setAppBadge){n?navigator.setAppBadge(n):navigator.clearAppBadge()}}catch(e){}
+  return out;
+}
+
 /* ---------- Aparência (light / dark / follow the phone) ---------- */
 function themePref(){try{const t=localStorage.getItem('lmm-theme');return t==='light'||t==='dark'?t:'system'}catch(e){return 'system'}}
 function setTheme(t){
@@ -1332,7 +1370,8 @@ function render(){
   if(m)$('#meBtn').innerHTML=m.photo?`<img src="${m.photo}" alt="">`:esc(ini(m.name).charAt(0));
   $('#meBtn').classList.toggle('on',!!UI.profileOpen);
   document.querySelector('.tabs').hidden=!m;
-  $('#tabs').innerHTML=m?TABS.filter(([k])=>k!=='comissao'||m.committee).map(([k,l])=>`<a href="#${k}" class="${r===k?'on':''}" ${r===k?'aria-current="page"':''}>${ICON[k]}${l}</a>`).join(''):'';
+  const news=m?newsTabs(r):{};
+  $('#tabs').innerHTML=m?TABS.filter(([k])=>k!=='comissao'||m.committee).map(([k,l])=>`<a href="#${k}" class="${r===k?'on':''}" ${r===k?'aria-current="page"':''} ${news[k]?`aria-label="${l.charAt(0)+l.slice(1).toLowerCase()}, com novidades"`:''}>${ICON[k]}${news[k]?'<span class="new" aria-hidden="true"></span>':''}${l}</a>`).join(''):'';
   const active=document.activeElement&&document.activeElement.id;
   const app=$('#app'),changed=UI.lastRoute!==(m?r:'who');UI.lastRoute=m?r:'who';
   app.innerHTML=!m?vWho():({jantar:vJantar,votar:vVotar,galeria:vGaleria,regras:vRegras,comissao:vComissao}[r])();
@@ -1448,8 +1487,8 @@ document.addEventListener('click',ev=>{
     case 'reason':{const t=$('#reason').value.trim();if(!t){toast('Escreva o motivo');return}Store.one('rsvp.'+m.id,{s:'nao',reason:t,j:'pendente'});toast('Justificação enviada');return}
     case 'pickcand':UI.pick[k]=id;ui();return;
     case 'vote':{const kk=k,pk=UI.pick[kk];if(!pk)return;Store.one(`ballots.${kk}.votes.${m.id}`,pk);delete UI.pick[kk];toast('Voto depositado');return}
-    case 'phase':UI.ctab='jantar';Store.one('edition.phase',v);if(v==='noite')toast('Registo de membros iniciado');return;
-    case 'saveed':Store.setMany({'edition.date':$('#f-date').value||S.edition.date,'edition.time':$('#f-time').value||S.edition.time,'edition.place':$('#f-place').value.trim(),'edition.city':$('#f-city').value.trim(),'edition.dress':$('#f-dress').value.trim(),'edition.deadline':$('#f-dead').value||S.edition.deadline});toast('Convocatória guardada');return;
+    case 'phase':UI.ctab='jantar';Store.setMany({'edition.phase':v,'edition.updatedAt':Date.now(),'edition.updatedBy':m.id});if(v==='noite')toast('Registo de membros iniciado');return;
+    case 'saveed':Store.setMany({'edition.date':$('#f-date').value||S.edition.date,'edition.time':$('#f-time').value||S.edition.time,'edition.place':$('#f-place').value.trim(),'edition.city':$('#f-city').value.trim(),'edition.dress':$('#f-dress').value.trim(),'edition.deadline':$('#f-dead').value||S.edition.deadline,'edition.updatedAt':Date.now(),'edition.updatedBy':m.id});toast('Convocatória guardada');return;
     case 'just':Store.one(`rsvp.${id}.j`,v);toast(v==='aceite'?'Justificação aceite':'Justificação recusada');return;
     case 'present':if(S.edition.phase!=='noite'){toast('Inicie a noite primeiro');return}Store.one('present.'+id,S.present[id]?undefined:true);return;
     case 'askendnight':UI.confirm='endnight';ui();return;
@@ -1461,17 +1500,17 @@ document.addEventListener('click',ev=>{
       const n=$('#nom-name').value.trim().replace(/\s+/g,' '),note=$('#nom-note').value.trim();if(!n){toast('Escreva um nome');return}
       if(b.cands.some(c=>S.people[c]&&S.people[c].name.toLowerCase()===n.toLowerCase())){toast(n+' já foi proposto');return}
       const nid='c'+Date.now().toString(36);
-      UI.propose=false;Store.setMany({['people.'+nid]:{name:n,note,role:'convidado',nominatedBy:m.id,since:S.edition.year,dinners:0},'ballots.mascote.cands':b.cands.concat(nid)});toast(n+' proposto');return}
+      UI.propose=false;Store.setMany({['people.'+nid]:{name:n,note,role:'convidado',nominatedBy:m.id,since:S.edition.year,dinners:0,at:Date.now()},'ballots.mascote.cands':b.cands.concat(nid)});toast(n+' proposto');return}
     case 'unnominate':{const p=S.people[id],b=S.ballots.mascote;if(!p||b.open||b.revealed)return;if(!(p.nominatedBy===m.id||m.committee)){toast('Só quem propôs ou a Comissão pode retirar');return}
       Store.setMany({'ballots.mascote.cands':b.cands.filter(x=>x!==id),['people.'+id]:undefined});toast('Proposta retirada');return}
     case 'allpresent':Store.one('ballots.bigode.cands',presentIds().filter(p=>S.people[p].role!=='convidado'));return;
     case 'open':{if(S.edition.phase!=='noite'){toast('Inicie a noite primeiro');return}
-      const ch={[`ballots.${k}.open`]:true};
+      const ch={[`ballots.${k}.open`]:true,[`ballots.${k}.openedAt`]:Date.now(),[`ballots.${k}.openedBy`]:m.id};
       if(k==='bigode'&&S.ballots.bigode.cands.length<2)ch['ballots.bigode.cands']=presentIds().filter(p=>S.people[p].role==='membro');
       if((ch['ballots.bigode.cands']||S.ballots[k].cands).length<2){toast(k==='mascote'?'São precisas 2 propostas':'Registe 2 membros presentes');return}
       Store.setMany(ch);toast('Urna aberta');return}
-    case 'reveal':Store.setMany({[`ballots.${k}.open`]:false,[`ballots.${k}.revealed`]:true});toast('Urna selada');return;
-    case 'tiebreak':{const b=S.ballots[k];Store.setMany({[`ballots.${k}`]:{cands:leaders(b),open:true,revealed:false,votes:{},round:(b.round||1)+1}});toast('Desempate aberto');return}
+    case 'reveal':Store.setMany({[`ballots.${k}.open`]:false,[`ballots.${k}.revealed`]:true,[`ballots.${k}.revealedAt`]:Date.now(),[`ballots.${k}.revealedBy`]:m.id});toast('Urna selada');return;
+    case 'tiebreak':{const b=S.ballots[k];Store.setMany({[`ballots.${k}`]:{cands:leaders(b),open:true,revealed:false,votes:{},round:(b.round||1)+1,openedAt:Date.now(),openedBy:m.id}});toast('Desempate aberto');return}
     case 'resetb':Store.one(`ballots.${k}`,{cands:S.ballots[k].cands,open:false,revealed:false,votes:{},round:1});return;
     case 'edit':UI.editing=id;UI.confirm=null;ui();return;
     case 'saveedit':{const n=$('#ed-name').value.trim();if(!n){toast('O nome não pode ficar vazio');return}UI.editing=null;const ch={[`people.${id}.name`]:n};const cb=$('#ed-com');if(cb&&m.admin&&!S.people[id].admin)ch[`people.${id}.committee`]=cb.checked;
@@ -1506,7 +1545,7 @@ document.addEventListener('click',ev=>{
       const results={mascote:{counts:mt,names:nm(Object.keys(mt))},bigode:{counts:bt,names:nm(Object.keys(bt))}};
       const proposed=S.ballots.mascote.cands.filter(c=>S.people[c]).map(c=>{const q=S.people[c];return {name:q.name,note:q.note||'',by:q.nominatedBy||null,votes:mt[c]||0,won:c===mw}});
       const inv=invited();
-      ch.history=S.history.concat({year:y,date:S.edition.date,bigode:bw,mascote:mw,proposed,results,closedAt:Date.now(),
+      ch.history=S.history.concat({year:y,date:S.edition.date,bigode:bw,mascote:mw,proposed,results,closedAt:Date.now(),closedBy:m.id,
         attended:presentIds(),absent:inv.filter(p=>status(p.id)==='nao'&&!S.present[p.id]).map(p=>p.id),
         silent:inv.filter(p=>(status(p.id)==='excluido'||status(p.id)==='pendente')&&!S.present[p.id]).map(p=>p.id)});
       S.ballots.mascote.cands.forEach(c=>{if(c!==mw&&S.people[c]&&S.people[c].role==='convidado')ch['people.'+c]=undefined});
