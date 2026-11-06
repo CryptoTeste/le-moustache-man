@@ -180,10 +180,22 @@ details.grp>.list{padding-bottom:6px}
 .notice.green b{color:var(--green)}
 .notice.brass b{color:var(--brass)}
 
-textarea,input[type=text],input[type=date],input[type=time],select{width:100%;background:var(--surface);border:1px solid var(--line-strong);border-radius:2px;padding:12px 14px;font-size:15px}
+/* Fields: never wider than their column. iPhone gives date/time fields and dropdowns their own minimum width,
+   and zooms the page on fields under 16px, so both are overridden here. */
+textarea,input[type=text],input[type=date],input[type=time],input[type=number],select{
+  display:block;width:100%;max-width:100%;min-width:0;box-sizing:border-box;margin:0;
+  -webkit-appearance:none;appearance:none;background-color:var(--surface);color:var(--ink);
+  border:1px solid var(--line-strong);border-radius:2px;padding:12px 14px;font-size:16px;line-height:1.3}
+input[type=date],input[type=time]{min-height:48px;text-align:left}
+input[type=date]::-webkit-date-and-time-value,input[type=time]::-webkit-date-and-time-value{text-align:left;margin:0}
+input[type=date]::-webkit-calendar-picker-indicator,input[type=time]::-webkit-calendar-picker-indicator{opacity:.6}
+select{padding-right:38px;background-repeat:no-repeat;background-position:right 14px center;background-size:12px;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 8'%3E%3Cpath d='M1 1.5l5 5 5-5' fill='none' stroke='%23998F7D' stroke-width='1.6'/%3E%3C/svg%3E")}
+input[type=checkbox]{-webkit-appearance:auto;appearance:auto;width:18px;height:18px;accent-color:var(--brass)}
 textarea{min-height:84px;resize:vertical}
-label.f{display:flex;flex-direction:column;gap:6px;font-size:10px;letter-spacing:.22em;color:var(--faint);text-transform:uppercase}
+label.f{display:flex;flex-direction:column;gap:6px;min-width:0;font-size:10px;letter-spacing:.22em;color:var(--faint);text-transform:uppercase}
 .grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.grid2>*{min-width:0}
 
 .seg{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));border:1px solid var(--line-strong)}
 .seg.three{grid-template-columns:repeat(3,minmax(0,1fr))}
@@ -977,7 +989,7 @@ function vComissao(){
       <div class="sec-row"><span class="h-serif" style="font-size:20px">${B.t1} ${B.t2}</span><span class="status"><span class="dot ${b.revealed?'wine':b.open?'on':''}"></span>${b.revealed?'Revelada':b.open?'Aberta':'Fechada'}</span></div>
       <div class="list">${b.cands.map(id=>`<div class="row">${avatar(P(id))}<div class="nm"><b>${esc(P(id).name)}</b>${k==='mascote'?`<small style="white-space:normal">${esc(candSub(P(id)))}</small>`:''}</div>${editable?`<button class="btn sm" data-a="rmcand" data-k="${k}" data-id="${id}">Retirar</button>`:''}</div>`).join('')||`<div class="empty">${k==='mascote'?'Ainda sem propostas dos membros.':'Sem candidatos.'}</div>`}</div>
       ${editable&&k==='bigode'?`<div class="btn-row"><button class="btn sm" data-a="allpresent">Todos os presentes</button>
-        <select id="add-${k}" aria-label="Escolher candidato" style="flex:1;min-width:150px;padding:8px 10px"><option value="">Escolher…</option>${pool.map(p=>`<option value="${p.id}">${esc(p.name)}</option>`).join('')}</select>
+        <select id="add-${k}" aria-label="Escolher candidato" style="flex:1 1 150px;min-width:0;padding:8px 34px 8px 10px;background-position:right 10px center"><option value="">Escolher…</option>${pool.map(p=>`<option value="${p.id}">${esc(p.name)}</option>`).join('')}</select>
         <button class="btn sm" data-a="addcand" data-k="${k}">Nomear</button></div>`:''}
       ${editable&&k==='mascote'?`<p class="note">Os membros propõem nomes no separador Votação. Ao abrir a urna, as propostas fecham. Sem prémio: o eleito torna-se Mascote do Bigode, com convite vitalício.</p>`:''}
       <div class="btn-row">
@@ -1025,17 +1037,17 @@ function vComissao(){
   sec.membros=`<section class="sec"><div class="sec-row"><span class="h-serif">Membros</span><span class="note">${members.length} membros · ${members.filter(p=>p.committee).length} na Comissão</span></div>
     <p class="note">${me().admin?'Como administrador, define quem faz parte da Comissão em «Editar».':'Só o administrador define quem faz parte da Comissão.'}</p>
     <div class="list">${members.map(p=>UI.editing===p.id?`<div class="row" style="flex-wrap:wrap">
-        ${avatar(p)}<input type="text" id="ed-name" value="${esc(p.name)}" aria-label="Nome" style="flex:1;min-width:150px;padding:8px 10px">
+        ${avatar(p)}<input type="text" id="ed-name" value="${esc(p.name)}" aria-label="Nome" style="flex:1 1 150px;min-width:0;padding:8px 10px">
         <label style="display:flex;gap:6px;align-items:center;font-size:13px;${me().admin&&!p.admin?'':'opacity:.5'}"><input type="checkbox" id="ed-com" ${p.committee?'checked':''} ${me().admin&&!p.admin?'':'disabled'}> Comissão</label>
         ${me().admin?'':'<p class="note" style="width:100%">Só o administrador define quem faz parte da Comissão.</p>'}
         <div style="width:100%">${photoControls(p)}</div>
         <div class="btn-row" style="width:100%"><button class="btn sm brass" data-a="saveedit" data-id="${p.id}">Guardar</button><button class="btn sm" data-a="cancel">Cancelar</button><button class="btn sm" data-a="askrm" data-id="${p.id}" ${p.id===ME||p.admin?'disabled':''}>Remover</button></div>
         ${confirmBox('rm-'+p.id,`Remover ${esc(p.name)} da Irmandade (Art. 5.º)?`,'Remover','rmok',`data-id="${p.id}"`)}</div>`
       :`<div class="row"><span class="tag brass" style="width:34px">${String(p.no||'').padStart(3,'0')}</span>${avatar(p)}<div class="nm"><b>${esc(p.name)}</b><small>${[p.admin?'Administrador':p.committee?'Comissão':'',p.strikes?p.strikes+(p.strikes>1?' faltas':' falta')+' sem resposta':''].filter(Boolean).join(' · ')||'Desde '+p.since}</small></div>${p.strikes>1?'<span class="tag wine">Reincidente</span>':''}${linkBtns(p)}<button class="btn sm" data-a="edit" data-id="${p.id}">Editar</button></div>${UI.showLink===p.id?showLink(p):''}`).join('')}</div>
-    <div class="btn-row"><input type="text" id="new-member" placeholder="Nome do novo membro" style="flex:1;min-width:150px;padding:10px 12px"><button class="btn sm brass" data-a="addmember">Admitir</button></div></section>`;
+    <div class="btn-row"><input type="text" id="new-member" placeholder="Nome do novo membro" style="flex:1 1 150px;min-width:0;padding:10px 12px"><button class="btn sm brass" data-a="addmember">Admitir</button></div></section>`;
   sec.mascotes=`<section class="sec"><div class="sec-row"><span class="h-serif">Mascotes</span><span class="note">convite vitalício · Art. 8.º</span></div>
     <div class="list">${all().filter(p=>p.role==='mascote').sort((a,b)=>(b.mascotYear||0)-(a.mascotYear||0)).map(p=>UI.editing===p.id?`<div class="row" style="flex-wrap:wrap">
-        ${avatar(p)}<input type="text" id="ed-name" value="${esc(p.name)}" aria-label="Nome" style="flex:1;min-width:150px;padding:8px 10px">
+        ${avatar(p)}<input type="text" id="ed-name" value="${esc(p.name)}" aria-label="Nome" style="flex:1 1 150px;min-width:0;padding:8px 10px">
         <label class="f" for="ed-year" style="width:110px">Eleito em<input type="number" id="ed-year" value="${p.mascotYear||''}" min="1990" max="${e.year}" style="padding:8px 10px"></label>
         <div style="width:100%">${photoControls(p)}</div>
         <div class="btn-row" style="width:100%"><button class="btn sm brass" data-a="saveedit" data-id="${p.id}">Guardar</button><button class="btn sm" data-a="cancel">Cancelar</button><button class="btn sm" data-a="askrm" data-id="${p.id}">Remover</button></div>
@@ -1052,11 +1064,11 @@ function vComissao(){
   sec.arquivo=`<section class="sec"><div class="sec-row"><span class="h-serif">Edições anteriores</span><span class="note">Livro de honra</span></div>
     <p class="note">Registe os jantares de antes da app: a data, o Melhor Bigode e a Mascote de cada ano.</p>
     <div class="list">${hist.map(h=>`<div class="row" style="flex-wrap:wrap;gap:8px;align-items:center">
-        <span class="year">${h.year}</span><input type="date" id="hd-${h.year}" value="${h.date||''}" aria-label="Data do jantar de ${h.year}" style="flex:1;min-width:140px;padding:8px 10px">
-        <select id="hb-${h.year}" aria-label="Melhor Bigode ${h.year}" style="flex:1 1 45%;min-width:140px;padding:8px 10px">${mopts(h.bigode,memList,'Melhor Bigode')}</select>
-        <select id="hm-${h.year}" aria-label="Mascote ${h.year}" style="flex:1 1 45%;min-width:140px;padding:8px 10px">${mopts(h.mascote,masList,'Mascote')}</select>
+        <span class="year">${h.year}</span><input type="date" id="hd-${h.year}" value="${h.date||''}" aria-label="Data do jantar de ${h.year}" style="flex:1 1 140px;min-width:0;padding:8px 10px">
+        <select id="hb-${h.year}" aria-label="Melhor Bigode ${h.year}" style="flex:1 1 45%;min-width:0;padding:8px 34px 8px 10px;background-position:right 10px center">${mopts(h.bigode,memList,'Melhor Bigode')}</select>
+        <select id="hm-${h.year}" aria-label="Mascote ${h.year}" style="flex:1 1 45%;min-width:0;padding:8px 34px 8px 10px;background-position:right 10px center">${mopts(h.mascote,masList,'Mascote')}</select>
         <div class="btn-row" style="width:100%"><button class="btn sm brass" data-a="savehist" data-v="${h.year}">Guardar ${h.year}</button>${h.closedAt?'<span class="note">Registada pela app</span>':`<button class="txt-btn" data-a="rmhist" data-v="${h.year}">Apagar</button>`}</div></div>`).join('')||'<div class="empty">Ainda sem edições registadas.</div>'}</div>
-    <div class="btn-row"><input type="number" id="new-hist-year" placeholder="Ano, ex.: 2024" min="1990" max="${e.year-1}" aria-label="Ano" style="flex:1;min-width:120px;padding:10px 12px"><button class="btn sm brass" data-a="addhist">Adicionar ano</button></div>
+    <div class="btn-row"><input type="number" id="new-hist-year" placeholder="Ano, ex.: 2024" min="1990" max="${e.year-1}" aria-label="Ano" style="flex:1 1 120px;min-width:0;padding:10px 12px"><button class="btn sm brass" data-a="addhist">Adicionar ano</button></div>
     <p class="note">Primeiro adicione as mascotes antigas (acima), para as poder escolher aqui.</p></section>`;
   sec.close=`<section class="sec"><span class="h-serif">Encerrar edição ${roman(e.year)}</span>
     <p class="note">Passa os vencedores para o Livro de honra, dá o estatuto de mascote ao eleito, conta o jantar a quem esteve presente, regista uma falta a quem não respondeu e prepara a convocatória de ${e.year+1}.</p>
