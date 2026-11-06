@@ -10,23 +10,50 @@
 <title>Le Moustache Man</title>
 <meta name="apple-mobile-web-app-title" content="Le Moustache Man">
 <meta name="application-name" content="Le Moustache Man">
-<meta name="theme-color" content="#0E0D0B">
+<meta name="theme-color" content="#0E0D0B" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" content="#F4F1EA" media="(prefers-color-scheme: light)">
+<script>/* Apply the member's chosen look before anything is drawn (no flash) */
+(function(){try{var t=localStorage.getItem('lmm-theme');if(t==='light'||t==='dark'){document.documentElement.setAttribute('data-theme',t);
+document.querySelectorAll('meta[name="theme-color"]').forEach(function(m){m.setAttribute('content',t==='light'?'#F4F1EA':'#0E0D0B')})}}catch(e){}})();</script>
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500;1,600&family=Manrope:wght@400;500;600;700&display=swap">
 <style>
-/* Layout: single-column phone app (max 520px), quiet header, fixed bottom tab bar. One deliberate dark look: a gentlemen's club ledger in brass and oxblood. */
-:root{
+/* Layout: single-column phone app (max 520px), quiet header, fixed bottom tab bar.
+   Two looks of the same club: dark (brass on near-black, the default) and light (ink and brass on paper).
+   The phone's setting decides, unless the member picks one in their profile (data-theme on <html>).
+   .force-dark keeps the reveal ceremony dark in both. */
+:root,.force-dark{
   color-scheme:dark;
-  --bg:#0E0D0B; --surface:#14120E; --surface-2:#1C1912; --line:#2A261F; --line-soft:#221F1A; --line-strong:#3A352C;
+  --bg:#0E0D0B; --surface:#14120E; --surface-2:#1C1912; --panel:#17150F; --line:#2A261F; --line-soft:#221F1A; --line-strong:#3A352C;
   --ink:#ECE4D3; --muted:#A39A88; --faint:#8C8473; --dim:#5E574A;
   --brass:#C9A45C; --brass-hi:#E2C27F; --on-brass:#14120E;
-  --wine:#7a1b2a; --wine-line:#9A3242; --wine-ink:#D07A84; --wine-soft:#E4C9CC;
-  --green:#7FB08E; --green-deep:#1F3A2C; --green-line:#2E5440;
+  --brass-soft:rgba(201,164,92,.3); --brass-mid:rgba(201,164,92,.45); --mark:rgba(201,164,92,.25);
+  --wine:#7a1b2a; --wine-line:#9A3242; --wine-ink:#D07A84; --wine-soft:#E4C9CC; --wine-bg:#1D1012;
+  --green:#7FB08E; --green-deep:#1F3A2C; --green-line:#2E5440; --green-bg:#111A14;
+  --shadow:rgba(0,0,0,.5);
   --f-serif:"Cormorant Garamond",Georgia,"Times New Roman",serif;
   --f-sans:"Manrope",system-ui,-apple-system,"Segoe UI",sans-serif;
 }
+@media (prefers-color-scheme:light){:root:not([data-theme="dark"]){
+  color-scheme:light;
+  --bg:#F4F1EA; --surface:#FFFFFF; --surface-2:#ECE7DC; --panel:#FBF9F4; --line:#DCD4C4; --line-soft:#E7E1D5; --line-strong:#C7BDA9;
+  --ink:#1C1A15; --muted:#57503F; --faint:#6E6553; --dim:#B5AB97;
+  --brass:#7A5C1F; --brass-hi:#9C7A33; --on-brass:#FFFFFF;
+  --brass-soft:rgba(122,92,31,.3); --brass-mid:rgba(122,92,31,.45); --mark:rgba(122,92,31,.18);
+  --wine:#7a1b2a; --wine-line:#A84050; --wine-ink:#9B2436; --wine-soft:#E4C9CC; --wine-bg:#F7E8EA;
+  --green:#2E6B45; --green-deep:#1F3A2C; --green-line:#7FA98C; --green-bg:#E8F1EA;
+  --shadow:rgba(40,30,10,.18)}}
+:root[data-theme="light"]{
+  color-scheme:light;
+  --bg:#F4F1EA; --surface:#FFFFFF; --surface-2:#ECE7DC; --panel:#FBF9F4; --line:#DCD4C4; --line-soft:#E7E1D5; --line-strong:#C7BDA9;
+  --ink:#1C1A15; --muted:#57503F; --faint:#6E6553; --dim:#B5AB97;
+  --brass:#7A5C1F; --brass-hi:#9C7A33; --on-brass:#FFFFFF;
+  --brass-soft:rgba(122,92,31,.3); --brass-mid:rgba(122,92,31,.45); --mark:rgba(122,92,31,.18);
+  --wine:#7a1b2a; --wine-line:#A84050; --wine-ink:#9B2436; --wine-soft:#E4C9CC; --wine-bg:#F7E8EA;
+  --green:#2E6B45; --green-deep:#1F3A2C; --green-line:#7FA98C; --green-bg:#E8F1EA;
+  --shadow:rgba(40,30,10,.18)}
 *{box-sizing:border-box}
 /* The serif's default figures are old-style (1 looks like I, 0 like o). The font shorthand resets numeric settings, so force lining figures everywhere. */
 *,*::before,*::after{font-feature-settings:"lnum" 1 !important}
@@ -93,7 +120,7 @@ p{margin:0}
 .btn-row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
 
 .panel{background:var(--surface);border:1px solid var(--line);padding:16px 18px;display:flex;flex-direction:column;gap:12px}
-.stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));text-align:center;background:#17150F;border:1px solid var(--line);padding:16px 8px}
+.stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));text-align:center;background:var(--panel);border:1px solid var(--line);padding:16px 8px}
 .stats > div + div{border-left:1px solid var(--line)}
 .stats b{display:block;font:500 34px/1 var(--f-serif);font-variant-numeric:lining-nums tabular-nums}
 .stats span{display:block;font-size:9px;letter-spacing:.24em;color:var(--faint);margin-top:6px}
@@ -146,9 +173,9 @@ details.grp>.list{padding-bottom:6px}
 
 .notice{border:1px solid var(--line);background:var(--surface);padding:14px 16px;font-size:14px;line-height:1.5;display:flex;flex-direction:column;gap:4px}
 .notice b{font-weight:600}
-.notice.wine{border-color:var(--wine-line);background:#1D1012}
+.notice.wine{border-color:var(--wine-line);background:var(--wine-bg)}
 .notice.wine b{color:var(--wine-ink)}
-.notice.green{border-color:var(--green-line);background:#111A14}
+.notice.green{border-color:var(--green-line);background:var(--green-bg)}
 .notice.green b{color:var(--green)}
 .notice.brass b{color:var(--brass)}
 
@@ -222,8 +249,8 @@ label.f{display:flex;flex-direction:column;gap:6px;font-size:10px;letter-spacing
 .ballot{display:flex;flex-direction:column;gap:16px;padding-top:24px;border-top:1px solid var(--line)}
 
 /* invitation card: the dinner's essentials at a glance */
-.invite{display:grid;grid-template-columns:auto minmax(0,1fr);background:#17150F;border:1px solid var(--brass);outline:1px solid rgba(201,164,92,.3);outline-offset:4px;margin:4px}
-.inv-date{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;padding:16px 18px;border-right:1px solid rgba(201,164,92,.45);min-width:96px;text-align:center}
+.invite{display:grid;grid-template-columns:auto minmax(0,1fr);background:var(--panel);border:1px solid var(--brass);outline:1px solid var(--brass-soft);outline-offset:4px;margin:4px}
+.inv-date{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;padding:16px 18px;border-right:1px solid var(--brass-mid);min-width:96px;text-align:center}
 .inv-date .wd,.inv-date .mo{font-size:10px;letter-spacing:.3em;color:var(--muted)}
 .inv-date b{font:500 60px/.85 var(--f-serif);color:var(--brass);font-variant-numeric:lining-nums}
 .inv-date .hr{font:italic 500 18px var(--f-serif);color:var(--ink);margin-top:4px}
@@ -253,7 +280,7 @@ label.f{display:flex;flex-direction:column;gap:6px;font-size:10px;letter-spacing
 .add-link svg{width:14px;height:14px}
 
 /* honour card / pass */
-.pass{border-radius:14px;padding:20px;display:flex;flex-direction:column;gap:22px;position:relative;overflow:hidden;box-shadow:0 18px 40px rgba(0,0,0,.5);color:#fff}
+.pass{border-radius:14px;padding:20px;display:flex;flex-direction:column;gap:22px;position:relative;overflow:hidden;box-shadow:0 18px 40px var(--shadow);color:#fff}
 .pass.membro{background:#1F1C17;border:1px solid #4A4232}
 .pass.mascote{background:var(--green-deep);border:1px solid var(--green-line)}
 .pass.vencedor{background:var(--wine);border:1px solid var(--wine-line)}
@@ -279,7 +306,7 @@ details.ch>summary h2{font:500 22px/1.15 var(--f-serif);flex:1}
 .art .n{font:600 13px var(--f-sans);color:var(--brass);width:34px;flex:none;padding-top:2px}
 .art h3{font-size:15px;font-weight:600;margin-bottom:4px}
 .art p{font-size:14px;color:var(--muted);max-width:60ch}
-mark{background:rgba(201,164,92,.25);color:var(--ink)}
+mark{background:var(--mark);color:var(--ink)}
 .protocol{counter-reset:p;display:flex;flex-direction:column}
 .protocol div{counter-increment:p;display:flex;gap:14px;padding:12px 0;border-top:1px solid var(--line-soft);font-size:14px}
 .protocol div::before{content:counter(p,upper-roman);font:500 16px var(--f-serif);color:var(--brass);width:30px;flex:none}
@@ -1104,7 +1131,7 @@ async function playReveal(k,replay,hist){
   const max=Math.max(1,...rows.map(id=>c[id])),total=Object.values(c).reduce((a,x)=>a+x,0);
   const seenKey=hist?yearKey(k,hist.year):revealKey(k);
   const reduce=window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches;
-  const el=document.createElement('div');el.className='ceremony';el.setAttribute('role','dialog');el.setAttribute('aria-modal','true');el.setAttribute('aria-label','Revelação: '+B.t1+' '+B.t2);
+  const el=document.createElement('div');el.className='ceremony force-dark';el.setAttribute('role','dialog');el.setAttribute('aria-modal','true');el.setAttribute('aria-label','Revelação: '+B.t1+' '+B.t2);
   const barHTML=id=>`<div class="cer-bar" data-id="${id}"><div class="lab"><span>${esc(nameOf(id))}</span><b>0</b></div><div class="track"><div class="fill"></div></div></div>`;
   el.innerHTML=`<canvas class="confetti" aria-hidden="true"></canvas><button class="txt-btn cer-skip" data-cer="skip">Saltar</button>
     <div class="cer-in">
@@ -1142,6 +1169,15 @@ async function playReveal(k,replay,hist){
   if(!skipped&&!reduce){await wait(700);bars.classList.add('dim');
     stage.innerHTML=`<div class="cer-drum">${tie?'Temos um':'E o vencedor é'}<i>.</i><i>.</i><i>.</i></div>`;await wait(1900)}
   finish();
+}
+
+/* ---------- Aparência (light / dark / follow the phone) ---------- */
+function themePref(){try{const t=localStorage.getItem('lmm-theme');return t==='light'||t==='dark'?t:'system'}catch(e){return 'system'}}
+function setTheme(t){
+  try{t==='system'?localStorage.removeItem('lmm-theme'):localStorage.setItem('lmm-theme',t)}catch(e){}
+  const root=document.documentElement;t==='system'?root.removeAttribute('data-theme'):root.setAttribute('data-theme',t);
+  const dark=t==='dark'||(t==='system'&&!(window.matchMedia&&matchMedia('(prefers-color-scheme: light)').matches));
+  document.querySelectorAll('meta[name="theme-color"]').forEach(m=>m.setAttribute('content',t==='system'?(m.media.includes('light')?'#F4F1EA':'#0E0D0B'):(dark?'#0E0D0B':'#F4F1EA')));
 }
 
 /* ---------- Perfil ---------- */
@@ -1182,6 +1218,10 @@ function vPerfil(){
       :'<p class="note">Ainda sem títulos. O Laço-Testemunho está à espera.</p>'}</section>
 
   <section class="sec"><span class="h-serif">Presenças</span><div class="list">${rows.join('')}</div></section>
+
+  <section class="sec"><div class="sec-row"><span class="h-serif">Aparência</span><span class="note">só neste telemóvel</span></div>
+    <div class="seg three" role="radiogroup" aria-label="Aparência">${[['system','Sistema'],['light','Claro'],['dark','Escuro']].map(([k,l])=>`<button role="radio" aria-checked="${themePref()===k}" class="${themePref()===k?'on':''}" data-a="theme" data-v="${k}">${l}</button>`).join('')}</div>
+    <p class="note">«Sistema» segue o modo claro ou escuro do telemóvel.</p></section>
 
   <section class="sec" style="gap:10px">
     ${ONLINE?'':`<details class="grp"><summary>Ver como outro membro (teste)</summary><div class="who" style="padding-bottom:14px">${invited().map(p=>`<button data-a="pick" data-id="${p.id}">${avatar(p)}<span>${esc(p.name)}</span></button>`).join('')}</div></details>`}
@@ -1246,6 +1286,7 @@ document.addEventListener('click',ev=>{
   switch(a){
     case 'viewfile':viewFile(id);return;
     case 'openarchive':case 'openalbum':viewAlbum(Number(v));return;
+    case 'theme':setTheme(v);ui();toast(v==='system'?'Segue o telemóvel':v==='light'?'Modo claro':'Modo escuro');return;
     case 'replay':if(!ceremonyOn)playReveal(k,true);return;
     case 'ctab':UI.ctab=v;UI.confirm=null;UI.editing=null;ui();{const s=document.querySelector('.seg.four');if(s)s.scrollIntoView({block:'start'});window.scrollBy(0,-70)}return;
     case 'rmphoto':{if(!(m.id===id||m.committee)){toast('Só o próprio ou a Comissão');return}Store.one(`people.${id}.photo`,undefined);if($('#layer').innerHTML&&id===ME)sheet();toast('Fotografia removida');return}
