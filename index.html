@@ -16,7 +16,7 @@
 (function(){try{var t=localStorage.getItem('lmm-theme');if(t==='light'||t==='dark'){document.documentElement.setAttribute('data-theme',t);
 document.querySelectorAll('meta[name="theme-color"]').forEach(function(m){m.setAttribute('content',t==='light'?'#F4F1EA':'#0E0D0B')})}}catch(e){}})();</script>
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500;1,600&family=Manrope:wght@400;500;600;700&display=swap">
 <style>
@@ -58,6 +58,7 @@ document.querySelectorAll('meta[name="theme-color"]').forEach(function(m){m.setA
 /* The serif's default figures are old-style (1 looks like I, 0 like o). The font shorthand resets numeric settings, so force lining figures everywhere. */
 *,*::before,*::after{font-feature-settings:"lnum" 1 !important}
 html,body{min-height:100%}
+html{background:var(--bg)}
 body{background:var(--bg);color:var(--ink);font:15px/1.5 var(--f-sans);-webkit-font-smoothing:antialiased;font-variant-numeric:lining-nums}
 button,input,textarea,select{font:inherit;color:inherit}
 button{cursor:pointer;-webkit-tap-highlight-color:transparent}
