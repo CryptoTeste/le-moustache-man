@@ -141,7 +141,10 @@ p{margin:0}
 .portrait{width:92px;height:92px;border-radius:50%;padding:3px;border:1px solid var(--brass);flex:none}
 .portrait.green{border-color:var(--green)}
 .portrait .in{width:100%;height:100%;border-radius:50%;overflow:hidden;background:var(--surface-2);display:grid;place-items:center;font:500 36px var(--f-serif);color:var(--muted)}
-.hon-feat{background:var(--surface);border:1px solid var(--line);padding:20px 16px 22px;display:flex;flex-direction:column;gap:18px}
+.group-photo{display:block;width:100%;max-width:100%;aspect-ratio:3/2;object-fit:cover;border:1px solid var(--line);background:var(--surface-2)}
+.hon-feat .group-photo{margin:-20px -16px 0;width:calc(100% + 32px);max-width:none;border:0;border-bottom:1px solid var(--line)}
+.photo-btn{padding:0;border:0;background:none;display:block;width:100%;cursor:zoom-in}
+.hon-feat{overflow:hidden;background:var(--surface);border:1px solid var(--line);padding:20px 16px 22px;display:flex;flex-direction:column;gap:18px}
 .hon-date{display:flex;align-items:baseline;justify-content:space-between;gap:10px;border-bottom:1px solid var(--line);padding-bottom:12px}
 .hon-date b{font:500 34px/1 var(--f-serif);color:var(--brass)}
 .hon-date span{font-size:11px;letter-spacing:.14em;color:var(--muted);text-transform:uppercase;text-align:right}
@@ -725,7 +728,8 @@ function vJantar(){
 const fmtSize=b=>b>1048576?(b/1048576).toFixed(1)+' MB':Math.max(1,Math.round(b/1024))+' KB';
 const fmtAgo=t=>dm(new Date(t));
 function edNotes(){return Object.entries(S.notes||{}).filter(([,n])=>n.year===S.edition.year).sort((a,b)=>b[1].at-a[1].at)}
-function edFiles(){return Object.entries(S.files||{}).filter(([,f])=>f.year===S.edition.year).sort((a,b)=>b[1].at-a[1].at)}
+function edFiles(){return Object.entries(S.files||{}).filter(([,f])=>f.year===S.edition.year&&f.kind!=='group').sort((a,b)=>b[1].at-a[1].at)}
+function groupPhoto(y){const e=Object.entries(S.files||{}).find(([,f])=>f.kind==='group'&&f.year===y);return e?Object.assign({id:e[0]},e[1]):null}
 function boardHTML(manage){
   const ns=edNotes(),fs=edFiles();
   if(!manage&&!ns.length&&!fs.length)return '';
@@ -799,7 +803,11 @@ function viewAlbum(y){
   const sheetEl=document.querySelector('.sheet');const keep=sheetEl?sheetEl.scrollTop:0;
   $('#layer').innerHTML=`<div class="scrim" data-a="closesheet"><div class="sheet" role="dialog" aria-label="Jantar ${y}">
     <div class="sec-row"><div><span class="eyebrow">Arquivo · ${y}</span><div class="title-sm">Jantar <em>${roman(y)}</em></div></div><button class="btn sm" data-a="closesheet">Fechar</button></div>
+    ${groupPhoto(y)?`<figure style="margin:0;display:flex;flex-direction:column;gap:8px"><img class="group-photo" style="aspect-ratio:auto;max-height:60vh" src="${groupPhoto(y).data}" alt="Fotografia de grupo do jantar ${y}"><figcaption class="note">A fotografia da Irmandade${h&&h.place?' · '+esc(h.place):''}</figcaption></figure>`:''}
+    ${me()&&me().committee&&h?`<button class="btn sm" data-a="histform" data-v="${y}" style="align-self:flex-start">Editar esta edição</button>`:''}
     ${h?`<div class="ledger">
+      ${h.date?`<div><span class="k">QUANDO</span><span class="v">${esc(fmtLong(h.date))} ${h.year}</span></div>`:''}
+      ${h.place?`<div><span class="k">ONDE</span><span class="v">${esc(h.place)}</span></div>`:''}
       <div><span class="k">BIGODE</span><span class="v">${nm(h.bigode)}${h.prize?`<small>«${esc(h.prize)}»</small>`:''}</span></div>
       <div><span class="k">MASCOTE</span><span class="v">${nm(h.mascote)}</span></div></div>`:''}
     ${props.length?`<section class="sec"><div class="sec-row"><span class="h-serif">Propostas de mascote</span><span class="note">${props.length}</span></div>
@@ -836,6 +844,54 @@ async function addMedia(files){
   }
   render();
   toast(ok?(ok===1?'1 registo adicionado':ok+' registos adicionados')+(skip?` · ${skip} não cabem no modo de teste`:''):'Não foi possível adicionar');
+}
+
+/* ---------- Edição anterior: one form for year, date, place, winners and the group photo ---------- */
+function histForm(y){
+  const h=y?S.history.find(x=>x.year===y):null,gp=y?groupPhoto(y):null;
+  UI.histPhoto=undefined;UI.histYear=y||null;
+  const mem=all().filter(p=>p.role==='membro').sort((a,b)=>a.name.localeCompare(b.name,'pt'));
+  const mas=all().filter(p=>p.role==='mascote').sort((a,b)=>a.name.localeCompare(b.name,'pt'));
+  const opt=(list,sel)=>list.map(p=>`<option value="${p.id}" ${p.id===sel?'selected':''}>${esc(p.name)}</option>`).join('');
+  $('#layer').innerHTML=`<div class="scrim" data-a="closesheet"><div class="sheet" role="dialog" aria-modal="true" aria-label="${h?'Editar a edição '+y:'Nova edição anterior'}">
+    <div class="grab" aria-hidden="true"></div>
+    <div class="sec-row"><div><span class="eyebrow">Livro de honra</span><div class="title-sm">${h?'Jantar <em>'+roman(y)+'</em>':'Edição <em>anterior</em>'}</div></div><button class="btn sm" data-a="closesheet">Fechar</button></div>
+    <div class="grid2"><label class="f" for="hf-year">Ano<input type="number" id="hf-year" inputmode="numeric" value="${y||''}" placeholder="2024" min="1990" max="${S.edition.year-1}" ${h?'disabled':''}></label>
+      <label class="f" for="hf-date">Data<input type="date" id="hf-date" value="${h&&h.date||''}"></label></div>
+    <label class="f" for="hf-place">Local<input type="text" id="hf-place" maxlength="80" value="${esc(h&&h.place||'')}" placeholder="Ex.: Tasca do Largo, Óbidos"></label>
+    <label class="f" for="hf-bigode">Melhor Bigode<select id="hf-bigode"><option value="">— Por definir —</option>${opt(mem,h&&h.bigode)}</select></label>
+    <label class="f" for="hf-mascote">Mascote<select id="hf-mascote"><option value="">— Sem mascote —</option>${opt(mas,h&&h.mascote)}<option value="__new">+ Nova mascote…</option></select></label>
+    <label class="f" for="hf-newm" id="hf-newm-wrap" hidden>Nome da nova mascote<input type="text" id="hf-newm" maxlength="60" placeholder="Ex.: Sr. Joaquim do talho"></label>
+    <div class="sec" style="gap:10px"><span class="sub-label">Fotografia de grupo</span>
+      <div id="hf-preview">${gp?`<img class="group-photo" src="${gp.data}" alt="">`:'<p class="note">A fotografia tradicional da Irmandade nesse ano.</p>'}</div>
+      <div class="btn-row"><label class="btn sm" for="hf-photo" style="display:inline-flex;align-items:center;cursor:pointer">${gp?'Trocar fotografia':'Escolher fotografia'}</label><input type="file" id="hf-photo" accept="image/*" hidden>
+        ${gp?`<button class="btn sm" data-a="hfnophoto">Remover</button>`:''}</div></div>
+    <div class="btns"><button class="btn brass" data-a="savehistform">Guardar</button><button class="btn" data-a="closesheet">Cancelar</button></div>
+    ${h&&!h.closedAt?`<button class="txt-btn" data-a="rmhist" data-v="${y}" style="align-self:center">Apagar esta edição</button>`:''}
+  </div></div>`;
+  attachDrag($('#layer .sheet'),()=>closeLayer());
+}
+async function saveHistForm(btn){
+  const m=me(),editing=UI.histYear,y=editing||Number($('#hf-year').value);
+  if(!y||y<1990||y>=S.edition.year){toast('Ano inválido');return}
+  if(!editing&&S.history.some(h=>h.year===y)){toast(y+' já existe: abra-a para editar');return}
+  btn.disabled=true;
+  const ch={};let mascote=$('#hf-mascote').value;
+  if(mascote==='__new'){const n=$('#hf-newm').value.trim();if(!n){toast('Escreva o nome da nova mascote');btn.disabled=false;return}
+    mascote='g'+Date.now().toString(36);ch['people.'+mascote]={name:n,role:'mascote',since:y,dinners:0,mascotYear:y};if(ONLINE)Remote.addKey(mascote).catch(()=>{})}
+  else if(mascote&&S.people[mascote]&&!S.people[mascote].mascotYear)ch[`people.${mascote}.mascotYear`]=y;
+  const old=S.history.find(h=>h.year===y)||{year:y,manual:true};
+  const n=Object.assign({},old);
+  const d=$('#hf-date').value,pl=$('#hf-place').value.trim(),bb=$('#hf-bigode').value;
+  d?n.date=d:delete n.date;pl?n.place=pl:delete n.place;bb?n.bigode=bb:delete n.bigode;mascote?n.mascote=mascote:delete n.mascote;
+  ch.history=S.history.filter(h=>h.year!==y).concat(n).sort((a,b)=>a.year-b.year);
+  Object.entries(ch).forEach(([p,v])=>Store.set(p,v));
+  if(UI.histPhoto!==undefined){
+    const gp=groupPhoto(y);if(gp)Store.set('files.'+gp.id,undefined);
+    if(UI.histPhoto){const fid='gp'+y+Date.now().toString(36);Store.set('files.'+fid,{kind:'group',year:y,name:'Grupo '+y+'.jpg',type:'image/jpeg',size:UI.histPhoto.length,data:UI.histPhoto,by:m.id,at:Date.now()})}
+  }
+  const ok=Store.persist();
+  closeLayer();render();toast(ok?'Edição '+y+' guardada':'Guardada, mas a fotografia é demasiado grande');
 }
 
 /* ---------- Votação ---------- */
@@ -899,19 +955,20 @@ function vGaleria(){
   const featDate=h=>h.date?cap(D(h.date).toLocaleDateString('pt-PT',{weekday:'long'}))+', '+fmtShort(h.date):'';
   const honour=!feat?'<div class="empty">Ainda sem registos.</div>':`
     <article class="hon-feat">
-      <div class="hon-date"><b>${feat.year}</b><span>${featDate(feat)}</span></div>
+      ${groupPhoto(feat.year)?`<button class="photo-btn" data-a="openarchive" data-v="${feat.year}" aria-label="Abrir o jantar ${feat.year}"><img class="group-photo" src="${groupPhoto(feat.year).data}" alt="Fotografia de grupo do jantar ${feat.year}"></button>`:''}
+      <div class="hon-date"><b>${feat.year}</b><span>${featDate(feat)}${feat.place?`<br>${esc(feat.place)}`:''}</span></div>
       <div class="hon-pair">
         <div class="hon-p">${portrait(P(feat.bigode))}<span class="tag brass">Melhor Bigode</span><b>${nameOf(feat.bigode)}</b>${feat.prize?`<small>«${esc(feat.prize)}»</small>`:''}</div>
         <div class="hon-p">${portrait(P(feat.mascote),'green')}<span class="tag green">Mascote</span><b>${nameOf(feat.mascote)}</b></div>
       </div></article>
-    ${older.length?`<div class="list">${older.map(h=>`<div class="hon-row"><div class="hy"><b>${h.year}</b><small>${h.date?fmtShort(h.date):''}</small></div>${hp(h.bigode,'Bigode')}${hp(h.mascote,'Mascote')}</div>`).join('')}</div>`:''}`;
+    ${older.length?`<div class="list">${older.map(h=>`<button class="hon-row" data-a="openarchive" data-v="${h.year}" style="background:none;border-left:0;border-right:0;border-bottom:0;width:100%;text-align:left"><div class="hy"><b>${h.year}</b><small>${h.date?fmtShort(h.date):''}</small></div>${hp(h.bigode,'Bigode')}${hp(h.mascote,'Mascote')}</button>`).join('')}</div>`:''}`;
   return `
   <div class="head"><span class="eyebrow">Galeria da Irmandade</span><h1 class="title">Os <em>Bigodes</em></h1></div>
   ${cp?`<div class="pass vencedor"><span class="ghost">${STACHE}</span>
     <div class="top-row"><span class="lbl">Laço-Testemunho</span><span class="no">${cp.no?'Nº '+String(cp.no).padStart(3,'0'):''}</span></div>
     <div style="display:flex;align-items:center;gap:14px">${passPhoto(cp)}<div><div class="name">${esc(cp.name)}</div><div class="sub">Melhor Bigode ${cur.year}${cur.prize?' · «'+esc(cur.prize)+'»':''}</div></div></div>
     <div class="meta"><div><div>DESDE</div><div>${cp.since}</div></div><div><div>JANTARES</div><div>${cp.dinners}</div></div><div><div>ENTREGA EM</div><div>${roman(cur.year+1)}</div></div></div></div>`:''}
-  <section class="sec"><div class="sec-row"><span class="h-serif">Livro de honra</span><span class="note">Art. 14.º</span></div>${honour}</section>
+  <section class="sec"><div class="sec-row"><span class="h-serif">Livro de honra</span>${me()&&me().committee?`<button class="add-link" data-a="histform" style="background:none;border:0"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>Edição anterior</button>`:'<span class="note">Art. 14.º</span>'}</div>${honour}</section>
   ${(()=>{const ys=[...new Set(S.history.map(h=>h.year).concat(Object.values(S.media||{}).map(x=>x.year)))].sort((a,b)=>b-a);
     return `<section class="sec"><div class="sec-row"><span class="h-serif">Arquivo dos jantares</span><span class="note">fotografias e propostas</span></div>
     <div class="list">${ys.map(y=>{const ms=yearMedia(y),h=S.history.find(x=>x.year===y),np=h&&h.proposed?h.proposed.length:0;
@@ -919,7 +976,7 @@ function vGaleria(){
       return `<button class="row" data-a="openarchive" data-v="${y}" style="background:none;border-left:0;border-right:0;border-bottom:0;text-align:left;width:100%">
       <span style="font:500 20px var(--f-serif);color:var(--brass);width:52px;flex:none">${y}</span>
       <span class="nm"><b>Jantar ${roman(y)}</b><small>${bits}</small></span>
-      <span style="display:flex;gap:3px">${ms.filter(([,x])=>x.type.startsWith('image/')).slice(0,3).map(([,x])=>`<img src="${x.data}" alt="" style="width:40px;height:40px;object-fit:cover">`).join('')}</span>
+      <span style="display:flex;gap:3px">${(groupPhoto(y)?[groupPhoto(y).data]:[]).concat(ms.filter(([,x])=>x.type.startsWith('image/')).map(([,x])=>x.data)).slice(0,3).map(d=>`<img src="${d}" alt="" style="width:40px;height:40px;object-fit:cover">`).join('')}</span>
       <span style="color:var(--brass);font:20px var(--f-serif)">›</span></button>`}).join('')}</div></section>`})()}
   ${ONLINE?'':'<p class="demo"><span class="dot brass"></span>Nomes e anos de exemplo. A Comissão substitui pelos verdadeiros.</p>'}`;
 }
@@ -1057,19 +1114,13 @@ function vComissao(){
       <label class="f" for="new-mascot-year">Eleito em<input type="number" id="new-mascot-year" value="${e.year-1}" min="1990" max="${e.year}"></label></div>
     <button class="btn sm brass" data-a="addmascot" style="align-self:flex-start">Adicionar mascote</button>
     <p class="note">Para as mascotes de anos anteriores. Ficam com convite vitalício e aparecem no Livro de honra no ano em que foram eleitas. Não precisam de entrar na app, mas também podem receber um link.</p></section>`;
-  const mopts=(sel,list,lbl)=>`<option value="">${lbl}: —</option>`+list.map(p=>`<option value="${p.id}" ${p.id===sel?'selected':''}>${esc(p.name)}</option>`).join('');
-  const memList=all().filter(p=>p.role==='membro').sort((a,b)=>a.name.localeCompare(b.name,'pt'));
-  const masList=all().filter(p=>p.role==='mascote').sort((a,b)=>a.name.localeCompare(b.name,'pt'));
   const hist=S.history.slice().sort((a,b)=>b.year-a.year);
   sec.arquivo=`<section class="sec"><div class="sec-row"><span class="h-serif">Edições anteriores</span><span class="note">Livro de honra</span></div>
-    <p class="note">Registe os jantares de antes da app: a data, o Melhor Bigode e a Mascote de cada ano.</p>
-    <div class="list">${hist.map(h=>`<div class="row" style="flex-wrap:wrap;gap:8px;align-items:center">
-        <span class="year">${h.year}</span><input type="date" id="hd-${h.year}" value="${h.date||''}" aria-label="Data do jantar de ${h.year}" style="flex:1 1 140px;min-width:0;padding:8px 10px">
-        <select id="hb-${h.year}" aria-label="Melhor Bigode ${h.year}" style="flex:1 1 45%;min-width:0;padding:8px 34px 8px 10px;background-position:right 10px center">${mopts(h.bigode,memList,'Melhor Bigode')}</select>
-        <select id="hm-${h.year}" aria-label="Mascote ${h.year}" style="flex:1 1 45%;min-width:0;padding:8px 34px 8px 10px;background-position:right 10px center">${mopts(h.mascote,masList,'Mascote')}</select>
-        <div class="btn-row" style="width:100%"><button class="btn sm brass" data-a="savehist" data-v="${h.year}">Guardar ${h.year}</button>${h.closedAt?'<span class="note">Registada pela app</span>':`<button class="txt-btn" data-a="rmhist" data-v="${h.year}">Apagar</button>`}</div></div>`).join('')||'<div class="empty">Ainda sem edições registadas.</div>'}</div>
-    <div class="btn-row"><input type="number" id="new-hist-year" placeholder="Ano, ex.: 2024" min="1990" max="${e.year-1}" aria-label="Ano" style="flex:1 1 120px;min-width:0;padding:10px 12px"><button class="btn sm brass" data-a="addhist">Adicionar ano</button></div>
-    <p class="note">Primeiro adicione as mascotes antigas (acima), para as poder escolher aqui.</p></section>`;
+    <p class="note">Cada jantar com a data, o local, o Melhor Bigode, a Mascote e a fotografia de grupo. Todos os membros veem na Galeria.</p>
+    <div class="list">${hist.map(h=>`<div class="row">${groupPhoto(h.year)?`<img src="${groupPhoto(h.year).data}" alt="" style="width:44px;height:44px;object-fit:cover;flex:none">`:`<span class="year">${h.year}</span>`}
+      <div class="nm"><b>${groupPhoto(h.year)?h.year+' · ':''}${S.people[h.bigode]?esc(S.people[h.bigode].name):'Sem Melhor Bigode'}</b><small>${S.people[h.mascote]?'Mascote: '+esc(S.people[h.mascote].name):'Sem mascote'}${h.closedAt?' · registada pela app':''}</small></div>
+      <button class="btn sm" data-a="histform" data-v="${h.year}">Editar</button></div>`).join('')||'<div class="empty">Ainda sem edições registadas.</div>'}</div>
+    <button class="btn brass" data-a="histform">Adicionar edição anterior</button></section>`;
   sec.close=`<section class="sec"><span class="h-serif">Encerrar edição ${roman(e.year)}</span>
     <p class="note">Passa os vencedores para o Livro de honra, dá o estatuto de mascote ao eleito, conta o jantar a quem esteve presente, regista uma falta a quem não respondeu e prepara a convocatória de ${e.year+1}.</p>
     ${UI.confirm==='close'?confirmBox('close',`Encerrar a edição ${e.year}? Não é possível desfazer.`,'Encerrar','closeok'):`<button class="btn wine" data-a="askclose" ${canClose?'':'disabled'}>Encerrar edição</button>${canClose?'':'<p class="note">Primeiro revele as duas urnas, com um vencedor em cada.</p>'}`}</section>`;
@@ -1329,7 +1380,7 @@ document.addEventListener('input',ev=>{if(ev.target.id==='q'){UI.q=ev.target.val
 /* ====================================================================== actions */
 // Everything only the Committee may do. The online version enforces the same list on the server.
 const COMMITTEE_ONLY=new Set(['phase','saveed','just','present','addcand','newcand','rmcand','allpresent','open','reveal','tiebreak','resetb',
-  'edit','saveedit','askrm','rmok','addmember','askclose','closeok','askreset','resetok','addnote','rmnote','rmfile','askendnight','endnightok','copylink','newlink','addmascot','addhist','savehist','rmhist']);
+  'edit','saveedit','askrm','rmok','addmember','askclose','closeok','askreset','resetok','addnote','rmnote','rmfile','askendnight','endnightok','copylink','newlink','addmascot','addhist','savehist','rmhist','histform','savehistform','hfnophoto']);
 // Square-crop profile photos to 400px so they stay light
 function squarePhoto(file){return new Promise((res,rej)=>{const url=URL.createObjectURL(file);const img=new Image();
   img.onload=()=>{const s=Math.min(img.width,img.height),c=document.createElement('canvas');c.width=c.height=400;
@@ -1343,6 +1394,9 @@ document.addEventListener('change',async ev=>{
       if(!Store.persist()){Store.set(`people.${pid}.photo`,prev);Store.persist();toast('Sem espaço no modo de teste');return}
       render();toast('Fotografia atualizada')}catch(e){toast('Não foi possível ler a imagem')}
     return}
+  if(ev.target.id==='hf-mascote'){$('#hf-newm-wrap').hidden=ev.target.value!=='__new';if(ev.target.value==='__new')$('#hf-newm').focus();return}
+  if(ev.target.id==='hf-photo'){const f=ev.target.files&&ev.target.files[0];ev.target.value='';if(!f)return;
+    try{UI.histPhoto=await shrinkImage(f);$('#hf-preview').innerHTML=`<img class="group-photo" src="${UI.histPhoto}" alt="">`}catch(e){toast('Não foi possível ler a imagem')}return}
   if(ev.target.id==='media-in'){const fs=[...(ev.target.files||[])];ev.target.value='';if(fs.length)addMedia(fs);return}
   if(ev.target.id!=='file-in')return;
   const m=me(),f=ev.target.files&&ev.target.files[0];ev.target.value='';
@@ -1429,13 +1483,17 @@ document.addEventListener('click',ev=>{
       const hs=S.history.slice(),h=hs.find(x=>x.year===y);
       if(h){if(!h.mascote){ch.history=hs.map(x=>x.year===y?Object.assign({},x,{mascote:nid}):x)}}else ch.history=hs.concat({year:y,mascote:nid,manual:true}).sort((a,b)=>a.year-b.year);
       Store.setMany(ch);if(ONLINE)Remote.addKey(nid).catch(()=>{});toast(n+' é mascote');return}
+    case 'histform':histForm(v?Number(v):null);return;
+    case 'savehistform':saveHistForm(el);return;
+    case 'hfnophoto':UI.histPhoto=null;$('#hf-preview').innerHTML='<p class="note">A fotografia será removida ao guardar.</p>';el.remove();return;
     case 'addhist':{const y=Number($('#new-hist-year').value);if(!y||y<1990||y>=S.edition.year){toast('Ano inválido');return}if(S.history.some(h=>h.year===y)){toast(y+' já existe');return}
       Store.one('history',S.history.concat({year:y,manual:true}).sort((a,b)=>a.year-b.year));toast(y+' adicionado');return}
     case 'savehist':{const y=Number(v),d=$('#hd-'+y).value,bb=$('#hb-'+y).value,mm=$('#hm-'+y).value;
       const hs=S.history.map(h=>{if(h.year!==y)return h;const n=Object.assign({},h);d?n.date=d:delete n.date;bb?n.bigode=bb:delete n.bigode;mm?n.mascote=mm:delete n.mascote;return n});
       const ch={history:hs};if(mm&&S.people[mm]&&!S.people[mm].mascotYear)ch[`people.${mm}.mascotYear`]=y;Store.setMany(ch);toast(y+' guardado');return}
     case 'rmhist':{const y=Number(v);if(UI.confirm!=='rmh-'+y){UI.confirm='rmh-'+y;el.textContent='Confirmar?';el.style.color='var(--wine-ink)';return}
-      UI.confirm=null;Store.one('history',S.history.filter(h=>h.year!==y));toast(y+' apagado');return}
+      UI.confirm=null;const gp=groupPhoto(y),ch={history:S.history.filter(h=>h.year!==y)};if(gp)ch['files.'+gp.id]=undefined;
+      if($('#layer .sheet'))closeLayer();Store.setMany(ch);toast(y+' apagado');return}
     case 'addmember':{const n=$('#new-member').value.trim();if(!n)return;const no=Math.max(0,...all().map(p=>p.no||0))+1,nid='m'+Date.now().toString(36);Store.one('people.'+nid,{name:n,no,role:'membro',since:S.edition.year,dinners:0,committee:false,strikes:0});if(ONLINE)Remote.addKey(nid).catch(()=>toast('Sem permissão para criar o link'));toast(n+' admitido');return}
     case 'askclose':UI.confirm='close';ui();return;
     case 'askreset':UI.confirm='reset';ui();return;
