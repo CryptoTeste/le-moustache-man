@@ -482,9 +482,12 @@ const Remote={db:null,auth:null,FV:null,queue:[],ready:false,screen:'loading',ke
     try{if(!this.auth.currentUser)await this.auth.signInAnonymously()}catch(e){this.screen='error';render();return}
     this.uid=this.auth.currentUser.uid;
     // A personal link looks like https://…/?k=TOKEN — remember it and tidy the address bar
+    // Keep the personal code in the address (?k=…): "Add to Home Screen" saves this address,
+    // so the icon opens as the right member even though iPhone gives it separate storage.
     const url=new URL(location.href);let tok=url.searchParams.get('k');
-    if(tok){try{localStorage.setItem(TOKEN_KEY,tok)}catch(e){}url.searchParams.delete('k');history.replaceState(null,'',url.pathname+(url.search||'')+url.hash)}
+    if(tok){try{localStorage.setItem(TOKEN_KEY,tok)}catch(e){}}
     else{try{tok=localStorage.getItem(TOKEN_KEY)}catch(e){}}
+    if(tok&&url.searchParams.get('k')!==tok){url.searchParams.set('k',tok);history.replaceState(null,'',url.pathname+'?'+url.searchParams.toString()+url.hash)}
     this.token=tok;
     const meta=await this.db.doc('app/meta').get().catch(()=>null);
     if(!meta||!meta.exists){this.screen='setup';render();return}
@@ -570,7 +573,7 @@ const Remote={db:null,auth:null,FV:null,queue:[],ready:false,screen:'loading',ke
     try{localStorage.setItem(TOKEN_KEY,keys[adminId])}catch(e){}
     this.token=keys[adminId];ME=adminId;this.screen='loading';this.subscribe();
   },
-  async signOut(){try{localStorage.removeItem(TOKEN_KEY)}catch(e){}try{await this.db.doc('sessions/'+this.uid).delete()}catch(e){}location.reload()},
+  async signOut(){try{localStorage.removeItem(TOKEN_KEY)}catch(e){}try{await this.db.doc('sessions/'+this.uid).delete()}catch(e){}location.replace(location.pathname)},
   view(){
     const box=(t1,t2,body)=>`<div class="head"><span class="eyebrow">Le Moustache Man · Irmandade do Bigode</span><h1 class="title">${t1}<br><em>${t2}</em></h1></div>${body}`;
     if(this.screen==='setup')return box('Fundar a','Irmandade',`
