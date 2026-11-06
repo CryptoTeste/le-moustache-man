@@ -85,18 +85,19 @@ p{margin:0}
 .yr .what{font-size:14px;min-width:0}
 .yr .what small{display:block;font-size:12px;color:var(--faint)}
 
-.wrap{max-width:520px;margin:0 auto;padding-block:14px 120px;
+.wrap{max-width:520px;margin:0 auto;padding-block:22px 128px;
   padding-left:max(22px,env(safe-area-inset-left,0px));padding-right:max(22px,env(safe-area-inset-right,0px));
-  display:flex;flex-direction:column;gap:28px}
+  display:flex;flex-direction:column;gap:48px}
 
 .eyebrow{font-size:10px;letter-spacing:.3em;color:var(--brass);text-transform:uppercase}
-.title{font:500 42px/1 var(--f-serif);letter-spacing:-.01em}
+.title{font:500 44px/1 var(--f-serif);letter-spacing:-.01em}
 .title em{font-style:italic;color:var(--brass)}
-.head{display:flex;flex-direction:column;gap:10px}
-.h-serif{font:italic 500 22px/1.2 var(--f-serif)}
-.sec{display:flex;flex-direction:column;gap:12px}
+.head{display:flex;flex-direction:column;gap:12px}
+.h-serif{font:italic 500 25px/1.15 var(--f-serif)}
+.sec{display:flex;flex-direction:column;gap:16px}
+.sub-label{font-size:10px;letter-spacing:.22em;text-transform:uppercase;color:var(--faint)}
 .sec-row{display:flex;justify-content:space-between;align-items:baseline;gap:10px}
-.note{font-size:12px;color:var(--faint)}
+.note{font-size:12.5px;line-height:1.55;color:var(--faint)}
 .muted{color:var(--muted)}
 .status{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--muted)}
 .dot{width:6px;height:6px;border-radius:50%;background:var(--faint);flex:none}
@@ -126,7 +127,7 @@ p{margin:0}
 .stats span{display:block;font-size:9px;letter-spacing:.24em;color:var(--faint);margin-top:6px}
 
 .list{display:flex;flex-direction:column}
-.row{display:flex;align-items:center;gap:14px;padding:12px 0;border-top:1px solid var(--line);min-width:0}
+.row{display:flex;align-items:center;gap:14px;padding:14px 0;border-top:1px solid var(--line);min-width:0}
 .row:first-child{border-top:0}
 .row .nm{flex:1;min-width:0;display:flex;flex-direction:column;gap:1px}
 .row .nm b{font-weight:600;font-size:15px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -605,12 +606,13 @@ function nominationsHTML(){
   const b=S.ballots.mascote,m=me();
   const rows=b.cands.map(id=>{const p=P(id);if(!p)return '';const can=p.nominatedBy===m.id||m.committee;
     return `<div class="row" style="align-items:flex-start">${avatar(p)}<div class="nm"><b style="white-space:normal">${esc(p.name)}</b><small style="white-space:normal">${esc(candSub(p))}</small></div>${can?`<button class="txt-btn" data-a="unnominate" data-id="${id}">Retirar</button>`:''}</div>`}).join('');
-  return `<div class="notice"><b>Quem merece ser mascote?</b><span>Pense num senhor mais velho que conheça, de bigode ou barba respeitável. Todos podem propor nomes. A Comissão abre a votação na noite do jantar.</span></div>
-  <div class="list">${rows||'<div class="empty">Ainda ninguém foi proposto. Seja o primeiro.</div>'}</div>
-  <div class="sec" style="gap:10px"><span class="h-serif">Propor um nome</span>
+  return `<p class="muted" style="max-width:40ch">Um senhor mais velho, de bigode ou barba respeitável. Todos podem propor; vota-se na noite do jantar.</p>
+  <div class="list">${rows||'<div class="empty">Ainda ninguém foi proposto.</div>'}</div>
+  ${UI.propose?`<div class="panel" style="gap:14px">
     <label class="f" for="nom-name">Nome<input type="text" id="nom-name" placeholder="Ex.: Sr. Armando da tasca" maxlength="60"></label>
     <label class="f" for="nom-note">Porquê? (opcional)<input type="text" id="nom-note" placeholder="Ex.: bigode à antiga, 40 anos sem o cortar" maxlength="90"></label>
-    <button class="btn brass" data-a="nominate">Propor</button></div>`;
+    <div class="btns"><button class="btn brass" data-a="nominate">Propor</button><button class="btn" data-a="propose" data-v="0">Cancelar</button></div></div>`
+    :`<button class="btn" data-a="propose" data-v="1" style="color:var(--brass);border-color:var(--brass)">+ Propor um nome</button>`}`;
 }
 
 /* ====================================================================== UI state (this device only) */
@@ -655,22 +657,23 @@ function vJantar(){
     <div class="btns"><button class="btn ${st==='vou'?'brass':''}" data-a="rsvp" data-v="vou" ${lock?'disabled':''}>Presente</button>
       <button class="btn ${st==='nao'?'sel':''}" data-a="rsvp" data-v="nao" ${lock?'disabled':''}>Ausente</button></div>`;
     if(st==='vou')reply+=`<p class="note">Confirmado. Apresente-se com o bigode em condições.</p>`;
-    if(st==='pendente')reply+=`<p class="note">O silêncio não é um bigode. Sem resposta até ${fmtShort(e.deadline)}, fica de fora desta edição.</p>`;
+    if(st==='pendente')reply+=`<p class="note">O silêncio não é um bigode.</p>`;
     if(st==='nao'){
       const j=r.j==='aceite'?'<span class="tag green">Justificação aceite</span>':r.j==='recusada'?'<span class="tag wine">Justificação recusada</span>':r.reason?'<span class="tag brass">Em apreciação pela Comissão</span>':'';
       reply+=`<label class="f" for="reason">Motivo da ausência · Art. 6.º<textarea id="reason" placeholder="«Não me apetece» não constitui fundamento bastante.">${esc(r.reason||'')}</textarea></label>
       <div class="btn-row"><button class="btn sm brass" data-a="reason">Enviar justificação</button>${j}</div>`;
     }
   }
-  const grp=(t,arr,open)=>`<details class="grp" ${open?'open':''}><summary>${t} · ${arr.length}</summary><div class="list">${arr.length?arr.map(p=>`<div class="row">${avatar(p)}<div class="nm"><b>${esc(p.name)}</b>${p.role==='mascote'?`<small>Mascote ${roman(p.mascotYear)} · convite vitalício</small>`:''}</div>${e.phase!=='convocatoria'&&S.present[p.id]?'<span class="tag green">Presente</span>':''}</div>`).join(''):'<div class="empty">Ninguém.</div>'}</div></details>`;
+  const sub=(t,arr)=>arr.length?`<div class="sec" style="gap:4px"><span class="sub-label">${t} · ${arr.length}</span><div class="list">${arr.map(p=>`<div class="row">${avatar(p)}<div class="nm"><b>${esc(p.name)}</b>${p.role==='mascote'?`<small>Mascote ${roman(p.mascotYear)} · convite vitalício</small>`:''}</div>${e.phase!=='convocatoria'&&S.present[p.id]?'<span class="tag green">Presente</span>':''}</div>`).join('')}</div></div>`:'';
+  const total=g.vou.length+g.nao.length+silent.length;
   return `
   <div class="head"><span class="eyebrow">${eyebrow} · ${roman(e.year)}</span><h1 class="title">O Jantar<br><em>do Bigode</em></h1></div>
   ${inviteHTML()}
   <section class="sec">${reply}</section>
   ${boardHTML(false)}
-  <section class="sec">
+  <section class="sec"><div class="sec-row"><span class="h-serif">Quem vai</span><span class="note">${total-silent.length} de ${total} responderam</span></div>
     <div class="stats"><div><b style="color:var(--brass)">${g.vou.length}</b><span>PRESENTES</span></div><div><b>${g.nao.length}</b><span>AUSENTES</span></div><div><b style="color:var(--wine-ink)">${silent.length}</b><span>${deadlinePassed()?'EXCLUÍDOS':'EM SILÊNCIO'}</span></div></div>
-    <div>${grp('Presentes',g.vou,false)}${grp('Ausentes',g.nao)}${grp(deadlinePassed()?'Excluídos':'Em silêncio',silent)}</div>
+    <details class="grp"><summary>Ver a lista</summary><div class="sec" style="gap:22px;padding:4px 0 16px">${sub('Presentes',g.vou)}${sub('Ausentes',g.nao)}${sub(deadlinePassed()?'Excluídos':'Em silêncio',silent)}</div></details>
   </section>
   ${albumHTML()}`;
 }
@@ -1219,11 +1222,10 @@ function vPerfil(){
 
   <section class="sec"><span class="h-serif">Presenças</span><div class="list">${rows.join('')}</div></section>
 
-  <section class="sec"><div class="sec-row"><span class="h-serif">Aparência</span><span class="note">só neste telemóvel</span></div>
+  <section class="sec" style="border-top:1px solid var(--line);padding-top:28px"><span class="h-serif">Definições</span>
+    <div class="sec" style="gap:10px"><span class="sub-label">Aparência · só neste telemóvel</span>
     <div class="seg three" role="radiogroup" aria-label="Aparência">${[['system','Sistema'],['light','Claro'],['dark','Escuro']].map(([k,l])=>`<button role="radio" aria-checked="${themePref()===k}" class="${themePref()===k?'on':''}" data-a="theme" data-v="${k}">${l}</button>`).join('')}</div>
-    <p class="note">«Sistema» segue o modo claro ou escuro do telemóvel.</p></section>
-
-  <section class="sec" style="gap:10px">
+    <p class="note">«Sistema» segue o modo claro ou escuro do telemóvel.</p></div>
     ${ONLINE?'':`<details class="grp"><summary>Ver como outro membro (teste)</summary><div class="who" style="padding-bottom:14px">${invited().map(p=>`<button data-a="pick" data-id="${p.id}">${avatar(p)}<span>${esc(p.name)}</span></button>`).join('')}</div></details>`}
     <button class="btn" data-a="logout">${ONLINE?'Sair deste telemóvel':'Sair'}</button></section>`;
 }
@@ -1286,6 +1288,7 @@ document.addEventListener('click',ev=>{
   switch(a){
     case 'viewfile':viewFile(id);return;
     case 'openarchive':case 'openalbum':viewAlbum(Number(v));return;
+    case 'propose':UI.propose=v==='1';ui();if(UI.propose){const n=$('#nom-name');n&&n.focus()}return;
     case 'theme':setTheme(v);ui();toast(v==='system'?'Segue o telemóvel':v==='light'?'Modo claro':'Modo escuro');return;
     case 'replay':if(!ceremonyOn)playReveal(k,true);return;
     case 'ctab':UI.ctab=v;UI.confirm=null;UI.editing=null;ui();{const s=document.querySelector('.seg.four');if(s)s.scrollIntoView({block:'start'});window.scrollBy(0,-70)}return;
@@ -1324,7 +1327,7 @@ document.addEventListener('click',ev=>{
       const n=$('#nom-name').value.trim().replace(/\s+/g,' '),note=$('#nom-note').value.trim();if(!n){toast('Escreva um nome');return}
       if(b.cands.some(c=>S.people[c]&&S.people[c].name.toLowerCase()===n.toLowerCase())){toast(n+' já foi proposto');return}
       const nid='c'+Date.now().toString(36);
-      Store.setMany({['people.'+nid]:{name:n,note,role:'convidado',nominatedBy:m.id,since:S.edition.year,dinners:0},'ballots.mascote.cands':b.cands.concat(nid)});toast(n+' proposto');return}
+      UI.propose=false;Store.setMany({['people.'+nid]:{name:n,note,role:'convidado',nominatedBy:m.id,since:S.edition.year,dinners:0},'ballots.mascote.cands':b.cands.concat(nid)});toast(n+' proposto');return}
     case 'unnominate':{const p=S.people[id],b=S.ballots.mascote;if(!p||b.open||b.revealed)return;if(!(p.nominatedBy===m.id||m.committee)){toast('Só quem propôs ou a Comissão pode retirar');return}
       Store.setMany({'ballots.mascote.cands':b.cands.filter(x=>x!==id),['people.'+id]:undefined});toast('Proposta retirada');return}
     case 'allpresent':Store.one('ballots.bigode.cands',presentIds().filter(p=>S.people[p].role!=='convidado'));return;
