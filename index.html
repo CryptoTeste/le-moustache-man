@@ -520,7 +520,7 @@ const Remote={db:null,auth:null,FV:null,queue:[],ready:false,screen:'loading',ke
       else{this.screen='badlink';render();return}
     }
     if(!member){this.screen='nolink';render();return}
-    ME=member;this.subscribe();
+    ME=member;this.subscribe();Push.register();
   },
   subscribe(){
     const db=this.db;
@@ -530,7 +530,7 @@ const Remote={db:null,auth:null,FV:null,queue:[],ready:false,screen:'loading',ke
       S=Object.assign(emptyState(),d,{media:S.media||{},files:S.files||{}});
       Object.entries(this._photos).forEach(([id,ph])=>{if(S.people[id])S.people[id].photo=ph});
       if(!S.people[ME]){this.screen='badlink';this.ready=false;render();return}
-      const first=!this.ready;this.ready=true;
+      const first=!this.ready;this.ready=true;if(first)Push.refresh(true);
       if(first&&me().committee)this.watchKeys();
       Remote.render();
     },err=>{console.error(err);this.screen='error';this.ready=false;render()});
@@ -568,7 +568,7 @@ const Remote={db:null,auth:null,FV:null,queue:[],ready:false,screen:'loading',ke
       state[p]=val;
     }
     if(Object.keys(state).length){batch.update(db.doc('app/state'),state);ops++}
-    if(ops)batch.commit().catch(e=>{console.error(e);toast(e.code==='permission-denied'?'Sem permissão para isso':'Sem ligação: tente de novo')});
+    if(ops)this.lastCommit=batch.commit().catch(e=>{console.error(e);toast(e.code==='permission-denied'?'Sem permissão para isso':'Sem ligação: tente de novo')});
     return ok;
   },
   newToken(){const a=new Uint8Array(12);crypto.getRandomValues(a);return Array.from(a,b=>b.toString(16).padStart(2,'0')).join('')},
@@ -847,7 +847,7 @@ async function addMedia(files){
       ok++;
     }catch(e){skip++}
   }
-  render();
+  render();if(ok)notify('photos');
   toast(ok?(ok===1?'1 registo adicionado':ok+' registos adicionados')+(skip?` · ${skip} não cabem no modo de teste`:''):'Não foi possível adicionar');
 }
 
@@ -1274,6 +1274,65 @@ async function playReveal(k,replay,hist){
   finish();
 }
 
+/* ---------- Notificações no telemóvel (Web Push) ----------
+   Each phone that turns them on is stored in push/{phone}. Changes call /api/notify,
+   which checks who asked and sends the alert to everyone else. */
+function b64ToU8(s){const p='='.repeat((4-s.length%4)%4);const b=atob((s+p).replace(/-/g,'+').replace(/_/g,'/'));return Uint8Array.from(b,c=>c.charCodeAt(0))}
+const Push={
+  state:'unknown',
+  supported(){return 'serviceWorker' in navigator&&'PushManager' in window&&'Notification' in window},
+  ios(){return /iPhone|iPad|iPod/.test(navigator.userAgent)},
+  standalone(){return (window.matchMedia&&matchMedia('(display-mode: standalone)').matches)||navigator.standalone===true},
+  async register(){
+    if(!('serviceWorker' in navigator))return null;
+    try{const reg=await navigator.serviceWorker.register('sw.js');
+      navigator.serviceWorker.addEventListener('message',e=>{if(e.data&&e.data.type==='open'&&e.data.hash)location.hash=e.data.hash.replace('#','')});
+      return reg}catch(e){return null}
+  },
+  async refresh(resave){
+    if(!ONLINE){this.state='offline';return}
+    if(!this.supported()){this.state=this.ios()&&!this.standalone()?'needs-install':'unsupported';return}
+    if(Notification.permission==='denied'){this.state='denied';return}
+    try{const reg=await navigator.serviceWorker.getRegistration();const sub=reg&&await reg.pushManager.getSubscription();
+      this.state=sub?'on':'off';
+      // keep the stored address fresh (phones renew it now and then)
+      if(sub&&resave)Remote.db.doc('push/'+Remote.uid).set({member:ME,sub:JSON.parse(JSON.stringify(sub)),at:Date.now(),device:navigator.userAgent.slice(0,140)}).catch(()=>{});
+    }catch(e){this.state='off'}
+  },
+  async enable(){
+    const perm=await Notification.requestPermission();   // must be the first thing after the tap
+    if(perm!=='granted'){this.state=perm==='denied'?'denied':'off';return false}
+    const reg=(await this.register())||(await navigator.serviceWorker.ready);await navigator.serviceWorker.ready;
+    const r=await fetch('/api/vapid').catch(()=>null);
+    if(!r||!r.ok){this.state='unconfigured';return false}
+    const {publicKey}=await r.json();
+    const sub=await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:b64ToU8(publicKey)});
+    await Remote.db.doc('push/'+Remote.uid).set({member:ME,sub:JSON.parse(JSON.stringify(sub)),at:Date.now(),device:navigator.userAgent.slice(0,140)});
+    this.state='on';return true;
+  },
+  async disable(){
+    try{const reg=await navigator.serviceWorker.getRegistration();const sub=reg&&await reg.pushManager.getSubscription();if(sub)await sub.unsubscribe()}catch(e){}
+    await Remote.db.doc('push/'+Remote.uid).delete().catch(()=>{});this.state='off';
+  }
+};
+async function notify(event,extra){
+  if(!ONLINE||!Remote.auth||!Remote.auth.currentUser)return null;
+  try{await Remote.lastCommit;const t=await Remote.auth.currentUser.getIdToken();
+    const r=await fetch('/api/notify',{method:'POST',headers:{'content-type':'application/json',authorization:'Bearer '+t},body:JSON.stringify(Object.assign({event},extra||{}))});
+    return r.ok?await r.json():null}catch(e){return null}
+}
+function pushHTML(){
+  const s=Push.state;
+  const what='<p class="note">Avisos da Comissão, mudanças no jantar, início do registo, urnas abertas e seladas, novas propostas de mascote, fotografias da noite e lembretes do prazo de resposta.</p>';
+  if(s==='offline')return '<p class="note">Disponível na versão online da app.</p>';
+  if(s==='needs-install')return '<p class="note">No iPhone, as notificações só funcionam com a app no ecrã principal. Abra o seu link no Safari → Partilhar → Adicionar ao ecrã principal, e ative-as a partir do ícone.</p>';
+  if(s==='unsupported')return '<p class="note">Este telemóvel ou navegador não permite notificações.</p>';
+  if(s==='denied')return '<p class="note">As notificações estão bloqueadas neste telemóvel. Ative-as em Definições → Notificações → Le Moustache Man.</p>';
+  if(s==='unconfigured')return '<p class="note">As notificações ainda não estão configuradas no servidor. Fale com a Comissão.</p>';
+  if(s==='on')return `<div class="sec-row"><span class="status"><span class="dot on"></span>Ativas neste telemóvel</span><span class="btn-row" style="gap:16px"><button class="txt-btn" data-a="pushtest" style="color:var(--brass)">Enviar teste</button><button class="txt-btn" data-a="pushoff">Desativar</button></span></div>${what}`;
+  return `<button class="btn brass" data-a="pushon">Ativar notificações</button>${what}`;
+}
+
 /* ---------- Novidades: a dot on a tab when something new arrived there since you last looked ----------
    Only things other people did count. Remembered per phone. */
 const SEEN_TABS='lmm-seen-tabs';
@@ -1355,6 +1414,7 @@ function vPerfil(){
   <section class="sec"><span class="h-serif">Presenças</span><div class="list">${rows.join('')}</div></section>
 
   <section class="sec" style="border-top:1px solid var(--line);padding-top:28px"><span class="h-serif">Definições</span>
+    <div class="sec" style="gap:10px"><span class="sub-label">Notificações</span>${pushHTML()}</div>
     <div class="sec" style="gap:10px"><span class="sub-label">Aparência · só neste telemóvel</span>
     <div class="seg three" role="radiogroup" aria-label="Aparência">${[['system','Sistema'],['light','Claro'],['dark','Escuro']].map(([k,l])=>`<button role="radio" aria-checked="${themePref()===k}" class="${themePref()===k?'on':''}" data-a="theme" data-v="${k}">${l}</button>`).join('')}</div>
     <p class="note">«Sistema» segue o modo claro ou escuro do telemóvel.</p></div>
@@ -1401,7 +1461,7 @@ function attachDrag(sh,onClose){
 }
 function openProfile(){
   if(UI.profileOpen||!me())return;
-  UI.profileOpen=true;history.pushState({lmmSheet:'perfil'},'');
+  UI.profileOpen=true;history.pushState({lmmSheet:'perfil'},'');Push.refresh().then(()=>{if(UI.profileOpen)render()});
   $('#layer').innerHTML=`<div class="scrim" data-a="closeprofile"><div class="sheet full" role="dialog" aria-modal="true" aria-label="O seu perfil">
     <div class="grab" aria-hidden="true"></div><div class="sheet-head"><button class="txt-btn" data-a="closeprofile" aria-label="Fechar o perfil">Fechar</button></div>
     <div class="sheet-body">${vPerfil()}</div></div></div>`;
@@ -1461,6 +1521,9 @@ document.addEventListener('click',ev=>{
     case 'viewfile':viewFile(id);return;
     case 'openarchive':case 'openalbum':viewAlbum(Number(v));return;
     case 'propose':UI.propose=v==='1';ui();if(UI.propose){const n=$('#nom-name');n&&n.focus()}return;
+    case 'pushon':el.disabled=true;el.textContent='A ativar…';Push.enable().then(ok=>{render();toast(ok?'Notificações ativadas':Push.state==='denied'?'Notificações bloqueadas':'Não foi possível ativar')}).catch(()=>{render();toast('Não foi possível ativar')});return;
+    case 'pushoff':Push.disable().then(()=>{render();toast('Notificações desativadas')});return;
+    case 'pushtest':toast('A enviar…');notify('test').then(r=>toast(r&&r.sent?'Teste enviado: veja o telemóvel':'Não foi possível enviar'));return;
     case 'theme':setTheme(v);ui();toast(v==='system'?'Segue o telemóvel':v==='light'?'Modo claro':'Modo escuro');return;
     case 'replay':if(!ceremonyOn)playReveal(k,true);return;
     case 'ctab':UI.ctab=v;UI.confirm=null;UI.editing=null;ui();{const s=document.querySelector('.seg.four');if(s)s.scrollIntoView({block:'start'});window.scrollBy(0,-70)}return;
@@ -1470,7 +1533,7 @@ document.addEventListener('click',ev=>{
     case 'rmmedia':{const x=S.media[id];if(!x||!(x.by===m.id||m.committee)){toast('Só o autor ou a Comissão pode apagar');return}
       if(UI.confirm!=='rmm-'+id){UI.confirm='rmm-'+id;el.textContent='Confirmar?';el.style.color='var(--wine-ink)';return}
       UI.confirm=null;const wasSheet=!!$('#layer').innerHTML;Store.one('media.'+id,undefined);if(wasSheet)viewAlbum(x.year);toast('Apagado do álbum');return}
-    case 'addnote':{const t=$('#note-text').value.trim();if(!t){toast('Escreva o aviso');return}Store.one('notes.n'+Date.now().toString(36),{year:S.edition.year,text:t,by:m.id,at:Date.now()});toast('Aviso publicado');return}
+    case 'addnote':{const t=$('#note-text').value.trim();if(!t){toast('Escreva o aviso');return}const nid='n'+Date.now().toString(36);Store.one('notes.'+nid,{year:S.edition.year,text:t,by:m.id,at:Date.now()});notify('notice',{id:nid});toast('Aviso publicado');return}
     case 'rmnote':Store.one('notes.'+id,undefined);toast('Aviso apagado');return;
     case 'rmfile':Store.one('files.'+id,undefined);toast('Ficheiro apagado');return;
     case 'closesheet':if(ev.target===el||el.tagName==='BUTTON')closeLayer();return;
@@ -1487,8 +1550,8 @@ document.addEventListener('click',ev=>{
     case 'reason':{const t=$('#reason').value.trim();if(!t){toast('Escreva o motivo');return}Store.one('rsvp.'+m.id,{s:'nao',reason:t,j:'pendente'});toast('Justificação enviada');return}
     case 'pickcand':UI.pick[k]=id;ui();return;
     case 'vote':{const kk=k,pk=UI.pick[kk];if(!pk)return;Store.one(`ballots.${kk}.votes.${m.id}`,pk);delete UI.pick[kk];toast('Voto depositado');return}
-    case 'phase':UI.ctab='jantar';Store.setMany({'edition.phase':v,'edition.updatedAt':Date.now(),'edition.updatedBy':m.id});if(v==='noite')toast('Registo de membros iniciado');return;
-    case 'saveed':Store.setMany({'edition.date':$('#f-date').value||S.edition.date,'edition.time':$('#f-time').value||S.edition.time,'edition.place':$('#f-place').value.trim(),'edition.city':$('#f-city').value.trim(),'edition.dress':$('#f-dress').value.trim(),'edition.deadline':$('#f-dead').value||S.edition.deadline,'edition.updatedAt':Date.now(),'edition.updatedBy':m.id});toast('Convocatória guardada');return;
+    case 'phase':UI.ctab='jantar';Store.setMany({'edition.phase':v,'edition.updatedAt':Date.now(),'edition.updatedBy':m.id});if(v==='noite'){notify('night');toast('Registo de membros iniciado')}return;
+    case 'saveed':Store.setMany({'edition.date':$('#f-date').value||S.edition.date,'edition.time':$('#f-time').value||S.edition.time,'edition.place':$('#f-place').value.trim(),'edition.city':$('#f-city').value.trim(),'edition.dress':$('#f-dress').value.trim(),'edition.deadline':$('#f-dead').value||S.edition.deadline,'edition.updatedAt':Date.now(),'edition.updatedBy':m.id});notify('details');toast('Convocatória guardada');return;
     case 'just':Store.one(`rsvp.${id}.j`,v);toast(v==='aceite'?'Justificação aceite':'Justificação recusada');return;
     case 'present':if(S.edition.phase!=='noite'){toast('Inicie a noite primeiro');return}Store.one('present.'+id,S.present[id]?undefined:true);return;
     case 'askendnight':UI.confirm='endnight';ui();return;
@@ -1500,7 +1563,7 @@ document.addEventListener('click',ev=>{
       const n=$('#nom-name').value.trim().replace(/\s+/g,' '),note=$('#nom-note').value.trim();if(!n){toast('Escreva um nome');return}
       if(b.cands.some(c=>S.people[c]&&S.people[c].name.toLowerCase()===n.toLowerCase())){toast(n+' já foi proposto');return}
       const nid='c'+Date.now().toString(36);
-      UI.propose=false;Store.setMany({['people.'+nid]:{name:n,note,role:'convidado',nominatedBy:m.id,since:S.edition.year,dinners:0,at:Date.now()},'ballots.mascote.cands':b.cands.concat(nid)});toast(n+' proposto');return}
+      UI.propose=false;Store.setMany({['people.'+nid]:{name:n,note,role:'convidado',nominatedBy:m.id,since:S.edition.year,dinners:0,at:Date.now()},'ballots.mascote.cands':b.cands.concat(nid)});notify('nominate',{id:nid});toast(n+' proposto');return}
     case 'unnominate':{const p=S.people[id],b=S.ballots.mascote;if(!p||b.open||b.revealed)return;if(!(p.nominatedBy===m.id||m.committee)){toast('Só quem propôs ou a Comissão pode retirar');return}
       Store.setMany({'ballots.mascote.cands':b.cands.filter(x=>x!==id),['people.'+id]:undefined});toast('Proposta retirada');return}
     case 'allpresent':Store.one('ballots.bigode.cands',presentIds().filter(p=>S.people[p].role!=='convidado'));return;
@@ -1508,8 +1571,8 @@ document.addEventListener('click',ev=>{
       const ch={[`ballots.${k}.open`]:true,[`ballots.${k}.openedAt`]:Date.now(),[`ballots.${k}.openedBy`]:m.id};
       if(k==='bigode'&&S.ballots.bigode.cands.length<2)ch['ballots.bigode.cands']=presentIds().filter(p=>S.people[p].role==='membro');
       if((ch['ballots.bigode.cands']||S.ballots[k].cands).length<2){toast(k==='mascote'?'São precisas 2 propostas':'Registe 2 membros presentes');return}
-      Store.setMany(ch);toast('Urna aberta');return}
-    case 'reveal':Store.setMany({[`ballots.${k}.open`]:false,[`ballots.${k}.revealed`]:true,[`ballots.${k}.revealedAt`]:Date.now(),[`ballots.${k}.revealedBy`]:m.id});toast('Urna selada');return;
+      Store.setMany(ch);notify('open',{k});toast('Urna aberta');return}
+    case 'reveal':Store.setMany({[`ballots.${k}.open`]:false,[`ballots.${k}.revealed`]:true,[`ballots.${k}.revealedAt`]:Date.now(),[`ballots.${k}.revealedBy`]:m.id});notify('reveal',{k});toast('Urna selada');return;
     case 'tiebreak':{const b=S.ballots[k];Store.setMany({[`ballots.${k}`]:{cands:leaders(b),open:true,revealed:false,votes:{},round:(b.round||1)+1,openedAt:Date.now(),openedBy:m.id}});toast('Desempate aberto');return}
     case 'resetb':Store.one(`ballots.${k}`,{cands:S.ballots[k].cands,open:false,revealed:false,votes:{},round:1});return;
     case 'edit':UI.editing=id;UI.confirm=null;ui();return;
@@ -1556,7 +1619,7 @@ document.addEventListener('click',ev=>{
       ch.edition=Object.assign({},S.edition,{year:y+1,date:iso(nd),deadline:iso(dd),place:'Restaurante a confirmar',phase:'convocatoria'});
       ch.rsvp={};ch.present={};
       ['mascote','bigode'].forEach(x=>ch['ballots.'+x]={cands:[],open:false,revealed:false,votes:{},round:1});
-      UI.confirm=null;Store.setMany(ch);toast('Edição '+y+' encerrada');location.hash='galeria';return}
+      UI.confirm=null;Store.setMany(ch);notify('closed');toast('Edição '+y+' encerrada');location.hash='galeria';return}
   }
 });
 render();

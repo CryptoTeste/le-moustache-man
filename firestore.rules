@@ -85,6 +85,11 @@ service cloud.firestore {
       allow list: if isCommittee();
       allow create, delete: if isCommittee() || (signedIn() && !isSetUp());
     }
+    // Phones that turned on notifications. Only the server (which bypasses these rules) reads them.
+    match /push/{uid} {
+      allow create, update: if isMember() && request.auth.uid == uid && request.resource.data.member == meId();
+      allow delete: if signedIn() && request.auth.uid == uid;
+    }
     // Which member this phone belongs to — only valid with a real personal link.
     match /sessions/{uid} {
       allow get, delete: if signedIn() && request.auth.uid == uid;

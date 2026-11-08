@@ -38,3 +38,13 @@ Everything stays on Firebase's free plan (Spark), so no credit card is needed. V
 - **Members** can reply to the invitation (but not approve their own excuse), vote once while a ballot is open and they're marked present, propose and withdraw mascots, post photos and give *bigodaços* (likes), and change their own photo.
 - **The Committee** can do everything else: dinner details, attendance, opening and sealing ballots, notices and documents, members and links, and closing an edition.
 - **The administrator** (the founder) is the only one who decides who is on the Committee.
+
+## Phone notifications
+
+- The app side is `sw.js` (shows the notification and opens the app when it's tapped) plus the **Notificações** section in each member's profile.
+- The server side is three small Vercel functions in `api/`:
+  - `notify` is called by the app after a change. It checks who made the change and sends the alert to everyone else.
+  - `vapid` gives phones the public key they need to register.
+  - `remind` runs daily at 10:00 and reminds members who haven't replied, 3 days and 1 day before the deadline.
+- **One secret, set up once:** in Vercel → Settings → Environment Variables, add `FIREBASE_SERVICE_ACCOUNT` with the full contents of the JSON key from Firebase (Project settings → Service accounts → Generate new private key). The push keys are derived from it, so nothing else needs to be configured.
+- On iPhone, notifications only work when the app has been added to the home screen.

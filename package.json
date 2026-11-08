@@ -1,0 +1,10 @@
+{
+  "name": "le-moustache-man",
+  "private": true,
+  "description": "App da Irmandade do Bigode. The site is static (index.html); /api holds the notification service.",
+  "engines": { "node": ">=18" },
+  "dependencies": {
+    "firebase-admin": "12.7.0",
+    "web-push": "3.6.7"
+  }
+}
