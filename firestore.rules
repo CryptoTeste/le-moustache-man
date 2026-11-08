@@ -75,6 +75,17 @@ service cloud.firestore {
       allow read: if isMember();
       allow write: if isCommittee();
     }
+    // Comments on the Committee's notices: any member may write their own, short, and delete their own.
+    match /comments/{id} {
+      allow read: if isMember();
+      allow create: if isMember()
+        && request.resource.data.keys().hasOnly(['target', 'by', 'text', 'at'])
+        && request.resource.data.by == meId()
+        && request.resource.data.target is string
+        && request.resource.data.text is string
+        && request.resource.data.text.size() > 0 && request.resource.data.text.size() <= 500;
+      allow delete: if isCommittee() || (isMember() && resource.data.by == meId());
+    }
     match /photos/{pid} {
       allow read: if isMember();
       allow write: if isCommittee() || (isMember() && pid == meId());

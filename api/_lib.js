@@ -56,6 +56,19 @@ function buildMessage(event, st, actorId, extra) {
       if (!n) return null;
       return { committee: true, payload: { title: 'Aviso da Comissão', body: trunc(n.text, 140), url: '#jantar', tag: 'notice-' + extra.id } };
     }
+    case 'noticefile': {
+      const f = extra.file;
+      if (!f || f.kind === 'group') return null;
+      return { committee: true, payload: { title: 'Aviso da Comissão', body: trunc(f.caption || ('Novo ficheiro: ' + f.name), 140), url: '#jantar', tag: 'notice-' + extra.id } };
+    }
+    case 'comment': {
+      // Tell whoever posted the notice, the Committee, and the others in the conversation. Not everyone.
+      const c = extra.comment, n = extra.notice;
+      if (!c || !n || c.by !== actorId) return null;
+      const committee = Object.keys(st.people || {}).filter(id => st.people[id].committee);
+      const only = [...new Set([n.by].concat(committee, extra.thread || []))].filter(id => id && id !== actorId);
+      return { only, throttleMin: 2, payload: { title: (actor.name || 'Um membro') + ' comentou um aviso', body: trunc(c.text, 140), url: '#jantar', tag: 'comment-' + c.target } };
+    }
     case 'details':
       return { committee: true, payload: { title: 'O jantar foi atualizado', body: [shortDate(e.date) + (e.time ? ', ' + e.time.replace(':', 'h') : ''), e.place].filter(Boolean).join(' · '), url: '#jantar', tag: 'details' } };
     case 'night':

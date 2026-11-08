@@ -294,6 +294,44 @@ label.f{display:flex;flex-direction:column;gap:6px;min-width:0;font-size:10px;le
 .txt-btn{background:none;border:0;padding:4px 0;font-size:10px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:var(--faint)}
 .add-link{display:inline-flex;align-items:center;gap:6px;font-size:10px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:var(--brass);cursor:pointer;padding:6px 0}
 .add-link svg{width:14px;height:14px}
+.add-wrap{display:inline-flex;align-items:center;gap:14px}
+.tie-box{display:flex;flex-direction:column;gap:8px;border-top:1px solid var(--line-soft);padding-top:12px}
+
+/* avisos (notices) */
+.av-list{display:flex;flex-direction:column;gap:12px}
+.aviso{display:flex;flex-direction:column;gap:12px;width:100%;text-align:left;font:inherit;color:var(--ink);background:var(--surface);border:1px solid var(--line);border-left:3px solid var(--brass);padding:16px 16px 14px;cursor:pointer;position:relative;transition:transform .2s ease,border-color .2s ease}
+.aviso:active{transform:scale(.99)}
+.aviso.unread{border-color:var(--brass);border-left-width:3px;box-shadow:0 10px 30px var(--shadow)}
+.av-top{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.av-eyebrow{font-size:10px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:var(--brass)}
+.pill-new{font-size:9px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:#fff;background:var(--wine-ink);padding:4px 8px;border-radius:99px}
+.pill-unread{font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--wine-ink);border:1px solid var(--wine-line);background:var(--wine-bg);padding:4px 10px;border-radius:99px;white-space:nowrap}
+.av-text{font:500 19px/1.35 var(--f-serif);white-space:pre-line;display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;overflow:hidden;overflow-wrap:anywhere}
+.av-img{width:100%;max-height:220px;object-fit:cover;display:block;border:1px solid var(--line-soft)}
+.av-file{display:flex;align-items:center;gap:12px;min-width:0}
+.av-file .ext{flex:none;width:44px;height:52px;display:flex;align-items:center;justify-content:center;border:1px solid var(--line-strong);font:700 10px var(--f-sans);letter-spacing:.1em;color:var(--brass)}
+.av-fn{display:flex;flex-direction:column;min-width:0}
+.av-fn b{font-weight:600;font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.av-fn small{font-size:12px;color:var(--faint)}
+.av-foot{display:flex;align-items:center;justify-content:space-between;gap:10px;font-size:12px;color:var(--muted);border-top:1px solid var(--line-soft);padding-top:10px}
+.av-cc{display:inline-flex;align-items:center;gap:4px;color:var(--brass);font-weight:600}
+.av-cc svg{width:14px;height:14px}
+.av-body{font:500 20px/1.4 var(--f-serif);white-space:pre-line;margin:0;overflow-wrap:anywhere}
+.av-full{width:100%;height:auto;display:block;border:1px solid var(--line)}
+.pdf-pages{display:flex;flex-direction:column;gap:10px;min-height:120px;flex:none}
+.sheet>*{flex-shrink:0}
+a.btn{display:inline-flex;align-items:center;justify-content:center;text-decoration:none}
+.pdf-pages canvas{width:100%;height:auto;display:block;background:#fff;border:1px solid var(--line)}
+.cm-sec{border-top:1px solid var(--line);padding-top:20px}
+.cm-list{display:flex;flex-direction:column;gap:16px}
+.cm{display:flex;gap:10px;align-items:flex-start}
+.cm .ini{width:30px;height:30px;font-size:14px;flex:none}
+.cm-b{flex:1;min-width:0}
+.cm-h{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}
+.cm-h b{font-size:14px;font-weight:600}
+.cm-h small{font-size:11px;color:var(--faint);flex:1}
+.cm-b p{margin:2px 0 0;font-size:15px;line-height:1.45;white-space:pre-line;overflow-wrap:anywhere}
+@media (prefers-reduced-motion:no-preference){.aviso.unread .pill-new{animation:pop .5s cubic-bezier(.2,1.6,.4,1)}}
 
 /* honour card / pass */
 .pass{border-radius:14px;padding:20px;display:flex;flex-direction:column;gap:22px;position:relative;overflow:hidden;box-shadow:0 18px 40px var(--shadow);color:#fff}
@@ -338,6 +376,7 @@ mark{background:var(--mark);color:var(--ink)}
 .tabs a.on::before{transform:scaleX(1)}
 .tabs a.on svg{stroke-width:1.9;transform:translateY(-1px)}
 .tabs a .new{position:absolute;top:9px;left:calc(50% + 8px);width:8px;height:8px;border-radius:50%;background:var(--wine-ink);box-shadow:0 0 0 2px var(--bg)}
+.tabs a .new.count{width:auto;min-width:17px;height:17px;top:4px;padding:0 5px;border-radius:9px;font:700 10px/17px var(--f-sans);letter-spacing:0;color:#fff;text-align:center}
 @media (prefers-reduced-motion:no-preference){.tabs a .new{animation:pop .4s cubic-bezier(.2,1.6,.4,1)}}
 @keyframes pop{from{transform:scale(0)}}
 
@@ -427,7 +466,7 @@ function seed(){
   people.c1={name:'Sr. Armando da tasca',note:'bigode à antiga, nunca o cortou',role:'convidado',nominatedBy:'m3',since:2026,dinners:0};
   people.c2={name:'Tio Zé Manel',note:'barba de capitão de navio',role:'convidado',nominatedBy:'m9',since:2026,dinners:0};
   const notes={n1:{year:2026,text:'O restaurante será anunciado até ao fim do mês. Reservem a data.',by:'m1',at:Date.now()-864e5*2}};
-  return seedAttendance({people,rsvp,present:{},notes,files:{},media:{},
+  return seedAttendance({people,rsvp,present:{},notes,files:{},media:{},comments:{},
     edition:{year:2026,date:'2026-12-12',time:'20:00',place:'Restaurante a confirmar',city:'Caldas da Rainha',
       dress:'Cavalheiro clássico. Colete ou suspensórios, laço ou gravata.',deadline:'2026-11-28',phase:'convocatoria'},
     ballots:{bigode:ballot(),mascote:ballot(['c1','c2'])},
@@ -475,7 +514,7 @@ const Store={
   reset(){if(ONLINE)return;S=seed();Store.persist()}
 };
 function emptyState(){const b=()=>({cands:[],open:false,revealed:false,votes:{},round:1});
-  return {people:{},rsvp:{},present:{},notes:{},files:{},media:{},history:[],ballots:{bigode:b(),mascote:b()},
+  return {people:{},rsvp:{},present:{},notes:{},files:{},media:{},comments:{},history:[],ballots:{bigode:b(),mascote:b()},
     edition:{year:new Date().getFullYear(),date:iso(new Date()),time:'20:00',place:'Restaurante a confirmar',city:'',dress:'',deadline:iso(new Date()),phase:'convocatoria'}}}
 
 /* ======================================================================
@@ -527,7 +566,7 @@ const Remote={db:null,auth:null,FV:null,queue:[],ready:false,screen:'loading',ke
     db.doc('app/state').onSnapshot(snap=>{
       if(!snap.exists)return;
       const d=snap.data();this._core=d;
-      S=Object.assign(emptyState(),d,{media:S.media||{},files:S.files||{}});
+      S=Object.assign(emptyState(),d,{media:S.media||{},files:S.files||{},comments:S.comments||{}});
       Object.entries(this._photos).forEach(([id,ph])=>{if(S.people[id])S.people[id].photo=ph});
       if(!S.people[ME]){this.screen='badlink';this.ready=false;render();return}
       const first=!this.ready;this.ready=true;if(first)Push.refresh(true);
@@ -536,6 +575,7 @@ const Remote={db:null,auth:null,FV:null,queue:[],ready:false,screen:'loading',ke
     },err=>{console.error(err);this.screen='error';this.ready=false;render()});
     db.collection('media').onSnapshot(q=>{const m={};q.forEach(d=>m[d.id]=d.data());S.media=m;Remote.render()},e=>console.error(e));
     db.collection('files').onSnapshot(q=>{const m={};q.forEach(d=>m[d.id]=d.data());S.files=m;Remote.render()},e=>console.error(e));
+    db.collection('comments').onSnapshot(q=>{const m={};q.forEach(d=>m[d.id]=d.data());S.comments=m;Remote.render()},e=>console.error(e));
     db.collection('photos').onSnapshot(q=>{const m={};q.forEach(d=>m[d.id]=d.data().data);this._photos=m;
       Object.keys(S.people||{}).forEach(id=>{if(m[id])S.people[id].photo=m[id];else delete S.people[id].photo});Remote.render()},e=>console.error(e));
   },
@@ -554,7 +594,7 @@ const Remote={db:null,auth:null,FV:null,queue:[],ready:false,screen:'loading',ke
     const db=this.db,FV=this.FV,batch=db.batch(),state={};let ok=true,ops=0;
     for(const p of keep){
       const ks=p.split('.'),v=getPath(p);
-      if((ks[0]==='media'||ks[0]==='files')&&ks.length>=2){
+      if((ks[0]==='media'||ks[0]==='files'||ks[0]==='comments')&&ks.length>=2){
         const ref=db.collection(ks[0]).doc(ks[1]);
         if(ks.length===2){if(v===undefined)batch.delete(ref);else{if(JSON.stringify(v).length>950000){ok=false;applyLocal(p,undefined);continue}batch.set(ref,v)}}
         else batch.update(ref,{[ks.slice(2).join('.')]:v===undefined?FV.delete():v});
@@ -583,7 +623,7 @@ const Remote={db:null,auth:null,FV:null,queue:[],ready:false,screen:'loading',ke
     const dl=D(date);dl.setDate(dl.getDate()-14);
     const st=emptyState();st.people=people;
     st.edition=Object.assign(st.edition,{year:y,date,deadline:iso(dl),dress:'Cavalheiro clássico. Colete ou suspensórios, laço ou gravata. Bigode natural.'});
-    delete st.media;delete st.files;
+    delete st.media;delete st.files;delete st.comments;
     const b=this.db.batch();
     b.set(this.db.doc('app/state'),st);
     Object.keys(people).forEach(id=>{const t=this.newToken();keys[id]=t;b.set(this.db.doc('keys/'+t),{member:id})});
@@ -613,7 +653,7 @@ const Remote={db:null,auth:null,FV:null,queue:[],ready:false,screen:'loading',ke
 Store.load();
 // Upgrade data saved by earlier test versions (test mode only)
 if(!ONLINE)(function migrate(){
-  S.notes=S.notes||{};S.files=S.files||{};S.media=S.media||{};
+  S.notes=S.notes||{};S.files=S.files||{};S.media=S.media||{};S.comments=S.comments||{};
   if(S.history.some(h=>!h.manual&&!Array.isArray(h.attended)))seedAttendance(S);
   if(!Object.values(S.people).some(p=>p.admin)){const c=S.people.m1||Object.values(S.people).find(p=>p.committee);if(c){c.admin=true;c.committee=true}}
   Store.persist();
@@ -648,7 +688,9 @@ const fmtShort=s=>dm(D(s));
 const presentIds=()=>Object.keys(S.present).filter(k=>S.present[k]&&S.people[k]);
 function status(id){const r=S.rsvp[id];if(r&&r.s==='vou')return 'vou';if(r&&r.s==='nao')return 'nao';return deadlinePassed()?'excluido':'pendente'}
 function tally(b){const c={};b.cands.forEach(id=>c[id]=0);Object.values(b.votes||{}).forEach(v=>{if(v in c)c[v]++});return c}
-function leaders(b){const c=tally(b);const mx=Math.max(0,...Object.values(c));return mx===0?[]:Object.keys(c).filter(k=>c[k]===mx)}
+function tiedLeaders(b){const c=tally(b);const mx=Math.max(0,...Object.values(c));return mx===0?[]:Object.keys(c).filter(k=>c[k]===mx)}
+// A tie the Committee settled (Art. 16.º) counts as a single winner
+function leaders(b){const L=tiedLeaders(b);return b.decided&&L.length>1&&L.includes(b.decided)?[b.decided]:L}
 let toastT;function toast(m){document.querySelectorAll('.toast').forEach(t=>t.remove());const t=document.createElement('div');t.className='toast';t.setAttribute('role','status');t.setAttribute('aria-live','polite');t.textContent=m;document.body.appendChild(t);clearTimeout(toastT);toastT=setTimeout(()=>t.remove(),2200)}
 const BALLOT={bigode:{t1:'Melhor Bigode',t2:'do Ano',art:'Artigo 12.º',prize:'recebe o Laço-Testemunho'},mascote:{t1:'Mascote',t2:'do Bigode',art:'Artigo 7.º',prize:'é a nova Mascote do Bigode, com convite vitalício'}};
 const proposer=p=>p.nominatedBy&&S.people[p.nominatedBy]?S.people[p.nominatedBy].name:null;
@@ -705,9 +747,9 @@ function vJantar(){
   }else{
     const lock=deadlinePassed();
     reply=`<div class="sec-row"><span class="h-serif">A sua resposta</span><span class="note">${lock?'prazo terminado':`até ${fmtShort(e.deadline)} · ${daysLeft()===0?'termina hoje':daysLeft()===1?'falta 1 dia':'faltam '+daysLeft()+' dias'}`}</span></div>
-    <div class="btns"><button class="btn ${st==='vou'?'brass':''}" data-a="rsvp" data-v="vou" ${lock?'disabled':''}>Presente</button>
-      <button class="btn ${st==='nao'?'sel':''}" data-a="rsvp" data-v="nao" ${lock?'disabled':''}>Ausente</button></div>`;
-    if(st==='vou')reply+=`<p class="note">Confirmado. Apresente-se com o bigode em condições.</p>`;
+    <div class="btns"><button class="btn ${st==='vou'?'brass':''}" data-a="rsvp" data-v="vou" aria-pressed="${st==='vou'}" ${lock?'disabled':''}>Presente</button>
+      <button class="btn ${st==='nao'?'sel':''}" data-a="rsvp" data-v="nao" aria-pressed="${st==='nao'}" ${lock?'disabled':''}>Ausente</button></div>`;
+    if(st==='vou')reply+=`<p class="note">Confirmado. Apresente-se com o bigode em condições.${lock?'':' Toque de novo em «Presente» para retirar a resposta.'}</p>`;
     if(st==='pendente')reply+=`<p class="note">O silêncio não é um bigode.</p>`;
     if(st==='nao'){
       const j=r.j==='aceite'?'<span class="tag green">Justificação aceite</span>':r.j==='recusada'?'<span class="tag wine">Justificação recusada</span>':r.reason?'<span class="tag brass">Em apreciação pela Comissão</span>':'';
@@ -720,8 +762,8 @@ function vJantar(){
   return `
   <div class="head"><span class="eyebrow">${eyebrow} · ${roman(e.year)}</span><h1 class="title">O Jantar<br><em>do Bigode</em></h1></div>
   ${inviteHTML()}
+  ${noticesHTML()}
   <section class="sec">${reply}</section>
-  ${boardHTML(false)}
   <section class="sec"><div class="sec-row"><span class="h-serif">Quem vai</span><span class="note">${total-silent.length} de ${total} responderam</span></div>
     <div class="stats"><div><b style="color:var(--brass)">${g.vou.length}</b><span>PRESENTES</span></div><div><b>${g.nao.length}</b><span>AUSENTES</span></div><div><b style="color:var(--wine-ink)">${silent.length}</b><span>${deadlinePassed()?'EXCLUÍDOS':'EM SILÊNCIO'}</span></div></div>
     <details class="grp"><summary>Ver a lista</summary><div class="sec" style="gap:22px;padding:4px 0 16px">${sub('Presentes',g.vou)}${sub('Ausentes',g.nao)}${sub(deadlinePassed()?'Excluídos':'Em silêncio',silent)}</div></details>
@@ -740,17 +782,112 @@ function boardHTML(manage){
   if(!manage&&!ns.length&&!fs.length)return '';
   const by=id=>S.people[id]?esc(S.people[id].name):'Comissão';
   return `<section class="sec"><div class="sec-row"><span class="h-serif">Avisos da Comissão</span>${manage?'':'<span class="note">'+(ns.length+fs.length)+'</span>'}</div>
-    ${ns.length?`<div class="list">${ns.map(([id,n])=>`<div class="row" style="align-items:flex-start"><span class="dot brass" style="margin-top:8px"></span><div class="nm"><span style="font-size:15px;white-space:pre-line">${esc(n.text)}</span><small>${by(n.by)} · ${fmtAgo(n.at)}</small></div>${manage?`<button class="btn sm" data-a="rmnote" data-id="${id}">Apagar</button>`:''}</div>`).join('')}</div>`:(manage?'<div class="empty">Sem avisos.</div>':'')}
+    ${ns.length?`<div class="list">${ns.map(([id,n])=>`<div class="row" style="align-items:flex-start"><span class="dot brass" style="margin-top:8px"></span><div class="nm"><span style="font-size:15px;white-space:pre-line">${esc(n.text)}</span><small>${by(n.by)} · ${fmtAgo(n.at)}${commentsFor('note:'+id).length?' · '+plural(commentsFor('note:'+id).length,'comentário','comentários'):''}</small></div><button class="btn sm" data-a="opennotice" data-id="note:${id}">Ver</button>${manage?`<button class="btn sm" data-a="rmnote" data-id="${id}">Apagar</button>`:''}</div>`).join('')}</div>`:(manage?'<div class="empty">Sem avisos.</div>':'')}
     ${fs.length?`<div class="list">${fs.map(([id,f])=>`<div class="row">${f.type.startsWith('image/')?`<button data-a="viewfile" data-id="${id}" aria-label="Ver ${esc(f.name)}" style="padding:0;border:1px solid var(--line-strong);background:none;width:52px;height:52px;flex:none"><img src="${f.data}" alt="" style="width:100%;height:100%;object-fit:cover;display:block"></button>`:`<span class="ini" style="border-radius:2px;font:600 10px var(--f-sans);letter-spacing:.1em">${esc((f.name.split('.').pop()||'DOC').slice(0,4).toUpperCase())}</span>`}
-      <div class="nm"><b>${esc(f.name)}</b><small>${fmtSize(f.size)} · ${by(f.by)} · ${fmtAgo(f.at)}</small></div>
-      ${f.type.startsWith('image/')?`<button class="btn sm" data-a="viewfile" data-id="${id}">Ver</button>`:''}${manage?`<button class="btn sm" data-a="rmfile" data-id="${id}">Apagar</button>`:''}</div>`).join('')}</div>`:''}
+      <div class="nm"><b>${esc(f.name)}</b>${f.caption?`<span style="font-size:14px;white-space:pre-line">${esc(f.caption)}</span>`:''}<small>${fmtSize(f.size)} · ${by(f.by)} · ${fmtAgo(f.at)}${commentsFor('file:'+id).length?' · '+plural(commentsFor('file:'+id).length,'comentário','comentários'):''}</small></div>
+      <button class="btn sm" data-a="viewfile" data-id="${id}">Ver</button>${manage?`<button class="btn sm" data-a="rmfile" data-id="${id}">Apagar</button>`:''}</div>`).join('')}</div>`:''}
     ${manage?`<label class="f" for="note-text">Novo aviso<textarea id="note-text" placeholder="Ex.: O restaurante está confirmado. Menu em anexo."></textarea></label>
       <div class="btn-row"><button class="btn sm brass" data-a="addnote">Publicar aviso</button>
       <label class="btn sm" for="file-in" style="display:inline-flex;align-items:center;cursor:pointer">Anexar ficheiro</label><input type="file" id="file-in" accept="image/*,application/pdf,.doc,.docx" hidden></div>
-      <p class="note">Imagens e PDF até 1,5 MB (menu, fotografias, convite). Todos os membros veem os avisos e ficheiros no separador Jantar.</p>`:''}
+      <p class="note">Escreva o texto e depois anexe, se quiser, uma imagem ou PDF (até ${ONLINE?'650 KB':'1,5 MB'}): fica tudo no mesmo aviso. Aparece em destaque no separador Jantar, marcado como «Novo» até cada membro o abrir.</p>`:''}
   </section>`;
 }
+/* ---------- Avisos for members: stand-out cards, "Novo" until opened, full view with comments ---------- */
+const readKey=()=>'lmm-read-'+ME;
+function readSet(){try{return JSON.parse(localStorage.getItem(readKey())||'{}')}catch(e){return UI.readMem||(UI.readMem={})}}
+function markRead(key){const o=readSet();if(o[key])return;o[key]=Date.now();try{localStorage.setItem(readKey(),JSON.stringify(o))}catch(e){UI.readMem=o}}
+const isPdf=f=>f&&(f.type==='application/pdf'||/\.pdf$/i.test(f.name||''));
+const isImg=f=>f&&(f.type||'').startsWith('image/');
+function edNotices(){
+  return edNotes().map(([id,n])=>({key:'note:'+id,id,kind:'note',at:n.at,by:n.by,text:n.text}))
+    .concat(edFiles().map(([id,f])=>({key:'file:'+id,id,kind:'file',at:f.at,by:f.by,f,text:f.caption||''})))
+    .sort((a,b)=>b.at-a.at);
+}
+const isUnread=x=>x.by!==ME&&!readSet()[x.key];
+function unreadNotices(){return me()?edNotices().filter(isUnread).length:0}
+function noticeByKey(key){return edNotices().find(x=>x.key===key)||null}
+function commentsFor(key){return Object.entries(S.comments||{}).filter(([,c])=>c.target===key).sort((a,b)=>a[1].at-b[1].at)}
+const plural=(n,a,b)=>n+' '+(n===1?a:b);
+function noticeCard(x){
+  const un=isUnread(x),cc=commentsFor(x.key).length,f=x.f;
+  const ext=f?esc((f.name.split('.').pop()||'DOC').slice(0,4).toUpperCase()):'';
+  return `<button class="aviso${un?' unread':''}" data-a="opennotice" data-id="${x.key}" aria-label="Abrir aviso${un?' (novo)':''}">
+    <span class="av-top"><span class="av-eyebrow">Aviso · ${fmtAgo(x.at)}</span>${un?'<span class="pill-new">Novo</span>':''}</span>
+    ${x.text?`<span class="av-text">${esc(x.text)}</span>`:''}
+    ${f&&isImg(f)?`<img class="av-img" src="${f.data}" alt="${esc(f.name)}" loading="lazy">`:''}
+    ${f&&!isImg(f)?`<span class="av-file"><span class="ext">${ext}</span><span class="av-fn"><b>${esc(f.name)}</b><small>${fmtSize(f.size)}${isPdf(f)?' · toque para ler':''}</small></span></span>`:''}
+    <span class="av-foot"><span>${S.people[x.by]?esc(S.people[x.by].name):'Comissão'}</span><span class="av-cc">${cc?plural(cc,'comentário','comentários'):'Comentar'}<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></span></span>
+  </button>`;
+}
+function noticesHTML(){
+  const list=edNotices();if(!list.length)return '';
+  const un=list.filter(isUnread).length,top=list.slice(0,3),rest=list.slice(3);
+  return `<section class="sec avisos"><div class="sec-row"><span class="h-serif">Avisos da Comissão</span>${un?`<span class="pill-unread">${un} por ler</span>`:`<span class="note">${plural(list.length,'aviso','avisos')}</span>`}</div>
+    <div class="av-list">${top.map(noticeCard).join('')}</div>
+    ${rest.length?`<details class="grp"><summary>Avisos anteriores · ${rest.length}</summary><div class="av-list" style="padding:4px 0 16px">${rest.map(noticeCard).join('')}</div></details>`:''}
+  </section>`;
+}
+function commentsHTML(key){
+  const m=me(),cs=commentsFor(key);
+  return cs.length?cs.map(([cid,c])=>{const p=S.people[c.by]?P(c.by):{id:'',name:'Membro',role:'membro'};
+    return `<div class="cm">${avatar(p)}<div class="cm-b"><div class="cm-h"><b>${esc(p.name)}</b><small>${fmtPostTime(c.at)}</small>${m&&(c.by===m.id||m.committee)?`<button class="txt-btn" data-a="rmcomment" data-id="${cid}">Apagar</button>`:''}</div><p>${esc(c.text)}</p></div></div>`}).join('')
+    :'<p class="note">Ainda sem comentários. Seja o primeiro.</p>';
+}
+function openNotice(key){
+  const x=noticeByKey(key);if(!x)return;
+  markRead(key);UI.noticeOpen=key;
+  const f=x.f,by=S.people[x.by]?esc(S.people[x.by].name):'Comissão';
+  let body='';
+  if(f&&isImg(f))body=`<img src="${f.data}" alt="${esc(f.name)}" class="av-full">`;
+  else if(f&&isPdf(f))body=`<div class="pdf-pages" id="pdf-view"><p class="note">A abrir o PDF…</p></div>
+    <div class="btn-row"><button class="btn sm" data-a="openpdf" data-id="${x.id}">Abrir em ecrã inteiro</button><a class="btn sm" href="${f.data}" download="${esc(f.name)}">Descarregar</a></div>`;
+  else if(f)body=`<div class="av-file"><span class="ext">${esc((f.name.split('.').pop()||'DOC').slice(0,4).toUpperCase())}</span><span class="av-fn"><b>${esc(f.name)}</b><small>${fmtSize(f.size)}</small></span></div>
+    <a class="btn sm" href="${f.data}" download="${esc(f.name)}" style="align-self:flex-start">Descarregar</a>`;
+  $('#layer').innerHTML=`<div class="scrim" data-a="closesheet"><div class="sheet" role="dialog" aria-modal="true" aria-label="Aviso da Comissão">
+    <div class="sec-row"><div><span class="eyebrow">Aviso da Comissão</span><div class="note" style="margin-top:2px">${by} · ${fmtPostTime(x.at)}</div></div><button class="btn sm" data-a="closesheet">Fechar</button></div>
+    ${f&&!x.text?`<b style="font-weight:600;overflow-wrap:anywhere">${esc(f.name)}</b>`:''}
+    ${x.text?`<p class="av-body">${esc(x.text)}</p>`:''}
+    ${body}
+    <section class="sec cm-sec"><div class="sec-row"><span class="h-serif">Comentários</span></div>
+      <div id="cm-list" class="cm-list">${commentsHTML(key)}</div>
+      <label class="f" for="cm-text">O seu comentário<textarea id="cm-text" maxlength="500" rows="2" placeholder="Escreva aqui…"></textarea></label>
+      <button class="btn sm brass" data-a="addcomment" data-id="${key}" style="align-self:flex-start">Comentar</button>
+    </section>
+  </div></div>`;
+  attachDrag($('#layer .sheet'),()=>closeLayer());
+  if(f&&isPdf(f))renderPdf(f.data,$('#pdf-view'));
+  render();
+}
+function refreshNotice(){
+  if(!UI.noticeOpen)return;const l=$('#cm-list');
+  if(!l||!noticeByKey(UI.noticeOpen)){if(!l)UI.noticeOpen=null;return}
+  const html=commentsHTML(UI.noticeOpen);if(l.innerHTML!==html){l.innerHTML=html}
+}
+// PDFs are drawn page by page with pdf.js (loaded only when needed), so they read the same on every phone
+const dataBytes=u=>{const b=atob(u.split(',')[1]||'');const a=new Uint8Array(b.length);for(let i=0;i<b.length;i++)a[i]=b.charCodeAt(i);return a};
+let pdfLib=null;
+function loadPdfJs(){
+  const base='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/';
+  return pdfLib||(pdfLib=new Promise((res,rej)=>{const sc=document.createElement('script');sc.src=base+'pdf.min.js';
+    sc.onload=()=>{window.pdfjsLib.GlobalWorkerOptions.workerSrc=base+'pdf.worker.min.js';res(window.pdfjsLib)};
+    sc.onerror=()=>{pdfLib=null;rej(new Error('pdfjs'))};document.head.appendChild(sc)}));
+}
+async function renderPdf(data,box){
+  if(!box)return;
+  try{
+    const lib=await loadPdfJs();const doc=await lib.getDocument({data:dataBytes(data)}).promise;
+    if(!box.isConnected)return;box.innerHTML='';
+    const w=box.clientWidth||340,dpr=Math.min(2,window.devicePixelRatio||1);
+    for(let i=1;i<=Math.min(doc.numPages,30);i++){
+      const pg=await doc.getPage(i),v1=pg.getViewport({scale:1}),vp=pg.getViewport({scale:w/v1.width*dpr});
+      const c=document.createElement('canvas');c.width=Math.round(vp.width);c.height=Math.round(vp.height);c.setAttribute('aria-label','Página '+i);
+      await pg.render({canvasContext:c.getContext('2d'),viewport:vp}).promise;
+      if(!box.isConnected)return;box.appendChild(c);
+    }
+  }catch(e){console.error(e);if(box.isConnected)box.innerHTML='<p class="note">Não foi possível mostrar o PDF aqui. Use «Abrir em ecrã inteiro» ou «Descarregar».</p>'}
+}
 function viewFile(id){
+  if(S.files[id]&&S.files[id].kind!=='group'){openNotice('file:'+id);return}
   const f=S.files[id];if(!f)return;
   $('#layer').innerHTML=`<div class="scrim" data-a="closesheet"><div class="sheet" role="dialog" aria-label="${esc(f.name)}">
     <div class="sec-row"><span class="h-serif" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(f.name)}</span><button class="btn sm" data-a="closesheet">Fechar</button></div>
@@ -777,6 +914,8 @@ function inviteHTML(){
 /* ---------- Álbum (everyone adds photos on the night; Committee any time) ---------- */
 const isDinnerDay=()=>iso(today())===S.edition.date;
 const canUpload=()=>{const m=me();return !!m&&(m.committee||S.edition.phase==='noite'||isDinnerDay())};
+const PHOTO_LIMIT=5;
+const myPhotoCount=()=>{const m=me();return m?Object.values(S.media||{}).filter(x=>x.year===S.edition.year&&x.by===m.id).length:0};
 const yearMedia=y=>Object.entries(S.media||{}).filter(([,x])=>x.year===y).sort((a,b)=>a[1].at-b[1].at);
 const fmtPostTime=t=>{const d=new Date(t);return dm(d)+' · '+String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0')};
 const STACHE_LIKE='<svg viewBox="0 0 64 24" aria-hidden="true"><path d="M32 9.5c-2.6-4.6-8.4-6.6-13.2-4.2-3.8 1.9-5.6 5.6-9.6 5.6-2.8 0-4.6-1.6-5.7-3.6-.4 5.6 4.3 10.4 11 10.4 7.3 0 12.2-4.3 17.5-6 5.3 1.7 10.2 6 17.5 6 6.7 0 11.4-4.8 11-10.4-1.1 2-2.9 3.6-5.7 3.6-4 0-5.8-3.7-9.6-5.6C40.4 2.9 34.6 4.9 32 9.5z" fill="FILL" stroke="currentColor" stroke-width="2.2"/></svg>';
@@ -793,11 +932,12 @@ function postHTML(id,x){
   </article>`;
 }
 function albumHTML(){
-  const ms=yearMedia(S.edition.year).reverse(),open=canUpload();
-  const add=open?`<label class="add-link" for="media-in"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>Adicionar</label><input type="file" id="media-in" accept="${ONLINE?'image/*':'image/*,video/*'}" multiple hidden>`:`<span class="note">${ms.length?ms.length+(ms.length===1?' registo':' registos'):''}</span>`;
+  const ms=yearMedia(S.edition.year).reverse(),open=canUpload(),mine=myPhotoCount(),full=mine>=PHOTO_LIMIT;
+  const add=open&&full?`<span class="note">${PHOTO_LIMIT} de ${PHOTO_LIMIT} fotografias</span>`:open?`<span class="add-wrap">${mine?`<span class="note">${mine} de ${PHOTO_LIMIT}</span>`:''}<label class="add-link" for="media-in"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>Adicionar</label><input type="file" id="media-in" accept="${ONLINE?'image/*':'image/*,video/*'}" multiple hidden></span>`:`<span class="note">${ms.length?ms.length+(ms.length===1?' registo':' registos'):''}</span>`;
+  const rule=!open?'':full?`Já partilhou as suas ${PHOTO_LIMIT} fotografias. Para trocar uma, apague-a primeiro.`:`Cada membro pode partilhar até ${PHOTO_LIMIT} fotografias.`;
   return `<section class="sec"><div class="sec-row"><span class="h-serif">Álbum do jantar</span>${add}</div>
-    ${ms.length?`<div class="feed">${ms.map(([id,x])=>postHTML(id,x)).join('')}</div>`
-      :`<p class="note">${open?'Ainda sem registos. Partilhe a primeira fotografia da noite.':`As fotografias da noite aparecem aqui. Todos podem partilhar no dia do jantar, ${fmtShort(S.edition.date)}.`}</p>`}
+    ${ms.length?`<div class="feed">${ms.map(([id,x])=>postHTML(id,x)).join('')}</div>${rule?`<p class="note">${rule}</p>`:''}`
+      :`<p class="note">${open?'Ainda sem registos. Partilhe a primeira fotografia da noite. '+rule:`As fotografias da noite aparecem aqui. Todos podem partilhar no dia do jantar, ${fmtShort(S.edition.date)}.`}</p>`}
   </section>`;
 }
 // Archive of one dinner: winners, every mascot proposal (with votes), and the album
@@ -834,6 +974,9 @@ function shrinkImage(file){return new Promise((res,rej)=>{const url=URL.createOb
 const readData=f=>new Promise(r=>{const fr=new FileReader();fr.onload=()=>r(fr.result);fr.readAsDataURL(f)});
 async function addMedia(files){
   const m=me();if(!canUpload()){toast('O álbum abre no dia do jantar');return}
+  let left=PHOTO_LIMIT-myPhotoCount();
+  if(left<=0){toast(`Já partilhou ${PHOTO_LIMIT} fotografias`);return}
+  const over=Math.max(0,files.length-left);files=files.slice(0,left);
   let ok=0,skip=0;
   for(const f of files){
     try{
@@ -848,7 +991,7 @@ async function addMedia(files){
     }catch(e){skip++}
   }
   render();if(ok)notify('photos');
-  toast(ok?(ok===1?'1 registo adicionado':ok+' registos adicionados')+(skip?` · ${skip} não cabem no modo de teste`:''):'Não foi possível adicionar');
+  toast(ok?(ok===1?'1 registo adicionado':ok+' registos adicionados')+(over?` · limite de ${PHOTO_LIMIT} por membro`:skip?` · ${skip} não foi possível`:''):'Não foi possível adicionar');
 }
 
 /* ---------- Edição anterior: one form for year, date, place, winners and the group photo ---------- */
@@ -928,7 +1071,8 @@ function ballotSection(k){
     const zero=b.cands.filter(id=>!c[id]&&S.people[id]);
     body=`<div class="list" style="gap:16px">${b.cands.filter(id=>c[id]&&S.people[id]).sort((x,y)=>c[y]-c[x]).map(id=>`<div class="bar ${L.length===1&&L[0]===id?'win':''}"><div class="lab"><span>${esc(P(id).name)}</span><b>${c[id]}</b></div><div class="track"><div class="fill" style="width:${c[id]/tot*100}%"></div></div></div>`).join('')}</div>`;
     if(zero.length)body+=`<p class="note">Sem votos: ${zero.map(id=>esc(S.people[id].name)).join(', ')}.</p>`;
-    body+=L.length>1?`<div class="notice brass"><b>Empate entre ${L.map(id=>esc(P(id).name)).join(' e ')}.</b><span>Prevalece o bom senso; na sua falta, nova votação (Art. 16.º). A Comissão decide.</span></div>`
+    if(L.length===1&&b.decided===L[0])body+=`<p class="note">Houve empate. A Comissão desempatou a favor de ${esc(P(L[0]).name)} (Art. 16.º).</p>`;
+    body+=L.length>1?`<div class="notice brass"><b>Empate entre ${L.map(id=>esc(P(id).name)).join(' e ')}.</b><span>A Comissão vai abrir uma nova votação só entre os empatados${(b.round||1)>1?' ou decidir ela própria':''} (Art. 16.º).</span></div>`
       :L.length===1?(L[0]===m.id?`<div class="notice brass" style="border-color:var(--brass)"><b>Parabéns, ${esc(m.name)}! É você.</b><span>${cap(B.prize.replace(/^recebe/,'Recebe').replace(/^é a nova/,'É a nova'))}.</span></div>`:`<div class="notice green"><b>${esc(P(L[0]).name)} vence.</b><span>${cap(B.prize)}.</span></div>`):'';
     body+=`<button class="txt-btn" data-a="replay" data-k="${k}" style="align-self:flex-start;color:var(--brass)">Rever a revelação</button>`;
   }else if(!b.open&&k==='mascote'){
@@ -1058,9 +1202,14 @@ function vComissao(){
       <div class="btn-row">
         ${editable?`<button class="btn sm brass" data-a="open" data-k="${k}" ${!canOpen(k)?'disabled':''}>Abrir urna</button>`:''}
         ${b.open?`<button class="btn sm wine" data-a="reveal" data-k="${k}">Selar e revelar</button>`:''}
-        ${b.revealed&&L.length>1?`<button class="btn sm brass" data-a="tiebreak" data-k="${k}">Desempate</button>`:''}
+        ${b.revealed&&L.length>1?`<button class="btn sm brass" data-a="tiebreak" data-k="${k}">Nova votação entre empatados</button>`:''}
         ${b.revealed||b.open?`<button class="btn sm" data-a="resetb" data-k="${k}">Recomeçar</button>`:''}
       </div>
+      ${b.revealed&&L.length>1?`<div class="tie-box"><span class="sub-label">Empate · ronda ${b.round||1}</span>
+        <p class="note">Abra uma nova votação só entre ${L.map(id=>esc(P(id).name)).join(' e ')}. Se voltar a empatar, ou se preferirem o bom senso, a Comissão decide (Art. 16.º).</p>
+        <div class="btn-row"><select id="dec-${k}" aria-label="Escolher o vencedor" style="flex:1 1 150px;min-width:0;padding:8px 34px 8px 10px;background-position:right 10px center"><option value="">Escolher…</option>${L.map(id=>`<option value="${id}">${esc(P(id).name)}</option>`).join('')}</select>
+        <button class="btn sm" data-a="decide" data-k="${k}">A Comissão decide</button></div></div>`:''}
+      ${b.revealed&&b.decided&&L.length===1?`<p class="note">Empate decidido pela Comissão a favor de ${esc(P(b.decided).name)}. <button class="txt-btn" data-a="undecide" data-k="${k}" style="color:var(--brass)">Anular</button></p>`:''}
       <p class="note">${editable?openHint(k):''}${b.open||b.revealed?Object.keys(b.votes||{}).length+' votos recebidos.':''}</p></div>`;
   };
   // Why a ballot can or cannot open yet, in plain words
@@ -1194,7 +1343,7 @@ function sheet(){
 const SEEN_KEY='bigode-premium-seen';
 function seenSet(){try{return new Set(JSON.parse(localStorage.getItem(SEEN_KEY)||'[]'))}catch(e){return UI.seenMem||(UI.seenMem=new Set())}}
 function markSeen(key){const s=seenSet();s.add(key);try{localStorage.setItem(SEEN_KEY,JSON.stringify([...s]))}catch(e){UI.seenMem=s}}
-const revealKey=k=>`${ME}-${S.edition.year}-${k}-${S.ballots[k].round||1}-${Object.keys(S.ballots[k].votes||{}).length}`;
+const revealKey=k=>`${ME}-${S.edition.year}-${k}-${S.ballots[k].round||1}-${Object.keys(S.ballots[k].votes||{}).length}${S.ballots[k].decided?'-d-'+S.ballots[k].decided:''}`;
 let ceremonyOn=false;
 function checkReveals(){
   if(ceremonyOn||!me())return;
@@ -1227,7 +1376,9 @@ async function playReveal(k,replay,hist){
   const R=hist?hist.results[k]:null;
   const c=R?R.counts:tally(S.ballots[k]),names=R?R.names||{}:{};
   const nameOf=id=>S.people[id]?S.people[id].name:(names[id]||'—');
-  const mx=Math.max(0,...Object.values(c)),L=mx?Object.keys(c).filter(id=>c[id]===mx):[];
+  let L=(()=>{const mx=Math.max(0,...Object.values(c));return mx?Object.keys(c).filter(id=>c[id]===mx):[]})();
+  const dec=R?R.decided:S.ballots[k].decided,byCommittee=!!dec&&L.length>1&&L.includes(dec);
+  if(byCommittee)L=[dec];
   const B=BALLOT[k],tie=L.length!==1,m=me();
   const win=tie?null:(P(L[0])||{id:L[0],name:nameOf(L[0])}),mine=!!win&&win.id===m.id;
   const rows=Object.keys(c).filter(id=>c[id]).sort((x,y)=>c[x]-c[y]);
@@ -1253,11 +1404,11 @@ async function playReveal(k,replay,hist){
     rows.forEach(id=>fillBar(id,true));
     L.forEach(id=>{const x=bars.querySelector(`[data-id="${id}"]`);if(x)x.classList.add('lead')});
     bars.classList.remove('dim');bars.classList.add('final');
-    if(tie){stage.innerHTML=`<div class="cer-win"><div class="cer-tie">Empate!</div><div class="cer-sub">${L.map(id=>esc(nameOf(id))).join(' · ')}</div><p class="note">Prevalece o bom senso; na sua falta, nova votação (Art. 16.º).</p></div>`}
+    if(tie){stage.innerHTML=`<div class="cer-win"><div class="cer-tie">Empate!</div><div class="cer-sub">${L.map(id=>esc(nameOf(id))).join(' · ')}</div><p class="note">A Comissão abre uma nova votação só entre os empatados ou decide (Art. 16.º).</p></div>`}
     else{stage.innerHTML=`<div class="cer-win">${mine?'<span class="cer-you">É você!</span>':''}${portrait(win,k==='mascote'?'green':'')}
       <div class="cer-name">${esc(win.name)}</div>
       <div class="cer-sub">${k==='bigode'?'Melhor Bigode do Ano · recebe o Laço-Testemunho':'Nova Mascote do Bigode · convite vitalício'}</div>
-      <div class="cer-votes">${c[win.id]} de ${total} votos</div></div>`;
+      <div class="cer-votes">${byCommittee?'Empate desfeito pela Comissão · Art. 16.º':`${c[win.id]} de ${total} votos`}</div></div>`;
       if(!reduce)confetti(el.querySelector('.confetti'),mine?190:120,mine?7000:5200)}
     stage.after(bars);
     el.querySelector('.cer-skip').hidden=true;
@@ -1360,7 +1511,7 @@ function newsTabs(current){
   if(current&&['jantar','votar','galeria'].includes(current)&&latestNews(current)>=(seen[current]||0)){seen[current]=now;saveSeenTabs(seen)}
   const out={};['jantar','votar','galeria'].forEach(k=>{out[k]=k!==current&&latestNews(k)>(seen[k]||0)});
   // The number on the home-screen icon (where the phone allows it)
-  const n=Object.values(out).filter(Boolean).length;
+  const n=Object.entries(out).filter(([k,v])=>v&&!(k==='jantar'&&unreadNotices())).length+unreadNotices();
   try{if(navigator.setAppBadge){n?navigator.setAppBadge(n):navigator.clearAppBadge()}}catch(e){}
   return out;
 }
@@ -1430,13 +1581,14 @@ function render(){
   if(m)$('#meBtn').innerHTML=m.photo?`<img src="${m.photo}" alt="">`:esc(ini(m.name).charAt(0));
   $('#meBtn').classList.toggle('on',!!UI.profileOpen);
   document.querySelector('.tabs').hidden=!m;
-  const news=m?newsTabs(r):{};
-  $('#tabs').innerHTML=m?TABS.filter(([k])=>k!=='comissao'||m.committee).map(([k,l])=>`<a href="#${k}" class="${r===k?'on':''}" ${r===k?'aria-current="page"':''} ${news[k]?`aria-label="${l.charAt(0)+l.slice(1).toLowerCase()}, com novidades"`:''}>${ICON[k]}${news[k]?'<span class="new" aria-hidden="true"></span>':''}${l}</a>`).join(''):'';
+  const news=m?newsTabs(r):{},unread=m?unreadNotices():0;
+  $('#tabs').innerHTML=m?TABS.filter(([k])=>k!=='comissao'||m.committee).map(([k,l])=>`<a href="#${k}" class="${r===k?'on':''}" ${r===k?'aria-current="page"':''} ${k==='jantar'&&unread?`aria-label="Jantar, ${plural(unread,'aviso por ler','avisos por ler')}"`:news[k]?`aria-label="${l.charAt(0)+l.slice(1).toLowerCase()}, com novidades"`:''}>${ICON[k]}${k==='jantar'&&unread?`<span class="new count" aria-hidden="true">${unread}</span>`:news[k]?'<span class="new" aria-hidden="true"></span>':''}${l}</a>`).join(''):'';
   const active=document.activeElement&&document.activeElement.id;
   const app=$('#app'),changed=UI.lastRoute!==(m?r:'who');UI.lastRoute=m?r:'who';
   app.innerHTML=!m?vWho():({jantar:vJantar,votar:vVotar,galeria:vGaleria,regras:vRegras,comissao:vComissao}[r])();
   if(changed){app.classList.remove('enter');void app.offsetWidth;app.classList.add('enter')}else app.classList.remove('enter');
   if(UI.profileOpen&&m){const body=$('#layer .sheet-body');if(body)body.innerHTML=vPerfil()}
+  if(UI.noticeOpen)refreshNotice();
   if(active==='q'){const q=$('#q');if(q){q.focus();q.setSelectionRange(q.value.length,q.value.length)}}
   if(m)setTimeout(checkReveals,250);
 }
@@ -1478,7 +1630,7 @@ document.addEventListener('input',ev=>{if(ev.target.id==='q'){UI.q=ev.target.val
 
 /* ====================================================================== actions */
 // Everything only the Committee may do. The online version enforces the same list on the server.
-const COMMITTEE_ONLY=new Set(['phase','saveed','just','present','addcand','newcand','rmcand','allpresent','open','reveal','tiebreak','resetb',
+const COMMITTEE_ONLY=new Set(['phase','saveed','just','present','addcand','newcand','rmcand','allpresent','open','reveal','tiebreak','decide','undecide','resetb',
   'edit','saveedit','askrm','rmok','addmember','askclose','closeok','askreset','resetok','addnote','rmnote','rmfile','askendnight','endnightok','copylink','newlink','addmascot','addhist','savehist','rmhist','histform','savehistform','hfnophoto']);
 // Square-crop profile photos to 400px so they stay light
 function squarePhoto(file){return new Promise((res,rej)=>{const url=URL.createObjectURL(file);const img=new Image();
@@ -1503,9 +1655,12 @@ document.addEventListener('change',async ev=>{
   if(!(m&&m.committee)){toast('Reservado à Comissão');return}
   const lim=ONLINE?0.65:1.5;if(f.size>lim*1048576){toast(`Ficheiro acima de ${String(lim).replace('.',',')} MB`);return}
   const r=new FileReader();
-  r.onload=()=>{const fid='f'+Date.now().toString(36);Store.set('files.'+fid,{year:S.edition.year,name:f.name,type:f.type||'application/octet-stream',size:f.size,data:r.result,by:m.id,at:Date.now()});
-    if(!Store.persist()){Store.set('files.'+fid,undefined);Store.persist();toast('Sem espaço no modo de teste');return}
-    render();toast('Ficheiro anexado')};
+  r.onload=()=>{const fid='f'+Date.now().toString(36);const ta=$('#note-text'),cap=ta?ta.value.trim():'';
+    const doc={year:S.edition.year,name:f.name,type:f.type||'application/octet-stream',size:f.size,data:r.result,by:m.id,at:Date.now()};if(cap)doc.caption=cap;
+    Store.set('files.'+fid,doc);
+    if(!Store.persist()){Store.set('files.'+fid,undefined);Store.persist();toast(ONLINE?'Ficheiro grande demais':'Sem espaço no modo de teste');return}
+    if(ta)ta.value='';render();toast(cap?'Aviso publicado com anexo':'Ficheiro publicado');
+    Promise.resolve(Remote.lastCommit).then(()=>notify('noticefile',{id:fid}))};
   r.readAsDataURL(f);
 });
 document.addEventListener('click',ev=>{
@@ -1534,9 +1689,20 @@ document.addEventListener('click',ev=>{
       if(UI.confirm!=='rmm-'+id){UI.confirm='rmm-'+id;el.textContent='Confirmar?';el.style.color='var(--wine-ink)';return}
       UI.confirm=null;const wasSheet=!!$('#layer').innerHTML;Store.one('media.'+id,undefined);if(wasSheet)viewAlbum(x.year);toast('Apagado do álbum');return}
     case 'addnote':{const t=$('#note-text').value.trim();if(!t){toast('Escreva o aviso');return}const nid='n'+Date.now().toString(36);Store.one('notes.'+nid,{year:S.edition.year,text:t,by:m.id,at:Date.now()});notify('notice',{id:nid});toast('Aviso publicado');return}
-    case 'rmnote':Store.one('notes.'+id,undefined);toast('Aviso apagado');return;
-    case 'rmfile':Store.one('files.'+id,undefined);toast('Ficheiro apagado');return;
-    case 'closesheet':if(ev.target===el||el.tagName==='BUTTON')closeLayer();return;
+    case 'rmnote':case 'rmfile':{const t=(a==='rmnote'?'note:':'file:')+id;
+      commentsFor(t).forEach(([cid])=>Store.set('comments.'+cid,undefined));
+      Store.one((a==='rmnote'?'notes.':'files.')+id,undefined);toast(a==='rmnote'?'Aviso apagado':'Ficheiro apagado');return}
+    case 'opennotice':openNotice(id);return;
+    case 'openpdf':{const f=S.files[id];if(!f)return;try{const u=URL.createObjectURL(new Blob([dataBytes(f.data)],{type:'application/pdf'}));
+      const w=window.open(u,'_blank');if(!w)toast('Use «Descarregar» para abrir o PDF')}catch(e){toast('Não foi possível abrir')}return}
+    case 'addcomment':{const ta=$('#cm-text'),t=ta?ta.value.trim():'';if(!t){toast('Escreva um comentário');ta&&ta.focus();return}
+      if(!noticeByKey(id)){toast('Este aviso já não existe');return}
+      const cid='c'+Date.now().toString(36)+Math.random().toString(36).slice(2,5);
+      Store.one('comments.'+cid,{target:id,by:m.id,text:t.slice(0,500),at:Date.now()});ta.value='';refreshNotice();
+      const l=$('#cm-list');if(l)l.lastElementChild&&l.lastElementChild.scrollIntoView({block:'nearest',behavior:'smooth'});
+      Promise.resolve(Remote.lastCommit).then(()=>notify('comment',{id:cid}));return}
+    case 'rmcomment':Store.one('comments.'+id,undefined);refreshNotice();toast('Comentário apagado');return;
+    case 'closesheet':if(ev.target===el||el.tagName==='BUTTON'){UI.noticeOpen=null;closeLayer()}return;
     case 'closeprofile':if(ev.target===el||el.tagName==='BUTTON')closeProfile();return;
     case 'card':UI.profileOpen?closeProfile():openProfile();return;
     case 'pick':Store.setMe(id);if(UI.profileOpen){UI.profileOpen=false;if(history.state&&history.state.lmmSheet)history.back()}$('#layer').innerHTML='';UI.pick={};if(location.hash==='#comissao'&&!P(id).committee)location.hash='jantar';ui();window.scrollTo(0,0);toast('Bem-vindo, '+P(id).name);return;
@@ -1546,7 +1712,10 @@ document.addEventListener('click',ev=>{
       const done=()=>{toast('Mensagem com o link copiada');UI.showLink=id;ui()};
       if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(msg).then(done,()=>{UI.showLink=id;ui()});else{UI.showLink=id;ui()}return}
     case 'newlink':{Remote.dropKeys(id).then(()=>Remote.addKey(id)).then(()=>toast('Novo link criado; o anterior deixou de funcionar')).catch(()=>toast('Sem permissão'));return}
-    case 'rsvp':{const prev=S.rsvp[m.id]||{};Store.one('rsvp.'+m.id,v==='vou'?{s:'vou'}:Object.assign({},prev.s==='nao'?prev:{},{s:'nao'}));toast(v==='vou'?'Presença confirmada':'Ausência registada');return}
+    case 'rsvp':{const prev=S.rsvp[m.id]||{};
+      // Tapping the option that is already chosen withdraws the reply (both buttons unselected again)
+      if(prev.s===v){Store.one('rsvp.'+m.id,{});toast('Resposta retirada');return}
+      Store.one('rsvp.'+m.id,v==='vou'?{s:'vou'}:Object.assign({},prev.s==='nao'?prev:{},{s:'nao'}));toast(v==='vou'?'Presença confirmada':'Ausência registada');return}
     case 'reason':{const t=$('#reason').value.trim();if(!t){toast('Escreva o motivo');return}Store.one('rsvp.'+m.id,{s:'nao',reason:t,j:'pendente'});toast('Justificação enviada');return}
     case 'pickcand':UI.pick[k]=id;ui();return;
     case 'vote':{const kk=k,pk=UI.pick[kk];if(!pk)return;Store.one(`ballots.${kk}.votes.${m.id}`,pk);delete UI.pick[kk];toast('Voto depositado');return}
@@ -1573,6 +1742,10 @@ document.addEventListener('click',ev=>{
       if((ch['ballots.bigode.cands']||S.ballots[k].cands).length<2){toast(k==='mascote'?'São precisas 2 propostas':'Registe 2 membros presentes');return}
       Store.setMany(ch);notify('open',{k});toast('Urna aberta');return}
     case 'reveal':Store.setMany({[`ballots.${k}.open`]:false,[`ballots.${k}.revealed`]:true,[`ballots.${k}.revealedAt`]:Date.now(),[`ballots.${k}.revealedBy`]:m.id});notify('reveal',{k});toast('Urna selada');return;
+    case 'decide':{const sel=$('#dec-'+k),w=sel&&sel.value;if(!w){toast('Escolha o vencedor');return}
+      if(!tiedLeaders(S.ballots[k]).includes(w))return;
+      Store.setMany({[`ballots.${k}.decided`]:w,[`ballots.${k}.revealedAt`]:Date.now(),[`ballots.${k}.revealedBy`]:m.id});notify('reveal',{k});toast('Empate decidido');return}
+    case 'undecide':Store.one(`ballots.${k}.decided`,undefined);toast('Decisão anulada');return;
     case 'tiebreak':{const b=S.ballots[k];Store.setMany({[`ballots.${k}`]:{cands:leaders(b),open:true,revealed:false,votes:{},round:(b.round||1)+1,openedAt:Date.now(),openedBy:m.id}});toast('Desempate aberto');return}
     case 'resetb':Store.one(`ballots.${k}`,{cands:S.ballots[k].cands,open:false,revealed:false,votes:{},round:1});return;
     case 'edit':UI.editing=id;UI.confirm=null;ui();return;
@@ -1606,6 +1779,7 @@ document.addEventListener('click',ev=>{
       const mt=tally(S.ballots.mascote),bt=tally(S.ballots.bigode);
       const nm=ids=>Object.fromEntries(ids.filter(i=>S.people[i]).map(i=>[i,S.people[i].name]));
       const results={mascote:{counts:mt,names:nm(Object.keys(mt))},bigode:{counts:bt,names:nm(Object.keys(bt))}};
+      ['mascote','bigode'].forEach(x=>{if(S.ballots[x].decided)results[x].decided=S.ballots[x].decided});
       const proposed=S.ballots.mascote.cands.filter(c=>S.people[c]).map(c=>{const q=S.people[c];return {name:q.name,note:q.note||'',by:q.nominatedBy||null,votes:mt[c]||0,won:c===mw}});
       const inv=invited();
       ch.history=S.history.concat({year:y,date:S.edition.date,bigode:bw,mascote:mw,proposed,results,closedAt:Date.now(),closedBy:m.id,

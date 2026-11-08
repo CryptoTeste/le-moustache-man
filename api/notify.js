@@ -19,7 +19,22 @@ module.exports = async (req, res) => {
   if (!me) return res.status(403).json({ error: 'not-member' });
 
   const body = typeof req.body === 'string' ? JSON.parse(req.body || '{}') : (req.body || {});
-  const msg = buildMessage(String(body.event || ''), st, member, { k: body.k, id: body.id });
+  const event = String(body.event || ''), id = String(body.id || '');
+  const extra = { k: body.k, id: body.id };
+  // A notice with a file, or a comment, lives in its own collection, so read it here
+  if (event === 'noticefile' && id) { const d = await db.doc('files/' + id).get(); extra.file = d.exists ? d.data() : null; }
+  if (event === 'comment' && id) {
+    const d = await db.doc('comments/' + id).get();
+    extra.comment = d.exists ? d.data() : null;
+    if (extra.comment && extra.comment.target) {
+      const q = await db.collection('comments').where('target', '==', extra.comment.target).get();
+      extra.thread = []; q.forEach(x => extra.thread.push(x.data().by));
+      const [kind, tid] = extra.comment.target.split(':');
+      if (kind === 'file') { const f = await db.doc('files/' + tid).get(); extra.notice = f.exists ? { by: f.data().by, text: f.data().caption || f.data().name } : null; }
+      else extra.notice = st.notes && st.notes[tid] ? { by: st.notes[tid].by, text: st.notes[tid].text } : null;
+    }
+  }
+  const msg = buildMessage(event, st, member, extra);
   if (!msg) return res.status(400).json({ error: 'event' });
   if (msg.committee && !me.committee) return res.status(403).json({ error: 'committee-only' });
 
