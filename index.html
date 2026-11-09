@@ -299,9 +299,12 @@ label.f{display:flex;flex-direction:column;gap:6px;min-width:0;font-size:10px;le
 
 /* avisos (notices) */
 .av-list{display:flex;flex-direction:column;gap:12px}
-.aviso{display:flex;flex-direction:column;gap:12px;width:100%;text-align:left;font:inherit;color:var(--ink);background:var(--surface);border:1px solid var(--line);border-left:3px solid var(--brass);padding:16px 16px 14px;cursor:pointer;position:relative;transition:transform .2s ease,border-color .2s ease}
+.aviso{display:flex;flex-direction:column;gap:12px;width:100%;text-align:left;font:inherit;color:var(--ink);background:var(--surface);border:1px solid var(--line);padding:16px 16px 14px;cursor:pointer;position:relative;transition:transform .2s ease,border-color .2s ease}
 .aviso:active{transform:scale(.99)}
-.aviso.unread{border-color:var(--brass);border-left-width:3px;box-shadow:0 10px 30px var(--shadow)}
+.aviso.unread{border-color:var(--brass);border-left:3px solid var(--brass);box-shadow:0 10px 30px var(--shadow)}
+.aviso:not(.unread) .av-eyebrow{color:var(--muted)}
+.av-read{display:inline-flex;align-items:center;gap:4px;font-size:10px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--faint)}
+.av-read svg{width:13px;height:13px}
 .av-top{display:flex;align-items:center;justify-content:space-between;gap:10px}
 .av-eyebrow{font-size:10px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:var(--brass)}
 .pill-new{font-size:9px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:#fff;background:var(--wine-ink);padding:4px 8px;border-radius:99px}
@@ -812,7 +815,7 @@ function noticeCard(x){
   const un=isUnread(x),cc=commentsFor(x.key).length,f=x.f;
   const ext=f?esc((f.name.split('.').pop()||'DOC').slice(0,4).toUpperCase()):'';
   return `<button class="aviso${un?' unread':''}" data-a="opennotice" data-id="${x.key}" aria-label="Abrir aviso${un?' (novo)':''}">
-    <span class="av-top"><span class="av-eyebrow">Aviso · ${fmtAgo(x.at)}</span>${un?'<span class="pill-new">Novo</span>':''}</span>
+    <span class="av-top"><span class="av-eyebrow">Aviso · ${fmtAgo(x.at)}</span>${un?'<span class="pill-new">Novo</span>':x.by===ME?'':'<span class="av-read"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>Lido</span>'}</span>
     ${x.text?`<span class="av-text">${esc(x.text)}</span>`:''}
     ${f&&isImg(f)?`<img class="av-img" src="${f.data}" alt="${esc(f.name)}" loading="lazy">`:''}
     ${f&&!isImg(f)?`<span class="av-file"><span class="ext">${ext}</span><span class="av-fn"><b>${esc(f.name)}</b><small>${fmtSize(f.size)}${isPdf(f)?' · toque para ler':''}</small></span></span>`:''}
@@ -1292,14 +1295,6 @@ function vComissao(){
 
   // What needs attention, with a shortcut to the right section
   const pendJ=just.filter(id=>!S.rsvp[id].j||S.rsvp[id].j==='pendente').length;
-  const todo=[];
-  if(pendJ)todo.push(['respostas',`${pendJ} ${pendJ>1?'justificações':'justificação'} por apreciar`,'wine']);
-  if(e.phase==='noite'&&!presentIds().length)todo.push(['jantar','Registar as presenças da noite','brass']);
-  ['mascote','bigode'].forEach(k=>{const b=S.ballots[k];if(b.open)todo.push(['jantar',`Urna ${k==='mascote'?'da Mascote':'do Melhor Bigode'} aberta · ${Object.keys(b.votes||{}).length} votos`,'on']);
-    else if(b.revealed&&leaders(b).length>1)todo.push(['jantar',`Empate na urna ${k==='mascote'?'da Mascote':'do Melhor Bigode'}`,'brass']);
-    else if(e.phase==='noite'&&!b.revealed&&canOpen(k))todo.push(['jantar',`Urna ${k==='mascote'?'da Mascote':'do Melhor Bigode'} pronta a abrir`,'brass'])});
-  if(canClose)todo.push(['jantar',`Pronto para encerrar a edição ${e.year}`,'brass']);
-  if(e.phase==='convocatoria'&&!deadlinePassed()&&silent.length)todo.push(['respostas',`${silent.length} ${silent.length===1?'membro ainda':'membros ainda'} em silêncio`,'']);
 
   const tabs=[['jantar','Jantar'],['respostas','Respostas'],['pessoas','Pessoas']];
   if(!UI.ctab||UI.ctab==='noite')UI.ctab='jantar';
@@ -1311,9 +1306,6 @@ function vComissao(){
   const body={jantar,respostas:sec.resumo+sec.just,pessoas:sec.membros+sec.mascotes+sec.arquivo+sec.test}[t];
   return `
   <div class="head"><span class="eyebrow">Órgão organizador · Art. 2.º</span><h1 class="title">A <em>Comissão</em></h1></div>
-  <section class="sec" style="gap:0"><span class="eyebrow" style="color:var(--muted);margin-bottom:6px">Para tratar</span>
-    ${todo.length?`<div class="list">${todo.map(([tab,txt,dot])=>`<button class="row" data-a="ctab" data-v="${tab}" style="background:none;border-left:0;border-right:0;border-bottom:0;width:100%;text-align:left;padding:11px 0"><span class="dot ${dot}"></span><span style="flex:1;font-size:14px">${txt}</span><span style="color:var(--brass);font:20px var(--f-serif)">›</span></button>`).join('')}</div>`
-      :'<p class="note" style="padding:8px 0">Nada pendente.</p>'}</section>
   <div class="seg four" role="tablist" aria-label="Secções da Comissão">${tabs.map(([k,l])=>`<button role="tab" aria-selected="${t===k}" class="${t===k?'on':''}" data-a="ctab" data-v="${k}">${l}${k==='respostas'&&pendJ?` <span class="badge">${pendJ}</span>`:''}</button>`).join('')}</div>
   ${body}`;
 }
