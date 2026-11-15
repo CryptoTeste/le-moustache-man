@@ -294,6 +294,14 @@ label.f{display:flex;flex-direction:column;gap:6px;min-width:0;font-size:10px;le
 .txt-btn{background:none;border:0;padding:4px 0;font-size:10px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:var(--faint)}
 .add-link{display:inline-flex;align-items:center;gap:6px;font-size:10px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:var(--brass);cursor:pointer;padding:6px 0}
 .add-link svg{width:14px;height:14px}
+.boot{display:flex;flex-direction:column;align-items:center;gap:22px;padding-top:30vh;text-align:center}
+.boot-stache{width:96px;height:36px;color:var(--brass);overflow:visible}
+/* the outer ends of the moustache lift and settle, like a twitch */
+.boot-stache path{transform-box:view-box;transform-origin:32px 12px;animation:tip-l 1.6s ease-in-out infinite}
+.boot-stache .tip-r{animation-name:tip-r}
+@keyframes tip-l{0%,55%,100%{transform:rotate(0)}20%{transform:rotate(9deg)}38%{transform:rotate(-2deg)}}
+@keyframes tip-r{0%,55%,100%{transform:rotate(0)}20%{transform:rotate(-9deg)}38%{transform:rotate(2deg)}}
+@media (prefers-reduced-motion:reduce){.boot-stache path{animation:none}}
 .add-wrap{display:inline-flex;align-items:center;gap:14px}
 .sheet-bar{position:sticky;top:-20px;z-index:2;display:flex;align-items:flex-start;justify-content:space-between;gap:12px;background:var(--bg);margin:-20px calc(-1 * max(22px,env(safe-area-inset-left,0px))) 0;padding:20px max(22px,env(safe-area-inset-right,0px)) 14px max(22px,env(safe-area-inset-left,0px));border-bottom:1px solid var(--line-soft)}
 .x-btn{flex:none;width:36px;height:36px;border-radius:50%;border:1px solid var(--line-strong);background:var(--surface);color:var(--ink);display:inline-flex;align-items:center;justify-content:center;cursor:pointer;padding:0}
@@ -652,7 +660,7 @@ const Remote={db:null,auth:null,FV:null,queue:[],ready:false,screen:'loading',ke
     if(this.screen==='nolink')return box('Precisa do','seu link',`<p class="muted">Esta app é só para a Irmandade. Peça à Comissão o seu link pessoal e abra-o neste telemóvel. Só precisa de o fazer uma vez.</p>`);
     if(this.screen==='badlink')return box('Link','inválido',`<p class="muted">Este link já não é válido. Peça um novo à Comissão.</p>`);
     if(this.screen==='error')return box('Sem','ligação',`<p class="muted">Não foi possível ligar à Irmandade. Verifique a internet e tente outra vez.</p><button class="btn" data-a="reload">Tentar outra vez</button>`);
-    return `<div class="head" style="padding-top:30vh;align-items:center;text-align:center"><span class="eyebrow">A abrir a Irmandade…</span></div>`;
+    return `<div class="boot" role="status"><svg class="boot-stache" viewBox="0 0 64 24" fill="currentColor" aria-hidden="true"><path class="tip-l" d="M32 9.5c-2.6-4.6-8.4-6.6-13.2-4.2-3.8 1.9-5.6 5.6-9.6 5.6-2.8 0-4.6-1.6-5.7-3.6-.4 5.6 4.3 10.4 11 10.4 7.3 0 12.2-4.3 17.5-6z"/><path class="tip-r" d="M32 9.5c2.6-4.6 8.4-6.6 13.2-4.2 3.8 1.9 5.6 5.6 9.6 5.6 2.8 0 4.6-1.6 5.7-3.6.4 5.6-4.3 10.4-11 10.4-7.3 0-12.2-4.3-17.5-6z"/></svg><span class="eyebrow">A abrir a Irmandade…</span></div>`;
   }
 };
 
