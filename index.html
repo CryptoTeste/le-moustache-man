@@ -653,6 +653,9 @@ const Remote={db:null,auth:null,FV:null,queue:[],ready:false,screen:'loading',ke
     const adminId=add(adminName,true,true);
     others.split('\n').map(s=>s.trim()).filter(Boolean).forEach(l=>{const com=/\*/.test(l);add(l.replace(/\*/g,'').trim(),com,false)});
     const dl=D(date);dl.setDate(dl.getDate()-14);
+    // Never start with a reply deadline that has already passed: that would exclude everyone at once (Art. 5.º)
+    const soon=new Date();soon.setHours(0,0,0,0);soon.setDate(soon.getDate()+7);
+    if(dl<soon){const d2=D(date);dl.setTime(Math.max(Math.min(soon.getTime(),d2.getTime()),Date.now()))}
     const st=emptyState();st.people=people;
     st.edition=Object.assign(st.edition,{year:y,date,deadline:iso(dl),dress:'Cavalheiro clássico. Colete ou suspensórios, laço ou gravata. Bigode natural.'});
     delete st.media;delete st.files;delete st.comments;
@@ -1300,7 +1303,7 @@ function vComissao(){
     <label class="f" for="f-dress">Traje<textarea id="f-dress">${esc(e.dress)}</textarea></label>
     <label class="f" for="f-dead">Prazo de resposta<input type="date" id="f-dead" value="${e.deadline}"></label>
     <button class="btn brass" data-a="saveed">Guardar convocatória</button>
-    <p class="note">Para testar a exclusão automática, ponha o prazo numa data passada.</p></section>`;
+    <p class="note">${deadlinePassed()?'<b>O prazo de resposta já passou</b>: quem não respondeu aparece como Excluído (Art. 5.º). Para reabrir as respostas, escolha uma data futura e guarde.':'Depois do prazo, quem não respondeu fica Excluído (Art. 5.º).'}</p></section>`;
   sec.just=`<section class="sec"><div class="sec-row"><span class="h-serif">Justificações</span><span class="note">Art. 6.º</span></div>
     <div class="list">${just.map(id=>{const r=S.rsvp[id];return `<div class="row" style="align-items:flex-start;flex-wrap:wrap">${avatar(P(id))}<div class="nm"><b>${esc(P(id).name)}</b><small style="white-space:normal;font:italic 15px var(--f-serif);color:var(--muted)">«${esc(r.reason)}»</small></div>
       ${!r.j||r.j==='pendente'?`<div class="btn-row" style="width:100%;padding-left:52px"><button class="btn sm brass" data-a="just" data-id="${id}" data-v="aceite">Aceitar</button><button class="btn sm" data-a="just" data-id="${id}" data-v="recusada">Recusar</button></div>`:`<span class="tag ${r.j==='aceite'?'green':'wine'}">${r.j==='aceite'?'Aceite':'Recusada'}</span>`}</div>`}).join('')||'<div class="empty">Nenhuma justificação por apreciar.</div>'}</div></section>`;
