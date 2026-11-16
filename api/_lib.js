@@ -82,6 +82,16 @@ function buildMessage(event, st, actorId, extra) {
       const k = extra.k === 'mascote' ? 'mascote' : 'bigode';
       return { committee: true, payload: { title: k === 'bigode' ? 'Melhor Bigode: a urna foi selada' : 'Mascote: a urna foi selada', body: 'Abra a app para ver quem venceu.', url: '#votar', tag: 'reveal-' + k } };
     }
+    case 'nudge': {
+      // Only the members marked present who haven't voted yet
+      const k = extra.k === 'mascote' ? 'mascote' : 'bigode';
+      const b = (st.ballots || {})[k] || {};
+      if (!b.open) return null;
+      const votes = b.votes || {};
+      const only = Object.keys(st.present || {}).filter(id => st.present[id] && !votes[id]);
+      if (!only.length) return null;
+      return { committee: true, only, throttleMin: 2, payload: { title: 'Ainda não votou', body: k === 'bigode' ? 'A urna do Melhor Bigode está aberta. Falta o seu voto!' : 'A urna da Mascote está aberta. Falta o seu voto!', url: '#votar', tag: 'nudge-' + k } };
+    }
     case 'closed':
       return { committee: true, payload: { title: 'Edição encerrada', body: 'O Livro de honra foi atualizado. Até ao próximo jantar!', url: '#galeria', tag: 'closed' } };
     case 'nominate': {
