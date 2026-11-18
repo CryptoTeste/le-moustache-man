@@ -274,6 +274,15 @@ label.f{display:flex;flex-direction:column;gap:6px;min-width:0;font-size:10px;le
 .miss-p:active{border-color:var(--brass)}
 .miss-p .ini,.miss-p .av{width:24px;height:24px;font-size:11px}
 .win-card{margin-bottom:4px}
+.crop{position:fixed;inset:0;z-index:60;background:var(--bg);display:flex;align-items:center;justify-content:center;padding:24px max(22px,env(safe-area-inset-right,0px)) calc(24px + env(safe-area-inset-bottom,0px)) max(22px,env(safe-area-inset-left,0px))}
+.crop-in{width:100%;max-width:400px;display:flex;flex-direction:column;align-items:stretch;gap:22px}
+.crop-stage{position:relative;align-self:center;overflow:hidden;border-radius:50%;touch-action:none;cursor:grab;background:#000;box-shadow:0 0 0 1px var(--brass),0 0 0 6px rgba(201,164,92,.18)}
+.crop-stage:active{cursor:grabbing}
+.crop-stage img{position:absolute;left:0;top:0;transform-origin:0 0;user-select:none;-webkit-user-drag:none;max-width:none;pointer-events:none}
+.crop-ring{position:absolute;inset:0;border-radius:50%;pointer-events:none;background:radial-gradient(circle,transparent 0 33%,rgba(255,255,255,.08) 33.3% 33.6%,transparent 34% 66%,rgba(255,255,255,.08) 66.3% 66.6%,transparent 67%)}
+.crop-zoom{display:flex;align-items:center;gap:12px;color:var(--muted)}
+.crop-zoom svg{width:18px;height:18px;flex:none}
+.crop-zoom input{flex:1;accent-color:var(--brass);width:auto;padding:0;border:0;background:none;min-height:auto}
 .prow{width:100%;background:none;border-left:0;border-right:0;border-bottom:0;text-align:left;color:inherit;font:inherit;cursor:pointer}
 .prow:active{background:var(--surface)}
 .prow .chev{width:16px;height:16px;color:var(--faint);flex:none}
@@ -1776,6 +1785,47 @@ document.addEventListener('input',ev=>{if(ev.target.id==='q'){UI.q=ev.target.val
 const COMMITTEE_ONLY=new Set(['phase','saveed','just','present','addcand','newcand','rmcand','allpresent','open','reveal','tiebreak','decide','undecide','resetb',
   'edit','saveedit','askrm','rmok','addmember','askclose','nudge','person','proxyvote','proxycast','allpresent','closeok','askreset','resetok','addnote','rmnote','rmfile','askendnight','endnightok','copylink','newlink','addmascot','addhist','savehist','rmhist','histform','savehistform','hfnophoto']);
 // Square-crop profile photos to 400px so they stay light
+/* Profile photo: the person drags and zooms it inside a circle before it is saved (400×400 JPEG) */
+function cropPhoto(file,name){return new Promise((res,rej)=>{
+  const url=URL.createObjectURL(file),img=new Image();
+  img.onerror=()=>{URL.revokeObjectURL(url);rej()};
+  img.onload=()=>{
+    const V=Math.min(300,window.innerWidth-60),W=img.naturalWidth,H=img.naturalHeight;
+    const min=V/Math.min(W,H),max=min*5;let sc=min,x=(V-W*sc)/2,y=(V-H*sc)/2;
+    const ov=document.createElement('div');ov.className='crop';ov.setAttribute('role','dialog');ov.setAttribute('aria-modal','true');ov.setAttribute('aria-label','Ajustar fotografia');
+    ov.innerHTML=`<div class="crop-in"><div><span class="eyebrow">Fotografia${name?' · '+esc(name):''}</span><div class="title-sm" style="margin-top:6px">Ajustar <em>fotografia</em></div></div>
+      <div class="crop-stage" style="width:${V}px;height:${V}px"><img alt="" draggable="false"><span class="crop-ring"></span></div>
+      <label class="crop-zoom"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="6"/><path d="M8 11h6M20 20l-4.5-4.5"/></svg><input type="range" min="0" max="1000" value="0" aria-label="Aproximar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="6"/><path d="M8 11h6M11 8v6M20 20l-4.5-4.5"/></svg></label>
+      <p class="note" style="text-align:center">Arraste para posicionar. Afaste os dedos ou use a barra para aproximar.</p>
+      <div class="btns"><button class="btn" data-c="no">Cancelar</button><button class="btn brass" data-c="ok">Guardar</button></div></div>`;
+    document.body.appendChild(ov);
+    const el=ov.querySelector('.crop-stage img'),stage=ov.querySelector('.crop-stage'),rng=ov.querySelector('input[type=range]');
+    el.src=url;el.style.width=W+'px';el.style.height=H+'px';
+    const clampXY=()=>{x=Math.min(0,Math.max(V-W*sc,x));y=Math.min(0,Math.max(V-H*sc,y))};
+    const draw=()=>{clampXY();el.style.transform=`translate(${x}px,${y}px) scale(${sc})`};
+    const zoomTo=(ns,cx=V/2,cy=V/2)=>{ns=Math.max(min,Math.min(max,ns));x=cx-(cx-x)*ns/sc;y=cy-(cy-y)*ns/sc;sc=ns;
+      rng.value=Math.round(Math.log(sc/min)/Math.log(max/min)*1000);draw()};
+    rng.addEventListener('input',()=>{zoomTo(min*Math.pow(max/min,rng.value/1000))});
+    const pts=new Map();let last=null;
+    const rel=e=>{const r=stage.getBoundingClientRect();return {x:e.clientX-r.left,y:e.clientY-r.top}};
+    stage.addEventListener('pointerdown',e=>{stage.setPointerCapture(e.pointerId);pts.set(e.pointerId,rel(e));last=null});
+    stage.addEventListener('pointermove',e=>{if(!pts.has(e.pointerId))return;const p0=pts.get(e.pointerId),p1=rel(e);pts.set(e.pointerId,p1);
+      if(pts.size===1){x+=p1.x-p0.x;y+=p1.y-p0.y;draw()}
+      else if(pts.size===2){const [a,b]=[...pts.values()],d=Math.hypot(a.x-b.x,a.y-b.y),c={x:(a.x+b.x)/2,y:(a.y+b.y)/2};
+        if(last){x+=c.x-last.c.x;y+=c.y-last.c.y;zoomTo(sc*d/last.d,c.x,c.y)}last={d,c}}});
+    const up=e=>{pts.delete(e.pointerId);last=null};
+    stage.addEventListener('pointerup',up);stage.addEventListener('pointercancel',up);
+    stage.addEventListener('wheel',e=>{e.preventDefault();const p=rel(e);zoomTo(sc*Math.exp(-e.deltaY*.002),p.x,p.y)},{passive:false});
+    stage.addEventListener('keydown',e=>{const k={ArrowLeft:[10,0],ArrowRight:[-10,0],ArrowUp:[0,10],ArrowDown:[0,-10]}[e.key];if(k){e.preventDefault();x+=k[0];y+=k[1];draw()}});
+    stage.tabIndex=0;draw();
+    const finish=ok=>{let out=null;
+      if(ok){const c=document.createElement('canvas');c.width=c.height=400;const g=c.getContext('2d');
+        g.drawImage(img,-x/sc,-y/sc,V/sc,V/sc,0,0,400,400);out=c.toDataURL('image/jpeg',.85)}
+      URL.revokeObjectURL(url);ov.remove();res(out)};
+    ov.addEventListener('click',e=>{const b=e.target.closest('[data-c]');if(b)finish(b.dataset.c==='ok')});
+  };
+  img.src=url;
+})}
 function squarePhoto(file){return new Promise((res,rej)=>{const url=URL.createObjectURL(file);const img=new Image();
   img.onload=()=>{const s=Math.min(img.width,img.height),c=document.createElement('canvas');c.width=c.height=400;
     c.getContext('2d').drawImage(img,(img.width-s)/2,(img.height-s)/2,s,s,0,0,400,400);URL.revokeObjectURL(url);res(c.toDataURL('image/jpeg',0.82))};
@@ -1784,7 +1834,7 @@ document.addEventListener('change',async ev=>{
   const pid=ev.target.dataset&&ev.target.dataset.photo;
   if(pid){const f=ev.target.files&&ev.target.files[0];ev.target.value='';if(!f)return;const m=me();
     if(!(m&&(m.id===pid||m.committee))){toast('Só o próprio ou a Comissão');return}
-    try{const data=await squarePhoto(f);const prev=S.people[pid].photo;Store.set(`people.${pid}.photo`,data);
+    try{const data=await cropPhoto(f,S.people[pid]?S.people[pid].name:'');if(!data)return;const prev=S.people[pid].photo;Store.set(`people.${pid}.photo`,data);
       if(!Store.persist()){Store.set(`people.${pid}.photo`,prev);Store.persist();toast('Sem espaço no modo de teste');return}
       render();toast('Fotografia atualizada')}catch(e){toast('Não foi possível ler a imagem')}
     return}
