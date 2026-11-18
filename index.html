@@ -270,7 +270,8 @@ label.f{display:flex;flex-direction:column;gap:6px;min-width:0;font-size:10px;le
 @keyframes livepulse{0%,100%{box-shadow:0 0 0 0 rgba(111,170,120,.55)}50%{box-shadow:0 0 0 6px rgba(111,170,120,0)}}
 .miss{display:flex;flex-direction:column;gap:10px;border-top:1px solid var(--line-soft);padding-top:14px}
 .miss-list{display:flex;flex-wrap:wrap;gap:8px}
-.miss-p{display:inline-flex;align-items:center;gap:6px;padding:3px 10px 3px 3px;border:1px solid var(--line);border-radius:99px;font-size:13px;font-weight:600}
+.miss-p{display:inline-flex;align-items:center;gap:6px;padding:3px 10px 3px 3px;border:1px solid var(--line);border-radius:99px;font-size:13px;font-weight:600;background:var(--surface);color:var(--ink);cursor:pointer}
+.miss-p:active{border-color:var(--brass)}
 .miss-p .ini,.miss-p .av{width:24px;height:24px;font-size:11px}
 .win-card{margin-bottom:4px}
 .inv-masc{display:flex;align-items:center;gap:10px;border-top:1px solid var(--line);padding-top:10px;font-size:13px}
@@ -1154,13 +1155,26 @@ function ballotSection(k){
       <div class="status"><span class="dot ${st[0]}"></span>${st[1]}</div></div>
     <div class="sec">${body}${b.open&&m.committee?missingHTML(k):''}</div></section>`;
 }
+// Committee: lend this phone to someone without the app. A private ballot in their name; the Committee doesn't see the choice.
+function openProxy(){
+  const x=UI.proxy;if(!x)return;const b=S.ballots[x.k],who=S.people[x.id];
+  if(!b||!b.open||!who||(b.votes||{})[x.id]){UI.proxy=null;closeLayer();return}
+  const B=BALLOT[x.k];
+  $('#layer').innerHTML=`<div class="scrim" data-a="closesheet"><div class="sheet proxy" role="dialog" aria-modal="true" aria-label="Boletim de voto de ${esc(who.name)}">
+    <div class="sheet-bar"><div><span class="eyebrow">Boletim de voto</span><div class="title-sm" style="margin-top:6px">${esc(who.name)}</div><div class="note" style="margin-top:4px">${B.t1} ${B.t2}</div></div><button class="x-btn" data-a="closesheet" aria-label="Cancelar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
+    <p class="muted">Este telemóvel foi emprestado pela Comissão. Escolha um candidato e deposite o voto. O voto é secreto.</p>
+    <div class="list" style="gap:10px">${b.cands.map((id,i)=>{const p=P(id);if(!p)return '';return `<button class="cand ${x.pick===id?'on':''}" data-a="proxypick" data-id="${id}"><span class="n">${roman(i+1)}</span>${avatar(p)}<span class="nm" style="flex:1;display:flex;flex-direction:column;text-align:left"><b style="font-weight:600">${esc(p.name)}</b><small class="note">${esc(candSub(p))}</small></span><span class="radio"></span></button>`}).join('')}</div>
+    <button class="btn brass" data-a="proxycast" ${x.pick?'':'disabled'}>${x.pick?'Depositar voto · '+esc(S.people[x.pick].name):'Escolha um candidato'}</button>
+  </div></div>`;
+}
 // Committee: who is present but hasn't voted yet, with a reminder
 function missingHTML(k){
   const b=S.ballots[k],miss=presentIds().filter(id=>S.people[id]&&!(b.votes||{})[id]);
   if(!miss.length)return `<p class="note">Todos os presentes já votaram.</p>`;
   const sent=UI.nudged&&UI.nudged[k]&&Date.now()-UI.nudged[k]<12e4;
   return `<div class="miss"><span class="sub-label">Falta votar · ${miss.length}</span>
-    <div class="miss-list">${miss.map(id=>`<span class="miss-p">${avatar(P(id))}<span>${esc(S.people[id].name.split(' ')[0])}</span></span>`).join('')}</div>
+    <div class="miss-list">${miss.map(id=>`<button class="miss-p" data-a="proxyvote" data-k="${k}" data-id="${id}" aria-label="Abrir o boletim de ${esc(S.people[id].name)} neste telemóvel">${avatar(P(id))}<span>${esc(S.people[id].name.split(' ')[0])}</span></button>`).join('')}</div>
+    <p class="note">Sem a app? Toque no nome e passe-lhe o seu telemóvel: abre o boletim dessa pessoa e o voto continua secreto.</p>
     <button class="btn sm" data-a="nudge" data-k="${k}" ${sent?'disabled':''} style="align-self:flex-start">${sent?'Lembrete enviado':'Lembrar quem falta'}</button></div>`;
 }
 
@@ -1702,7 +1716,7 @@ document.addEventListener('input',ev=>{if(ev.target.id==='q'){UI.q=ev.target.val
 /* ====================================================================== actions */
 // Everything only the Committee may do. The online version enforces the same list on the server.
 const COMMITTEE_ONLY=new Set(['phase','saveed','just','present','addcand','newcand','rmcand','allpresent','open','reveal','tiebreak','decide','undecide','resetb',
-  'edit','saveedit','askrm','rmok','addmember','askclose','nudge','allpresent','closeok','askreset','resetok','addnote','rmnote','rmfile','askendnight','endnightok','copylink','newlink','addmascot','addhist','savehist','rmhist','histform','savehistform','hfnophoto']);
+  'edit','saveedit','askrm','rmok','addmember','askclose','nudge','proxyvote','proxycast','allpresent','closeok','askreset','resetok','addnote','rmnote','rmfile','askendnight','endnightok','copylink','newlink','addmascot','addhist','savehist','rmhist','histform','savehistform','hfnophoto']);
 // Square-crop profile photos to 400px so they stay light
 function squarePhoto(file){return new Promise((res,rej)=>{const url=URL.createObjectURL(file);const img=new Image();
   img.onload=()=>{const s=Math.min(img.width,img.height),c=document.createElement('canvas');c.width=c.height=400;
@@ -1773,7 +1787,7 @@ document.addEventListener('click',ev=>{
       const l=$('#cm-list');if(l)l.lastElementChild&&l.lastElementChild.scrollIntoView({block:'nearest',behavior:'smooth'});
       Promise.resolve(Remote.lastCommit).then(()=>notify('comment',{id:cid}));return}
     case 'rmcomment':Store.one('comments.'+id,undefined);refreshNotice();toast('Comentário apagado');return;
-    case 'closesheet':if(ev.target===el||el.tagName==='BUTTON'){UI.noticeOpen=null;closeLayer()}return;
+    case 'closesheet':if(ev.target===el||el.tagName==='BUTTON'){UI.noticeOpen=null;UI.proxy=null;closeLayer()}return;
     case 'closeprofile':if(ev.target===el||el.tagName==='BUTTON')closeProfile();return;
     case 'card':UI.profileOpen?closeProfile():openProfile();return;
     case 'pick':Store.setMe(id);if(UI.profileOpen){UI.profileOpen=false;if(history.state&&history.state.lmmSheet)history.back()}$('#layer').innerHTML='';UI.pick={};if(location.hash==='#comissao'&&!P(id).committee)location.hash='jantar';ui();window.scrollTo(0,0);toast('Bem-vindo, '+P(id).name);return;
@@ -1789,6 +1803,13 @@ document.addEventListener('click',ev=>{
       Store.one('rsvp.'+m.id,v==='vou'?{s:'vou'}:Object.assign({},prev.s==='nao'?prev:{},{s:'nao'}));toast(v==='vou'?'Presença confirmada':'Ausência registada');return}
     case 'reason':{const t=$('#reason').value.trim();if(!t){toast('Escreva o motivo');return}Store.one('rsvp.'+m.id,{s:'nao',reason:t,j:'pendente'});toast('Justificação enviada');return}
     case 'pickcand':UI.pick[k]=id;ui();return;
+    case 'proxyvote':UI.proxy={k,id,pick:null};openProxy();return;
+    case 'proxypick':if(UI.proxy){UI.proxy.pick=id;openProxy()}return;
+    case 'proxycast':{const x=UI.proxy;if(!x||!x.pick)return;const b=S.ballots[x.k];
+      if(!b.open){toast('A urna já foi selada');UI.proxy=null;closeLayer();return}
+      const nm=S.people[x.id]?S.people[x.id].name:'';
+      Store.setMany({[`ballots.${x.k}.votes.${x.id}`]:x.pick,[`ballots.${x.k}.proxy.${x.id}`]:m.id});
+      UI.proxy=null;closeLayer();toast('Voto de '+nm+' depositado');return}
     case 'vote':{const kk=k,pk=UI.pick[kk];if(!pk)return;Store.one(`ballots.${kk}.votes.${m.id}`,pk);delete UI.pick[kk];toast('Voto depositado');return}
     case 'phase':UI.ctab='jantar';Store.setMany({'edition.phase':v,'edition.updatedAt':Date.now(),'edition.updatedBy':m.id});if(v==='noite'){notify('night');toast('Registo de membros iniciado')}return;
     case 'saveed':Store.setMany({'edition.date':$('#f-date').value||S.edition.date,'edition.time':$('#f-time').value||S.edition.time,'edition.place':$('#f-place').value.trim(),'edition.city':$('#f-city').value.trim(),'edition.dress':$('#f-dress').value.trim(),'edition.mascot':($('#f-mascot')||{}).value||'','edition.deadline':$('#f-dead').value||S.edition.deadline,'edition.updatedAt':Date.now(),'edition.updatedBy':m.id});notify('details');toast('Convocatória guardada');return;
