@@ -274,6 +274,15 @@ label.f{display:flex;flex-direction:column;gap:6px;min-width:0;font-size:10px;le
 .miss-p:active{border-color:var(--brass)}
 .miss-p .ini,.miss-p .av{width:24px;height:24px;font-size:11px}
 .win-card{margin-bottom:4px}
+.txt-btn.link{color:var(--brass)}
+.amenu{position:fixed;inset:0;z-index:55;background:rgba(0,0,0,.6);display:flex;align-items:flex-end;justify-content:center}
+.amenu-in{width:100%;max-width:520px;background:var(--bg);border-top:1px solid var(--line-strong);border-radius:18px 18px 0 0;padding:18px max(22px,env(safe-area-inset-right,0px)) calc(18px + env(safe-area-inset-bottom,0px)) max(22px,env(safe-area-inset-left,0px));display:flex;flex-direction:column;gap:4px}
+.amenu-in .eyebrow{padding-bottom:8px}
+.amenu-i{display:flex;flex-direction:column;gap:2px;text-align:left;background:none;border:0;border-top:1px solid var(--line-soft);padding:14px 0;color:var(--ink);font:inherit;cursor:pointer}
+.amenu-i b{font-size:16px;font-weight:600}
+.amenu-i small{font-size:12px;color:var(--faint)}
+.amenu-x{margin-top:8px;min-height:48px;background:none;border:1px solid var(--line-strong);color:var(--ink);font-size:12px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;cursor:pointer}
+@media (prefers-reduced-motion:no-preference){.amenu-in{animation:up .22s ease-out}}
 .rsvp-pick{display:flex;flex:none;border:1px solid var(--line-strong)}
 .rsvp-pick button{background:none;border:0;padding:8px 12px;font-size:10px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
 .rsvp-pick button+button{border-left:1px solid var(--line-strong)}
@@ -758,7 +767,20 @@ const tierName={membro:'Membro da Irmandade',mascote:'Mascote do Bigode',vencedo
 const avatar=p=>p.photo?`<span class="ini ${tier(p)}"><img src="${p.photo}" alt=""></span>`:`<span class="ini ${tier(p)}">${esc(ini(p.name))}</span>`;
 const portrait=(p,cls)=>`<span class="portrait ${cls||''}"><span class="in">${p&&p.photo?`<img src="${p.photo}" alt="${esc(p.name)}">`:esc(p?ini(p.name):'?')}</span></span>`;
 const passPhoto=p=>p&&p.photo?`<span class="pass-photo"><img src="${p.photo}" alt=""></span>`:'';
-const photoControls=p=>`<div class="btn-row">${p.photo?`<button class="btn sm" data-a="editphoto" data-id="${p.id}">Ajustar fotografia</button>`:''}<label class="btn sm" for="photo-in-${p.id}" style="display:inline-flex;align-items:center;cursor:pointer">${p.photo?'Mudar fotografia':'Adicionar fotografia'}</label><input type="file" id="photo-in-${p.id}" data-photo="${p.id}" accept="image/*" hidden>${p.photo?`<button class="btn sm" data-a="rmphoto" data-id="${p.id}">Remover fotografia</button>`:''}</div>`;
+const photoControls=p=>`<div class="btn-row">${p.photo?`<button class="btn sm" data-a="photomenu" data-id="${p.id}">Editar fotografia</button><button class="txt-btn" data-a="rmphoto" data-id="${p.id}">Remover</button>`
+  :`<label class="btn sm" for="photo-in-${p.id}" style="display:inline-flex;align-items:center;cursor:pointer">Adicionar fotografia</label>`}<input type="file" id="photo-in-${p.id}" data-photo="${p.id}" accept="image/*" hidden></div>`;
+// A small menu of choices for one thing (here: the photo), so a row never shows several look-alike buttons
+function actionMenu(title,items){
+  document.querySelectorAll('.amenu').forEach(x=>x.remove());
+  const el=document.createElement('div');el.className='amenu';el.setAttribute('role','dialog');el.setAttribute('aria-modal','true');el.setAttribute('aria-label',title);
+  el.innerHTML=`<div class="amenu-in"><span class="eyebrow">${esc(title)}</span>${items.join('')}<button class="amenu-x">Cancelar</button></div>`;
+  el.addEventListener('click',e=>{if(e.target===el||e.target.closest('.amenu-x')||e.target.closest('.amenu-i'))setTimeout(()=>el.remove(),0)});
+  document.body.appendChild(el);const f=el.querySelector('.amenu-i');if(f)f.focus();
+}
+function photoMenu(id){
+  actionMenu('Fotografia',[`<button class="amenu-i" data-a="editphoto" data-id="${id}"><b>Ajustar posição</b><small>Arrastar e aproximar a fotografia atual</small></button>`,
+    `<label class="amenu-i" for="photo-in-${id}" tabindex="0"><b>Mudar fotografia</b><small>Escolher outra imagem</small></label>`]);
+}
 const invited=()=>all().filter(p=>p.role==='membro'||p.role==='mascote').sort((a,b)=>a.name.localeCompare(b.name,'pt'));
 const roman=n=>{const m=[[1000,'M'],[900,'CM'],[500,'D'],[400,'CD'],[100,'C'],[90,'XC'],[50,'L'],[40,'XL'],[10,'X'],[9,'IX'],[5,'V'],[4,'IV'],[1,'I']];let r='';m.forEach(([v,s])=>{while(n>=v){r+=s;n-=v}});return r};
 const today=()=>{const d=new Date();d.setHours(0,0,0,0);return d};
@@ -885,10 +907,10 @@ function boardHTML(manage){
   if(!manage&&!ns.length&&!fs.length)return '';
   const by=id=>S.people[id]?esc(S.people[id].name):'Comissão';
   return `<section class="sec"><div class="sec-row"><span class="h-serif">Avisos da Comissão</span>${manage?'':'<span class="note">'+(ns.length+fs.length)+'</span>'}</div>
-    ${ns.length?`<div class="list">${ns.map(([id,n])=>`<div class="row" style="align-items:flex-start"><span class="dot brass" style="margin-top:8px"></span><div class="nm"><span style="font-size:15px;white-space:pre-line">${esc(n.text)}</span><small>${by(n.by)} · ${fmtAgo(n.at)}${commentsFor('note:'+id).length?' · '+plural(commentsFor('note:'+id).length,'comentário','comentários'):''}</small></div><button class="btn sm" data-a="opennotice" data-id="note:${id}">Ver</button>${manage?`<button class="btn sm" data-a="rmnote" data-id="${id}">Apagar</button>`:''}</div>`).join('')}</div>`:(manage?'<div class="empty">Sem avisos.</div>':'')}
+    ${ns.length?`<div class="list">${ns.map(([id,n])=>`<div class="row" style="align-items:flex-start"><span class="dot brass" style="margin-top:8px"></span><div class="nm"><span style="font-size:15px;white-space:pre-line">${esc(n.text)}</span><small>${by(n.by)} · ${fmtAgo(n.at)}${commentsFor('note:'+id).length?' · '+plural(commentsFor('note:'+id).length,'comentário','comentários'):''}</small></div><button class="txt-btn link" data-a="opennotice" data-id="note:${id}">Ver</button>${manage?`<button class="txt-btn" data-a="rmnote" data-id="${id}">Apagar</button>`:''}</div>`).join('')}</div>`:(manage?'<div class="empty">Sem avisos.</div>':'')}
     ${fs.length?`<div class="list">${fs.map(([id,f])=>`<div class="row">${f.type.startsWith('image/')?`<button data-a="viewfile" data-id="${id}" aria-label="Ver ${esc(f.name)}" style="padding:0;border:1px solid var(--line-strong);background:none;width:52px;height:52px;flex:none"><img src="${f.data}" alt="" style="width:100%;height:100%;object-fit:cover;display:block"></button>`:`<span class="ini" style="border-radius:2px;font:600 10px var(--f-sans);letter-spacing:.1em">${esc((f.name.split('.').pop()||'DOC').slice(0,4).toUpperCase())}</span>`}
       <div class="nm"><b>${esc(f.name)}</b>${f.caption?`<span style="font-size:14px;white-space:pre-line">${esc(f.caption)}</span>`:''}<small>${fmtSize(f.size)} · ${by(f.by)} · ${fmtAgo(f.at)}${commentsFor('file:'+id).length?' · '+plural(commentsFor('file:'+id).length,'comentário','comentários'):''}</small></div>
-      <button class="btn sm" data-a="viewfile" data-id="${id}">Ver</button>${manage?`<button class="btn sm" data-a="rmfile" data-id="${id}">Apagar</button>`:''}</div>`).join('')}</div>`:''}
+      <button class="txt-btn link" data-a="viewfile" data-id="${id}">Ver</button>${manage?`<button class="txt-btn" data-a="rmfile" data-id="${id}">Apagar</button>`:''}</div>`).join('')}</div>`:''}
     ${manage?`<label class="f" for="note-text">Novo aviso<textarea id="note-text" placeholder="Ex.: O restaurante está confirmado. Menu em anexo."></textarea></label>
       <div class="btn-row"><button class="btn sm brass" data-a="addnote">Publicar aviso</button>
       <label class="btn sm" for="file-in" style="display:inline-flex;align-items:center;cursor:pointer">Anexar ficheiro</label><input type="file" id="file-in" accept="image/*,application/pdf,.doc,.docx" hidden></div>
@@ -993,7 +1015,7 @@ function viewFile(id){
   if(S.files[id]&&S.files[id].kind!=='group'){openNotice('file:'+id);return}
   const f=S.files[id];if(!f)return;
   $('#layer').innerHTML=`<div class="scrim" data-a="closesheet"><div class="sheet" role="dialog" aria-label="${esc(f.name)}">
-    <div class="sec-row"><span class="h-serif" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(f.name)}</span><button class="btn sm" data-a="closesheet">Fechar</button></div>
+    <div class="sec-row"><span class="h-serif" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(f.name)}</span><button class="x-btn" data-a="closesheet" aria-label="Fechar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
     <img src="${f.data}" alt="${esc(f.name)}" style="width:100%;height:auto;border:1px solid var(--line)"></div></div>`;
 }
 
@@ -1056,7 +1078,7 @@ function viewAlbum(y){
   const props=h&&h.proposed?h.proposed.slice().sort((a,b)=>(b.votes||0)-(a.votes||0)):[];
   const sheetEl=document.querySelector('.sheet');const keep=sheetEl?sheetEl.scrollTop:0;
   $('#layer').innerHTML=`<div class="scrim" data-a="closesheet"><div class="sheet" role="dialog" aria-label="Jantar ${y}">
-    <div class="sec-row"><div><span class="eyebrow">Arquivo · ${y}</span><div class="title-sm">Jantar <em>${roman(y)}</em></div></div><button class="btn sm" data-a="closesheet">Fechar</button></div>
+    <div class="sec-row"><div><span class="eyebrow">Arquivo · ${y}</span><div class="title-sm">Jantar <em>${roman(y)}</em></div></div><button class="x-btn" data-a="closesheet" aria-label="Fechar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
     ${groupPhoto(y)?`<figure style="margin:0;display:flex;flex-direction:column;gap:8px"><img class="group-photo" style="aspect-ratio:auto;max-height:60vh" src="${groupPhoto(y).data}" alt="Fotografia de grupo do jantar ${y}"><figcaption class="note">A fotografia da Irmandade${h&&h.place?' · '+esc(h.place):''}</figcaption></figure>`:''}
     ${me()&&me().committee&&h?`<button class="btn sm" data-a="histform" data-v="${y}" style="align-self:flex-start">Editar esta edição</button>`:''}
     ${h?`<div class="ledger">
@@ -1112,7 +1134,7 @@ function histForm(y){
   const opt=(list,sel)=>list.map(p=>`<option value="${p.id}" ${p.id===sel?'selected':''}>${esc(p.name)}</option>`).join('');
   $('#layer').innerHTML=`<div class="scrim" data-a="closesheet"><div class="sheet" role="dialog" aria-modal="true" aria-label="${h?'Editar a edição '+y:'Nova edição anterior'}">
     <div class="grab" aria-hidden="true"></div>
-    <div class="sec-row"><div><span class="eyebrow">Livro de honra</span><div class="title-sm">${h?'Jantar <em>'+roman(y)+'</em>':'Edição <em>anterior</em>'}</div></div><button class="btn sm" data-a="closesheet">Fechar</button></div>
+    <div class="sec-row"><div><span class="eyebrow">Livro de honra</span><div class="title-sm">${h?'Jantar <em>'+roman(y)+'</em>':'Edição <em>anterior</em>'}</div></div><button class="x-btn" data-a="closesheet" aria-label="Fechar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
     <div class="grid2"><label class="f" for="hf-year">Ano<input type="number" id="hf-year" inputmode="numeric" value="${y||''}" placeholder="2024" min="1990" max="${S.edition.year-1}" ${h?'disabled':''}></label>
       <label class="f" for="hf-date">Data<input type="date" id="hf-date" value="${h&&h.date||''}"></label></div>
     <label class="f" for="hf-place">Local<input type="text" id="hf-place" maxlength="80" value="${esc(h&&h.place||'')}" placeholder="Ex.: Tasca do Largo, Óbidos"></label>
@@ -1122,7 +1144,7 @@ function histForm(y){
     <div class="sec" style="gap:10px"><span class="sub-label">Fotografia de grupo</span>
       <div id="hf-preview">${gp?`<img class="group-photo" src="${gp.data}" alt="">`:'<p class="note">A fotografia tradicional da Irmandade nesse ano.</p>'}</div>
       <div class="btn-row"><label class="btn sm" for="hf-photo" style="display:inline-flex;align-items:center;cursor:pointer">${gp?'Trocar fotografia':'Escolher fotografia'}</label><input type="file" id="hf-photo" accept="image/*" hidden>
-        ${gp?`<button class="btn sm" data-a="hfnophoto">Remover</button>`:''}</div></div>
+        ${gp?`<button class="txt-btn" data-a="hfnophoto">Remover</button>`:''}</div></div>
     <div class="btns"><button class="btn brass" data-a="savehistform">Guardar</button><button class="btn" data-a="closesheet">Cancelar</button></div>
     ${h&&!h.closedAt?`<button class="txt-btn" data-a="rmhist" data-v="${y}" style="align-self:center">Apagar esta edição</button>`:''}
   </div></div>`;
@@ -1339,7 +1361,7 @@ function personCard(id){
   </section>
   <section class="pc-sec"><span class="pc-k">Fotografia</span>
     <div class="pc-photo">${p.photo?`<button class="pc-pic" data-a="editphoto" data-id="${id}" aria-label="Ajustar a fotografia de ${esc(p.name)}">${portrait(p,masc?'green':'')}<span class="pc-edit">${PENCIL}</span></button>`:`<label class="pc-pic" for="photo-in-${id}" aria-label="Adicionar fotografia">${portrait(p,masc?'green':'')}<span class="pc-edit">${PLUS}</span></label>`}<div class="pc-photo-a"><span class="note">${p.photo?'Fotografia do cartão de membro.':'Ainda sem fotografia. Só de bigode, por favor.'}</span>
-      <div class="btn-row">${p.photo?`<button class="btn sm" data-a="editphoto" data-id="${id}">Ajustar</button>`:''}<label class="btn sm" for="photo-in-${id}" style="display:inline-flex;align-items:center;cursor:pointer">${p.photo?'Trocar':'Adicionar'}</label><input type="file" id="photo-in-${id}" data-photo="${id}" accept="image/*" hidden>${p.photo?`<button class="txt-btn" data-a="rmphoto" data-id="${id}">Remover</button>`:''}</div></div></div>
+      <div class="btn-row">${p.photo?`<button class="btn sm" data-a="photomenu" data-id="${id}">Editar</button><button class="txt-btn" data-a="rmphoto" data-id="${id}">Remover</button>`:`<label class="btn sm" for="photo-in-${id}" style="display:inline-flex;align-items:center;cursor:pointer">Adicionar</label>`}<input type="file" id="photo-in-${id}" data-photo="${id}" accept="image/*" hidden></div></div></div>
   </section>
   <section class="pc-sec"><span class="pc-k">Acesso à app</span>
     ${!ONLINE?'<p class="note">Os links pessoais existem só na versão online.</p>'
@@ -1373,7 +1395,7 @@ function vComissao(){
     const editable=!b.open&&!b.revealed;
     return `<div class="panel">
       <div class="sec-row"><span class="h-serif" style="font-size:20px">${B.t1} ${B.t2}</span><span class="status"><span class="dot ${b.revealed?'wine':b.open?'on':''}"></span>${b.revealed?'Revelada':b.open?'Aberta':'Fechada'}</span></div>
-      <div class="list">${b.cands.map(id=>`<div class="row">${avatar(P(id))}<div class="nm"><b>${esc(P(id).name)}</b>${k==='mascote'?`<small style="white-space:normal">${esc(candSub(P(id)))}</small>`:''}</div>${editable?`<button class="btn sm" data-a="rmcand" data-k="${k}" data-id="${id}">Retirar</button>`:''}</div>`).join('')||`<div class="empty">${k==='mascote'?'Ainda sem propostas dos membros.':'Sem candidatos.'}</div>`}</div>
+      <div class="list">${b.cands.map(id=>`<div class="row">${avatar(P(id))}<div class="nm"><b>${esc(P(id).name)}</b>${k==='mascote'?`<small style="white-space:normal">${esc(candSub(P(id)))}</small>`:''}</div>${editable?`<button class="txt-btn" data-a="rmcand" data-k="${k}" data-id="${id}">Retirar</button>`:''}</div>`).join('')||`<div class="empty">${k==='mascote'?'Ainda sem propostas dos membros.':'Sem candidatos.'}</div>`}</div>
       ${editable&&k==='bigode'?`<div class="btn-row"><button class="btn sm" data-a="allpresent">Todos os presentes</button>
         <select id="add-${k}" aria-label="Escolher candidato" style="flex:1 1 150px;min-width:0;padding:8px 34px 8px 10px;background-position:right 10px center"><option value="">Escolher…</option>${pool.map(p=>`<option value="${p.id}">${esc(p.name)}</option>`).join('')}</select>
         <button class="btn sm" data-a="addcand" data-k="${k}">Nomear</button></div>`:''}
@@ -1382,7 +1404,7 @@ function vComissao(){
         ${editable?`<button class="btn sm brass" data-a="open" data-k="${k}" ${!canOpen(k)?'disabled':''}>Abrir urna</button>`:''}
         ${b.open?`<button class="btn sm wine" data-a="reveal" data-k="${k}">Selar e revelar</button>`:''}
         ${b.revealed&&L.length>1?`<button class="btn sm brass" data-a="tiebreak" data-k="${k}">Nova votação entre empatados</button>`:''}
-        ${b.revealed||b.open?`<button class="btn sm" data-a="resetb" data-k="${k}">Recomeçar</button>`:''}
+        ${b.revealed||b.open?`<button class="txt-btn" data-a="resetb" data-k="${k}">Recomeçar</button>`:''}
       </div>
       ${b.revealed&&L.length>1?`<div class="tie-box"><span class="sub-label">Empate · ronda ${b.round||1}</span>
         <p class="note">Abra uma nova votação só entre ${L.map(id=>esc(P(id).name)).join(' e ')}. Se voltar a empatar, ou se preferirem o bom senso, a Comissão decide (Art. 16.º).</p>
@@ -1486,7 +1508,7 @@ function sheet(){
   const h=S.history.filter(x=>x.bigode===m.id).map(x=>x.year);
   const sub=t==='vencedor'?`Melhor Bigode ${S.history[S.history.length-1].year}`:t==='mascote'?`Eleita em ${m.mascotYear} · convite vitalício`:(h.length?'Melhor Bigode '+h.join(', '):'Laço livre da Irmandade');
   $('#layer').innerHTML=`<div class="scrim" data-a="closesheet"><div class="sheet" role="dialog" aria-label="Cartão de membro">
-    <div class="sec-row"><span class="h-serif">O seu cartão</span><button class="btn sm" data-a="closesheet">Fechar</button></div>
+    <div class="sec-row"><span class="h-serif">O seu cartão</span><button class="x-btn" data-a="closesheet" aria-label="Fechar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
     <div class="pass ${t}"><span class="ghost">${STACHE}</span>
       <div class="top-row"><span class="lbl">${tierName[t]}</span><span class="no">${m.no?'Nº '+String(m.no).padStart(3,'0'):roman(m.mascotYear||m.since)}</span></div>
       <div style="display:flex;align-items:center;gap:14px">${passPhoto(m)}<div><div class="name">${esc(m.name)}</div><div class="sub">${esc(sub)}</div></div></div>
@@ -1784,7 +1806,7 @@ function openProfile(){
   if(UI.profileOpen||!me())return;
   UI.profileOpen=true;history.pushState({lmmSheet:'perfil'},'');Push.refresh().then(()=>{if(UI.profileOpen)render()});
   $('#layer').innerHTML=`<div class="scrim" data-a="closeprofile"><div class="sheet full" role="dialog" aria-modal="true" aria-label="O seu perfil">
-    <div class="grab" aria-hidden="true"></div><div class="sheet-head"><button class="txt-btn" data-a="closeprofile" aria-label="Fechar o perfil">Fechar</button></div>
+    <div class="grab" aria-hidden="true"></div><div class="sheet-head"><button class="x-btn" data-a="closeprofile" aria-label="Fechar o perfil"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
     <div class="sheet-body">${vPerfil()}</div></div></div>`;
   attachDrag($('#layer .sheet'),()=>closeProfile());
   $('#meBtn').classList.add('on');
@@ -1892,6 +1914,7 @@ document.addEventListener('click',ev=>{
     case 'theme':setTheme(v);ui();toast(v==='system'?'Segue o telemóvel':v==='light'?'Modo claro':'Modo escuro');return;
     case 'replay':if(!ceremonyOn)playReveal(k,true);return;
     case 'ctab':UI.ctab=v;UI.confirm=null;UI.editing=null;ui();{const s=document.querySelector('.seg.four');if(s)s.scrollIntoView({block:'start'});window.scrollBy(0,-70)}return;
+    case 'photomenu':photoMenu(id);return;
     case 'editphoto':{const p=S.people[id];if(!p||!p.photo)return;if(!(m.id===id||m.committee)){toast('Só o próprio ou a Comissão');return}
       cropPhoto(p.photo,p.name).then(data=>{if(!data)return;const prev=S.people[id].photo;Store.set(`people.${id}.photo`,data);
         if(!Store.persist()){Store.set(`people.${id}.photo`,prev);Store.persist();toast('Sem espaço no modo de teste');return}
