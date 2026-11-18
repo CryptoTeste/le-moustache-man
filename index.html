@@ -274,6 +274,32 @@ label.f{display:flex;flex-direction:column;gap:6px;min-width:0;font-size:10px;le
 .miss-p:active{border-color:var(--brass)}
 .miss-p .ini,.miss-p .av{width:24px;height:24px;font-size:11px}
 .win-card{margin-bottom:4px}
+.prow{width:100%;background:none;border-left:0;border-right:0;border-bottom:0;text-align:left;color:inherit;font:inherit;cursor:pointer}
+.prow:active{background:var(--surface)}
+.prow .chev{width:16px;height:16px;color:var(--faint);flex:none}
+.add-box{display:flex;flex-direction:column;gap:10px;border:1px dashed var(--line-strong);padding:14px}
+.sheet.person{gap:0}
+.pc-head{display:flex;align-items:center;gap:14px;min-width:0}
+.pc-head .ini{width:48px;height:48px;font-size:22px}
+.pc-sec{display:flex;flex-direction:column;gap:12px;padding:22px 0;border-bottom:1px solid var(--line-soft)}
+.pc-sec:last-child{border-bottom:0}
+.pc-k{font-size:10px;font-weight:700;letter-spacing:.24em;text-transform:uppercase;color:var(--brass)}
+.pc-photo{display:flex;align-items:center;gap:16px}
+.pc-photo .portrait{width:76px;height:76px}
+.pc-photo-a{display:flex;flex-direction:column;gap:8px;min-width:0}
+.pc-link{font-size:12px;word-break:break-all;user-select:all;color:var(--muted);border:1px solid var(--line);padding:10px}
+.txt-btn.inline{padding:0;font:inherit;letter-spacing:0;text-transform:none;color:var(--brass);text-decoration:underline}
+.txt-btn.danger{color:var(--wine-ink);align-self:flex-start;font-size:11px}
+.pc-danger{padding-top:18px}
+.sw-row{display:flex;align-items:center;justify-content:space-between;gap:14px;border:1px solid var(--line);padding:12px 14px;cursor:pointer}
+.sw-row b{display:block;font-size:15px;font-weight:600}
+.sw-row small{display:block;font-size:12px;color:var(--faint)}
+.sw-row.off{cursor:default}
+input[type=checkbox].sw{appearance:none;-webkit-appearance:none;flex:none;width:46px;height:28px;border-radius:14px;background:var(--line-strong);position:relative;cursor:pointer;margin:0;transition:background .2s}
+input.sw::after{content:"";position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:50%;background:#fff;transition:transform .2s}
+input.sw:checked{background:var(--brass)}
+input.sw:checked::after{transform:translateX(18px)}
+input.sw:disabled{opacity:.5;cursor:default}
 .inv-masc{display:flex;align-items:center;gap:10px;border-top:1px solid var(--line);padding-top:10px;font-size:13px}
 .inv-masc div>span{display:block;font-size:9px;letter-spacing:.24em;color:var(--green)}
 .inv-masc b{font:500 19px/1.15 var(--f-serif)}
@@ -1270,6 +1296,48 @@ function confirmBox(id,question,okLabel,okAction,extra){
 }
 const linkBtns=p=>ONLINE?`<button class="txt-btn" data-a="copylink" data-id="${p.id}" style="color:var(--brass)">Link</button>`:'';
 const showLink=p=>`<div class="notice" style="margin:4px 0 10px"><b>Link de ${esc(p.name)}</b><span style="word-break:break-all;user-select:all">${esc(Remote.keys[p.id]?Remote.linkFor(Remote.keys[p.id]):'')}</span><div class="btn-row"><button class="btn sm" data-a="newlink" data-id="${p.id}">Novo link</button></div></div>`;
+/* ---------- Pessoas: one row per person; tapping opens their card ---------- */
+const CHEV='<svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>';
+const personRow=(p,lead,meta,extra)=>`<button class="row prow" data-a="person" data-id="${p.id}" aria-label="Abrir o cartão de ${esc(p.name)}">${lead}${avatar(p)}<span class="nm"><b>${esc(p.name)}</b><small>${meta}</small></span>${extra||''}${CHEV}</button>`;
+function personCard(id){
+  const p=P(id),m=me();if(!p||!m)return '';
+  const masc=p.role==='mascote',keep=(sel,def)=>{const el=document.querySelector('#layer '+sel);return el?el.value:def};
+  const sub=masc?`Mascote ${p.mascotYear||''} · convite vitalício`:`Membro nº ${String(p.no||'').padStart(3,'0')} · desde ${p.since}`;
+  const role=p.admin?'Administrador':p.committee?'Comissão':'';
+  const canCom=m.admin&&!p.admin;
+  const t=ONLINE?Remote.keys[id]:null,canRm=!(id===ME||p.admin);
+  return `<div class="sheet-bar"><div class="pc-head">${avatar(p)}<div><div class="title-sm">${esc(p.name)}</div><div class="note">${sub}${role?` · <span class="tag brass">${role}</span>`:''}</div></div></div><button class="x-btn" data-a="closesheet" aria-label="Fechar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
+  <section class="pc-sec"><span class="pc-k">Dados</span>
+    <label class="f" for="ed-name">Nome<input type="text" id="ed-name" value="${esc(keep('#ed-name',p.name))}" maxlength="40"></label>
+    ${masc?`<label class="f" for="ed-year">Eleito mascote em<input type="number" id="ed-year" value="${esc(keep('#ed-year',p.mascotYear||''))}" min="1990" max="${S.edition.year}"></label>`
+      :`<label class="sw-row${canCom?'':' off'}"><span><b>Comissão</b><small>${p.admin?'O administrador está sempre na Comissão.':canCom?'Gere o jantar, as urnas e as pessoas.':'Só o administrador altera.'}</small></span><input type="checkbox" class="sw" id="ed-com" ${p.committee?'checked':''} ${canCom?'':'disabled'}></label>`}
+    <button class="btn brass" data-a="saveedit" data-id="${id}">Guardar alterações</button>
+  </section>
+  <section class="pc-sec"><span class="pc-k">Fotografia</span>
+    <div class="pc-photo">${portrait(p,masc?'green':'')}<div class="pc-photo-a"><span class="note">${p.photo?'Fotografia do cartão de membro.':'Ainda sem fotografia. Só de bigode, por favor.'}</span>
+      <div class="btn-row"><label class="btn sm" for="photo-in-${id}" style="display:inline-flex;align-items:center;cursor:pointer">${p.photo?'Mudar':'Adicionar'}</label><input type="file" id="photo-in-${id}" data-photo="${id}" accept="image/*" hidden>${p.photo?`<button class="txt-btn" data-a="rmphoto" data-id="${id}">Remover</button>`:''}</div></div></div>
+  </section>
+  <section class="pc-sec"><span class="pc-k">Acesso à app</span>
+    ${!ONLINE?'<p class="note">Os links pessoais existem só na versão online.</p>'
+      :`<p class="note">${masc?'Não precisa de entrar na app: na noite do jantar, a Comissão pode emprestar-lhe o telemóvel para votar. Mas também pode receber um link.':'Cada pessoa entra com o seu link pessoal. Envie-o por WhatsApp.'}</p>
+      <button class="btn" data-a="copylink" data-id="${id}" ${t?'':'disabled'}>${t?'Copiar mensagem com o link':'A carregar o link…'}</button>
+      ${UI.showLink===id&&t?`<p class="pc-link">${esc(Remote.linkFor(t))}</p>`:''}
+      <p class="note">Perdeu o link ou foi partilhado por engano? <button class="txt-btn inline" data-a="newlink" data-id="${id}">Criar um novo link</button>. O anterior deixa de funcionar.</p>`}
+  </section>
+  ${canRm?`<section class="pc-sec pc-danger">${UI.confirm==='rm-'+id?confirmBox('rm-'+id,`Remover ${esc(p.name)} ${masc?'das mascotes':'da Irmandade (Art. 5.º)'}? Não é possível desfazer.`,'Remover','rmok',`data-id="${id}"`)
+    :`<button class="txt-btn danger" data-a="askrm" data-id="${id}">${masc?'Remover das mascotes':'Remover da Irmandade'}</button>`}</section>`:''}`;
+}
+function openPerson(id){
+  UI.personOpen=id;UI.confirm=null;UI.showLink=null;
+  $('#layer').innerHTML=`<div class="scrim" data-a="closesheet"><div class="sheet person" role="dialog" aria-modal="true" aria-label="Cartão de ${esc(S.people[id]?S.people[id].name:'')}">${personCard(id)}</div></div>`;
+  attachDrag($('#layer .sheet'),()=>{UI.personOpen=null;closeLayer()});
+}
+function refreshPerson(){
+  const sh=document.querySelector('#layer .sheet.person');
+  if(!sh||!S.people[UI.personOpen]){if(!sh)UI.personOpen=null;return}
+  const a=document.activeElement;if(a&&sh.contains(a)&&/INPUT|TEXTAREA/.test(a.tagName)&&a.type!=='checkbox')return;
+  const st=sh.scrollTop;sh.innerHTML=personCard(UI.personOpen);sh.scrollTop=st;
+}
 function vComissao(){
   const e=S.edition;
   const just=Object.keys(S.rsvp).filter(id=>S.people[id]&&S.rsvp[id].s==='nao'&&S.rsvp[id].reason);
@@ -1337,28 +1405,17 @@ function vComissao(){
     <details class="grp"><summary>Não confirmaram · ${others.length}</summary><div class="list">${others.map(p=>`<div class="row">${avatar(p)}<div class="nm"><b>${esc(p.name)}</b><small>${{nao:'Ausente',pendente:'Em silêncio',excluido:'Excluído · Art. 5.º'}[status(p.id)]}</small></div><button class="btn sm ${S.present[p.id]?'brass':''}" data-a="present" data-id="${p.id}">${S.present[p.id]?'Presente':'Registar'}</button></div>`).join('')}</div></details></section>`;
   sec.urnas=`<section class="sec"><span class="h-serif">Urnas</span>${ballot('bigode')}${ballot('mascote')}</section>`;
   sec.membros=`<section class="sec"><div class="sec-row"><span class="h-serif">Membros</span><span class="note">${members.length} membros · ${members.filter(p=>p.committee).length} na Comissão</span></div>
-    <p class="note">${me().admin?'Como administrador, define quem faz parte da Comissão em «Editar».':'Só o administrador define quem faz parte da Comissão.'}</p>
-    <div class="list">${members.map(p=>UI.editing===p.id?`<div class="row" style="flex-wrap:wrap">
-        ${avatar(p)}<input type="text" id="ed-name" value="${esc(p.name)}" aria-label="Nome" style="flex:1 1 150px;min-width:0;padding:8px 10px">
-        <label style="display:flex;gap:6px;align-items:center;font-size:13px;${me().admin&&!p.admin?'':'opacity:.5'}"><input type="checkbox" id="ed-com" ${p.committee?'checked':''} ${me().admin&&!p.admin?'':'disabled'}> Comissão</label>
-        ${me().admin?'':'<p class="note" style="width:100%">Só o administrador define quem faz parte da Comissão.</p>'}
-        <div style="width:100%">${photoControls(p)}</div>
-        <div class="btn-row" style="width:100%"><button class="btn sm brass" data-a="saveedit" data-id="${p.id}">Guardar</button><button class="btn sm" data-a="cancel">Cancelar</button><button class="btn sm" data-a="askrm" data-id="${p.id}" ${p.id===ME||p.admin?'disabled':''}>Remover</button></div>
-        ${confirmBox('rm-'+p.id,`Remover ${esc(p.name)} da Irmandade (Art. 5.º)?`,'Remover','rmok',`data-id="${p.id}"`)}</div>`
-      :`<div class="row"><span class="tag brass" style="width:34px">${String(p.no||'').padStart(3,'0')}</span>${avatar(p)}<div class="nm"><b>${esc(p.name)}</b><small>${[p.admin?'Administrador':p.committee?'Comissão':'',p.strikes?p.strikes+(p.strikes>1?' faltas':' falta')+' sem resposta':''].filter(Boolean).join(' · ')||'Desde '+p.since}</small></div>${p.strikes>1?'<span class="tag wine">Reincidente</span>':''}${linkBtns(p)}<button class="btn sm" data-a="edit" data-id="${p.id}">Editar</button></div>${UI.showLink===p.id?showLink(p):''}`).join('')}</div>
-    <div class="btn-row"><input type="text" id="new-member" placeholder="Nome do novo membro" style="flex:1 1 150px;min-width:0;padding:10px 12px"><button class="btn sm brass" data-a="addmember">Admitir</button></div></section>`;
+    <p class="note">Toque num nome para ver e editar os dados, a fotografia e o link pessoal.</p>
+    <div class="list">${members.map(p=>personRow(p,`<span class="tag brass" style="width:34px">${String(p.no||'').padStart(3,'0')}</span>`,[p.admin?'Administrador':p.committee?'Comissão':'',p.strikes?p.strikes+(p.strikes>1?' faltas':' falta')+' sem resposta':''].filter(Boolean).join(' · ')||'Desde '+p.since,p.strikes>1?'<span class="tag wine">Reincidente</span>':'')).join('')}</div>
+    <div class="add-box"><span class="sub-label">Admitir um novo membro</span><div class="btn-row"><input type="text" id="new-member" placeholder="Nome" aria-label="Nome do novo membro" style="flex:1 1 150px;min-width:0;padding:10px 12px"><button class="btn sm brass" data-a="addmember">Admitir</button></div></div></section>`;
   sec.mascotes=`<section class="sec"><div class="sec-row"><span class="h-serif">Mascotes</span><span class="note">convite vitalício · Art. 8.º</span></div>
-    <div class="list">${all().filter(p=>p.role==='mascote').sort((a,b)=>(b.mascotYear||0)-(a.mascotYear||0)).map(p=>UI.editing===p.id?`<div class="row" style="flex-wrap:wrap">
-        ${avatar(p)}<input type="text" id="ed-name" value="${esc(p.name)}" aria-label="Nome" style="flex:1 1 150px;min-width:0;padding:8px 10px">
-        <label class="f" for="ed-year" style="width:110px">Eleito em<input type="number" id="ed-year" value="${p.mascotYear||''}" min="1990" max="${e.year}" style="padding:8px 10px"></label>
-        <div style="width:100%">${photoControls(p)}</div>
-        <div class="btn-row" style="width:100%"><button class="btn sm brass" data-a="saveedit" data-id="${p.id}">Guardar</button><button class="btn sm" data-a="cancel">Cancelar</button><button class="btn sm" data-a="askrm" data-id="${p.id}">Remover</button></div>
-        ${confirmBox('rm-'+p.id,`Remover ${esc(p.name)} das mascotes?`,'Remover','rmok',`data-id="${p.id}"`)}</div>`
-      :`<div class="row"><span class="tag green" style="width:34px">${p.mascotYear||''}</span>${avatar(p)}<div class="nm"><b>${esc(p.name)}</b><small>${p.photo?'Com fotografia':'Sem fotografia'}</small></div>${linkBtns(p)}<button class="btn sm" data-a="edit" data-id="${p.id}">Editar</button></div>${UI.showLink===p.id?showLink(p):''}`).join('')||'<div class="empty">Ainda não há mascotes.</div>'}</div>
-    <div class="grid2" style="grid-template-columns:minmax(0,1fr) 110px"><label class="f" for="new-mascot">Nova mascote<input type="text" id="new-mascot" placeholder="Nome" maxlength="60"></label>
+    <div class="list">${all().filter(p=>p.role==='mascote').sort((a,b)=>(b.mascotYear||0)-(a.mascotYear||0)).map(p=>personRow(p,`<span class="tag green" style="width:34px">${p.mascotYear||''}</span>`,'Mascote '+(p.mascotYear||'')+' · convite vitalício','')).join('')||'<div class="empty">Ainda não há mascotes.</div>'}</div>
+    <div class="add-box">
+    <span class="sub-label">Adicionar uma mascote de anos anteriores</span>
+    <div class="grid2" style="grid-template-columns:minmax(0,1fr) 110px"><label class="f" for="new-mascot">Nome<input type="text" id="new-mascot" placeholder="Nome" maxlength="60"></label>
       <label class="f" for="new-mascot-year">Eleito em<input type="number" id="new-mascot-year" value="${e.year-1}" min="1990" max="${e.year}"></label></div>
     <button class="btn sm brass" data-a="addmascot" style="align-self:flex-start">Adicionar mascote</button>
-    <p class="note">Para as mascotes de anos anteriores. Ficam com convite vitalício e aparecem no Livro de honra no ano em que foram eleitas. Não precisam de entrar na app, mas também podem receber um link.</p></section>`;
+    <p class="note">Ficam com convite vitalício e aparecem no Livro de honra no ano em que foram eleitas.</p></div></section>`;
   const hist=S.history.slice().sort((a,b)=>b.year-a.year);
   sec.arquivo=`<section class="sec"><div class="sec-row"><span class="h-serif">Edições anteriores</span><span class="note">Livro de honra</span></div>
     <p class="note">Cada jantar com a data, o local, o Melhor Bigode, a Mascote e a fotografia de grupo. Todos os membros veem na Galeria.</p>
@@ -1674,6 +1731,7 @@ function render(){
   if(changed){app.classList.remove('enter');void app.offsetWidth;app.classList.add('enter')}else app.classList.remove('enter');
   if(UI.profileOpen&&m){const body=$('#layer .sheet-body');if(body){const o=openDetails(body);body.innerHTML=vPerfil();restoreDetails(body,o)}}
   if(UI.noticeOpen)refreshNotice();
+  if(UI.personOpen)refreshPerson();
   if(active==='q'){const q=$('#q');if(q){q.focus();q.setSelectionRange(q.value.length,q.value.length)}}
   if(m)setTimeout(checkReveals,250);
 }
@@ -1716,7 +1774,7 @@ document.addEventListener('input',ev=>{if(ev.target.id==='q'){UI.q=ev.target.val
 /* ====================================================================== actions */
 // Everything only the Committee may do. The online version enforces the same list on the server.
 const COMMITTEE_ONLY=new Set(['phase','saveed','just','present','addcand','newcand','rmcand','allpresent','open','reveal','tiebreak','decide','undecide','resetb',
-  'edit','saveedit','askrm','rmok','addmember','askclose','nudge','proxyvote','proxycast','allpresent','closeok','askreset','resetok','addnote','rmnote','rmfile','askendnight','endnightok','copylink','newlink','addmascot','addhist','savehist','rmhist','histform','savehistform','hfnophoto']);
+  'edit','saveedit','askrm','rmok','addmember','askclose','nudge','person','proxyvote','proxycast','allpresent','closeok','askreset','resetok','addnote','rmnote','rmfile','askendnight','endnightok','copylink','newlink','addmascot','addhist','savehist','rmhist','histform','savehistform','hfnophoto']);
 // Square-crop profile photos to 400px so they stay light
 function squarePhoto(file){return new Promise((res,rej)=>{const url=URL.createObjectURL(file);const img=new Image();
   img.onload=()=>{const s=Math.min(img.width,img.height),c=document.createElement('canvas');c.width=c.height=400;
@@ -1787,7 +1845,7 @@ document.addEventListener('click',ev=>{
       const l=$('#cm-list');if(l)l.lastElementChild&&l.lastElementChild.scrollIntoView({block:'nearest',behavior:'smooth'});
       Promise.resolve(Remote.lastCommit).then(()=>notify('comment',{id:cid}));return}
     case 'rmcomment':Store.one('comments.'+id,undefined);refreshNotice();toast('Comentário apagado');return;
-    case 'closesheet':if(ev.target===el||el.tagName==='BUTTON'){UI.noticeOpen=null;UI.proxy=null;closeLayer()}return;
+    case 'closesheet':if(ev.target===el||el.tagName==='BUTTON'){UI.noticeOpen=null;UI.proxy=null;UI.personOpen=null;UI.confirm=null;closeLayer()}return;
     case 'closeprofile':if(ev.target===el||el.tagName==='BUTTON')closeProfile();return;
     case 'card':UI.profileOpen?closeProfile():openProfile();return;
     case 'pick':Store.setMe(id);if(UI.profileOpen){UI.profileOpen=false;if(history.state&&history.state.lmmSheet)history.back()}$('#layer').innerHTML='';UI.pick={};if(location.hash==='#comissao'&&!P(id).committee)location.hash='jantar';ui();window.scrollTo(0,0);toast('Bem-vindo, '+P(id).name);return;
@@ -1843,11 +1901,11 @@ document.addEventListener('click',ev=>{
     case 'undecide':Store.one(`ballots.${k}.decided`,undefined);toast('Decisão anulada');return;
     case 'tiebreak':{const b=S.ballots[k];Store.setMany({[`ballots.${k}`]:{cands:leaders(b),open:true,revealed:false,votes:{},round:(b.round||1)+1,openedAt:Date.now(),openedBy:m.id}});toast('Desempate aberto');return}
     case 'resetb':Store.one(`ballots.${k}`,{cands:S.ballots[k].cands,open:false,revealed:false,votes:{},round:1});return;
-    case 'edit':UI.editing=id;UI.confirm=null;ui();return;
-    case 'saveedit':{const n=$('#ed-name').value.trim();if(!n){toast('O nome não pode ficar vazio');return}UI.editing=null;const ch={[`people.${id}.name`]:n};const cb=$('#ed-com');if(cb&&m.admin&&!S.people[id].admin)ch[`people.${id}.committee`]=cb.checked;
-      const ey=$('#ed-year');if(ey&&Number(ey.value))ch[`people.${id}.mascotYear`]=Number(ey.value);Store.setMany(ch);toast('Membro atualizado');return}
+    case 'edit':case 'person':openPerson(id);return;
+    case 'saveedit':{const n=$('#ed-name').value.trim();if(!n){toast('O nome não pode ficar vazio');return}UI.editing=null;UI.personOpen=null;closeLayer();const ch={[`people.${id}.name`]:n};const cb=$('#ed-com');if(cb&&m.admin&&!S.people[id].admin)ch[`people.${id}.committee`]=cb.checked;
+      const ey=$('#ed-year');if(ey&&Number(ey.value))ch[`people.${id}.mascotYear`]=Number(ey.value);Store.setMany(ch);toast(S.people[id]&&S.people[id].role==='mascote'?'Mascote atualizada':'Membro atualizado');return}
     case 'askrm':UI.confirm='rm-'+id;ui();return;
-    case 'rmok':{UI.editing=null;UI.confirm=null;const ch={['people.'+id]:undefined,['rsvp.'+id]:undefined,['present.'+id]:undefined};['bigode','mascote'].forEach(x=>ch[`ballots.${x}.cands`]=S.ballots[x].cands.filter(c=>c!==id));Store.setMany(ch);if(ONLINE)Remote.dropKeys(id).catch(()=>{});toast('Membro removido');return}
+    case 'rmok':{UI.editing=null;UI.confirm=null;if(UI.personOpen===id){UI.personOpen=null;closeLayer()}const ch={['people.'+id]:undefined,['rsvp.'+id]:undefined,['present.'+id]:undefined};['bigode','mascote'].forEach(x=>ch[`ballots.${x}.cands`]=S.ballots[x].cands.filter(c=>c!==id));Store.setMany(ch);if(ONLINE)Remote.dropKeys(id).catch(()=>{});toast('Membro removido');return}
     case 'addmascot':{const n=$('#new-mascot').value.trim(),y=Number($('#new-mascot-year').value);if(!n){toast('Escreva o nome');return}if(!y||y<1990||y>S.edition.year){toast('Ano inválido');return}
       const nid='g'+Date.now().toString(36),ch={['people.'+nid]:{name:n,role:'mascote',since:y,dinners:0,mascotYear:y}};
       const hs=S.history.slice(),h=hs.find(x=>x.year===y);
