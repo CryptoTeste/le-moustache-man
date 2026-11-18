@@ -295,6 +295,10 @@ label.f{display:flex;flex-direction:column;gap:6px;min-width:0;font-size:10px;le
 .pc-k{font-size:10px;font-weight:700;letter-spacing:.24em;text-transform:uppercase;color:var(--brass)}
 .pc-photo{display:flex;align-items:center;gap:16px}
 .pc-photo .portrait{width:76px;height:76px}
+.pc-pic .portrait{display:block}
+.pc-pic{position:relative;flex:none;background:none;border:0;padding:0;cursor:pointer;border-radius:50%;display:block}
+.pc-edit{position:absolute;right:-2px;bottom:-2px;width:28px;height:28px;border-radius:50%;background:var(--brass);color:var(--on-brass);display:grid;place-items:center;box-shadow:0 0 0 3px var(--bg)}
+.pc-edit svg{width:14px;height:14px}
 .pc-photo-a{display:flex;flex-direction:column;gap:8px;min-width:0}
 .pc-link{font-size:12px;word-break:break-all;user-select:all;color:var(--muted);border:1px solid var(--line);padding:10px}
 .txt-btn.inline{padding:0;font:inherit;letter-spacing:0;text-transform:none;color:var(--brass);text-decoration:underline}
@@ -748,7 +752,7 @@ const tierName={membro:'Membro da Irmandade',mascote:'Mascote do Bigode',vencedo
 const avatar=p=>p.photo?`<span class="ini ${tier(p)}"><img src="${p.photo}" alt=""></span>`:`<span class="ini ${tier(p)}">${esc(ini(p.name))}</span>`;
 const portrait=(p,cls)=>`<span class="portrait ${cls||''}"><span class="in">${p&&p.photo?`<img src="${p.photo}" alt="${esc(p.name)}">`:esc(p?ini(p.name):'?')}</span></span>`;
 const passPhoto=p=>p&&p.photo?`<span class="pass-photo"><img src="${p.photo}" alt=""></span>`:'';
-const photoControls=p=>`<div class="btn-row"><label class="btn sm" for="photo-in-${p.id}" style="display:inline-flex;align-items:center;cursor:pointer">${p.photo?'Mudar fotografia':'Adicionar fotografia'}</label><input type="file" id="photo-in-${p.id}" data-photo="${p.id}" accept="image/*" hidden>${p.photo?`<button class="btn sm" data-a="rmphoto" data-id="${p.id}">Remover fotografia</button>`:''}</div>`;
+const photoControls=p=>`<div class="btn-row">${p.photo?`<button class="btn sm" data-a="editphoto" data-id="${p.id}">Ajustar fotografia</button>`:''}<label class="btn sm" for="photo-in-${p.id}" style="display:inline-flex;align-items:center;cursor:pointer">${p.photo?'Mudar fotografia':'Adicionar fotografia'}</label><input type="file" id="photo-in-${p.id}" data-photo="${p.id}" accept="image/*" hidden>${p.photo?`<button class="btn sm" data-a="rmphoto" data-id="${p.id}">Remover fotografia</button>`:''}</div>`;
 const invited=()=>all().filter(p=>p.role==='membro'||p.role==='mascote').sort((a,b)=>a.name.localeCompare(b.name,'pt'));
 const roman=n=>{const m=[[1000,'M'],[900,'CM'],[500,'D'],[400,'CD'],[100,'C'],[90,'XC'],[50,'L'],[40,'XL'],[10,'X'],[9,'IX'],[5,'V'],[4,'IV'],[1,'I']];let r='';m.forEach(([v,s])=>{while(n>=v){r+=s;n-=v}});return r};
 const today=()=>{const d=new Date();d.setHours(0,0,0,0);return d};
@@ -1306,6 +1310,8 @@ function confirmBox(id,question,okLabel,okAction,extra){
 const linkBtns=p=>ONLINE?`<button class="txt-btn" data-a="copylink" data-id="${p.id}" style="color:var(--brass)">Link</button>`:'';
 const showLink=p=>`<div class="notice" style="margin:4px 0 10px"><b>Link de ${esc(p.name)}</b><span style="word-break:break-all;user-select:all">${esc(Remote.keys[p.id]?Remote.linkFor(Remote.keys[p.id]):'')}</span><div class="btn-row"><button class="btn sm" data-a="newlink" data-id="${p.id}">Novo link</button></div></div>`;
 /* ---------- Pessoas: one row per person; tapping opens their card ---------- */
+const PENCIL='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16z"/></svg>';
+const PLUS='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M12 6v12M6 12h12"/></svg>';
 const CHEV='<svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>';
 const personRow=(p,lead,meta,extra)=>`<button class="row prow" data-a="person" data-id="${p.id}" aria-label="Abrir o cartão de ${esc(p.name)}">${lead}${avatar(p)}<span class="nm"><b>${esc(p.name)}</b><small>${meta}</small></span>${extra||''}${CHEV}</button>`;
 function personCard(id){
@@ -1323,8 +1329,8 @@ function personCard(id){
     <button class="btn brass" data-a="saveedit" data-id="${id}">Guardar alterações</button>
   </section>
   <section class="pc-sec"><span class="pc-k">Fotografia</span>
-    <div class="pc-photo">${portrait(p,masc?'green':'')}<div class="pc-photo-a"><span class="note">${p.photo?'Fotografia do cartão de membro.':'Ainda sem fotografia. Só de bigode, por favor.'}</span>
-      <div class="btn-row"><label class="btn sm" for="photo-in-${id}" style="display:inline-flex;align-items:center;cursor:pointer">${p.photo?'Mudar':'Adicionar'}</label><input type="file" id="photo-in-${id}" data-photo="${id}" accept="image/*" hidden>${p.photo?`<button class="txt-btn" data-a="rmphoto" data-id="${id}">Remover</button>`:''}</div></div></div>
+    <div class="pc-photo">${p.photo?`<button class="pc-pic" data-a="editphoto" data-id="${id}" aria-label="Ajustar a fotografia de ${esc(p.name)}">${portrait(p,masc?'green':'')}<span class="pc-edit">${PENCIL}</span></button>`:`<label class="pc-pic" for="photo-in-${id}" aria-label="Adicionar fotografia">${portrait(p,masc?'green':'')}<span class="pc-edit">${PLUS}</span></label>`}<div class="pc-photo-a"><span class="note">${p.photo?'Fotografia do cartão de membro.':'Ainda sem fotografia. Só de bigode, por favor.'}</span>
+      <div class="btn-row">${p.photo?`<button class="btn sm" data-a="editphoto" data-id="${id}">Ajustar</button>`:''}<label class="btn sm" for="photo-in-${id}" style="display:inline-flex;align-items:center;cursor:pointer">${p.photo?'Trocar':'Adicionar'}</label><input type="file" id="photo-in-${id}" data-photo="${id}" accept="image/*" hidden>${p.photo?`<button class="txt-btn" data-a="rmphoto" data-id="${id}">Remover</button>`:''}</div></div></div>
   </section>
   <section class="pc-sec"><span class="pc-k">Acesso à app</span>
     ${!ONLINE?'<p class="note">Os links pessoais existem só na versão online.</p>'
@@ -1787,8 +1793,8 @@ const COMMITTEE_ONLY=new Set(['phase','saveed','just','present','addcand','newca
 // Square-crop profile photos to 400px so they stay light
 /* Profile photo: the person drags and zooms it inside a circle before it is saved (400×400 JPEG) */
 function cropPhoto(file,name){return new Promise((res,rej)=>{
-  const url=URL.createObjectURL(file),img=new Image();
-  img.onerror=()=>{URL.revokeObjectURL(url);rej()};
+  const own=typeof file!=='string',url=own?URL.createObjectURL(file):file,img=new Image(),free=()=>{if(own)URL.revokeObjectURL(url)};
+  img.onerror=()=>{free();rej()};
   img.onload=()=>{
     const V=Math.min(300,window.innerWidth-60),W=img.naturalWidth,H=img.naturalHeight;
     const min=V/Math.min(W,H),max=min*5;let sc=min,x=(V-W*sc)/2,y=(V-H*sc)/2;
@@ -1821,7 +1827,7 @@ function cropPhoto(file,name){return new Promise((res,rej)=>{
     const finish=ok=>{let out=null;
       if(ok){const c=document.createElement('canvas');c.width=c.height=400;const g=c.getContext('2d');
         g.drawImage(img,-x/sc,-y/sc,V/sc,V/sc,0,0,400,400);out=c.toDataURL('image/jpeg',.85)}
-      URL.revokeObjectURL(url);ov.remove();res(out)};
+      free();ov.remove();res(out)};
     ov.addEventListener('click',e=>{const b=e.target.closest('[data-c]');if(b)finish(b.dataset.c==='ok')});
   };
   img.src=url;
@@ -1875,6 +1881,10 @@ document.addEventListener('click',ev=>{
     case 'theme':setTheme(v);ui();toast(v==='system'?'Segue o telemóvel':v==='light'?'Modo claro':'Modo escuro');return;
     case 'replay':if(!ceremonyOn)playReveal(k,true);return;
     case 'ctab':UI.ctab=v;UI.confirm=null;UI.editing=null;ui();{const s=document.querySelector('.seg.four');if(s)s.scrollIntoView({block:'start'});window.scrollBy(0,-70)}return;
+    case 'editphoto':{const p=S.people[id];if(!p||!p.photo)return;if(!(m.id===id||m.committee)){toast('Só o próprio ou a Comissão');return}
+      cropPhoto(p.photo,p.name).then(data=>{if(!data)return;const prev=S.people[id].photo;Store.set(`people.${id}.photo`,data);
+        if(!Store.persist()){Store.set(`people.${id}.photo`,prev);Store.persist();toast('Sem espaço no modo de teste');return}
+        render();toast('Fotografia ajustada')}).catch(()=>toast('Não foi possível abrir a fotografia'));return}
     case 'rmphoto':{if(!(m.id===id||m.committee)){toast('Só o próprio ou a Comissão');return}Store.one(`people.${id}.photo`,undefined);toast('Fotografia removida');return}
     case 'like':{const x=S.media[id];if(!x)return;const on=!(x.likes&&x.likes[m.id]);Store.one(`media.${id}.likes.${m.id}`,on?true:undefined);
       if($('#layer').innerHTML)viewAlbum(x.year);return}
