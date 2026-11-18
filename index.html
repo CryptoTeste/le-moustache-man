@@ -274,6 +274,10 @@ label.f{display:flex;flex-direction:column;gap:6px;min-width:0;font-size:10px;le
 .miss-p:active{border-color:var(--brass)}
 .miss-p .ini,.miss-p .av{width:24px;height:24px;font-size:11px}
 .win-card{margin-bottom:4px}
+.rsvp-pick{display:flex;flex:none;border:1px solid var(--line-strong)}
+.rsvp-pick button{background:none;border:0;padding:8px 12px;font-size:10px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+.rsvp-pick button+button{border-left:1px solid var(--line-strong)}
+.rsvp-pick button[data-v=vou]{color:var(--brass)}
 .crop{position:fixed;inset:0;z-index:60;background:var(--bg);display:flex;align-items:center;justify-content:center;padding:24px max(22px,env(safe-area-inset-right,0px)) calc(24px + env(safe-area-inset-bottom,0px)) max(22px,env(safe-area-inset-left,0px))}
 .crop-in{width:100%;max-width:400px;display:flex;flex-direction:column;align-items:stretch;gap:22px}
 .crop-stage{position:relative;align-self:center;overflow:hidden;border-radius:50%;touch-action:none;cursor:grab;background:#000;box-shadow:0 0 0 1px var(--brass),0 0 0 6px rgba(201,164,92,.18)}
@@ -1452,7 +1456,12 @@ function vComissao(){
   const silent=deadlinePassed()?g.excluido:g.pendente;
   sec.resumo=`<section class="sec"><div class="sec-row"><span class="h-serif">Respostas</span><span class="note">${deadlinePassed()?'prazo terminado':'prazo: '+fmtShort(e.deadline)}</span></div>
     <div class="stats"><div><b style="color:var(--brass)">${g.vou.length}</b><span>PRESENTES</span></div><div><b>${g.nao.length}</b><span>AUSENTES</span></div><div><b style="color:var(--wine-ink)">${silent.length}</b><span>${deadlinePassed()?'EXCLUÍDOS':'EM SILÊNCIO'}</span></div></div>
-    ${silent.length?`<details class="grp"><summary>${deadlinePassed()?'Excluídos (Art. 5.º)':'Ainda sem resposta'} · ${silent.length}</summary><div class="list">${silent.map(p=>`<div class="row">${avatar(p)}<div class="nm"><b>${esc(p.name)}</b>${p.strikes?`<small>${p.strikes} ${p.strikes>1?'faltas':'falta'} anteriores</small>`:''}</div></div>`).join('')}</div></details>`:''}</section>`;
+    ${silent.length?`<details class="grp" open><summary>${deadlinePassed()?'Excluídos (Art. 5.º)':'Ainda sem resposta'} · ${silent.length}</summary>
+      <p class="note" style="padding-bottom:8px">Responderam por outro meio ou não têm a app? Registe aqui a resposta.</p>
+      <div class="list">${silent.map(p=>`<div class="row">${avatar(p)}<div class="nm"><b>${esc(p.name)}</b>${p.strikes?`<small>${p.strikes} ${p.strikes>1?'faltas':'falta'} anteriores</small>`:''}</div>
+        <div class="rsvp-pick" role="group" aria-label="Resposta de ${esc(p.name)}"><button data-a="setrsvp" data-id="${p.id}" data-v="vou">Vai</button><button data-a="setrsvp" data-id="${p.id}" data-v="nao">Não vai</button></div></div>`).join('')}</div></details>`:''}
+    ${[['vou','Vão',g.vou],['nao','Não vão',g.nao]].map(([k,l,arr])=>arr.length?`<details class="grp"><summary>${l} · ${arr.length}</summary><div class="list">${arr.map(p=>{const r=S.rsvp[p.id]||{},byC=r.by&&S.people[r.by];
+      return `<div class="row">${avatar(p)}<div class="nm"><b>${esc(p.name)}</b><small>${byC?'Registado por '+esc(S.people[r.by].name):k==='nao'&&r.reason?'Com justificação':'Respondeu na app'}</small></div>${byC?`<button class="txt-btn" data-a="unsetrsvp" data-id="${p.id}">Anular</button>`:''}</div>`}).join('')}</div></details>`:'').join('')}</section>`;
 
   // What needs attention, with a shortcut to the right section
   const pendJ=just.filter(id=>!S.rsvp[id].j||S.rsvp[id].j==='pendente').length;
@@ -1791,7 +1800,7 @@ document.addEventListener('input',ev=>{if(ev.target.id==='q'){UI.q=ev.target.val
 /* ====================================================================== actions */
 // Everything only the Committee may do. The online version enforces the same list on the server.
 const COMMITTEE_ONLY=new Set(['phase','saveed','just','present','addcand','newcand','rmcand','allpresent','open','reveal','tiebreak','decide','undecide','resetb',
-  'edit','saveedit','askrm','rmok','addmember','askclose','nudge','person','proxyvote','proxycast','allpresent','closeok','askreset','resetok','addnote','rmnote','rmfile','askendnight','endnightok','copylink','newlink','addmascot','addhist','savehist','rmhist','histform','savehistform','hfnophoto']);
+  'edit','saveedit','askrm','rmok','addmember','askclose','nudge','setrsvp','unsetrsvp','person','proxyvote','proxycast','allpresent','closeok','askreset','resetok','addnote','rmnote','rmfile','askendnight','endnightok','copylink','newlink','addmascot','addhist','savehist','rmhist','histform','savehistform','hfnophoto']);
 // Square-crop profile photos to 400px so they stay light
 /* Profile photo: the person drags and zooms it inside a circle before it is saved (400×400 JPEG) */
 function cropPhoto(file,name){return new Promise((res,rej)=>{
@@ -1922,6 +1931,8 @@ document.addEventListener('click',ev=>{
       if(prev.s===v){Store.one('rsvp.'+m.id,{});toast('Resposta retirada');return}
       Store.one('rsvp.'+m.id,v==='vou'?{s:'vou'}:Object.assign({},prev.s==='nao'?prev:{},{s:'nao'}));toast(v==='vou'?'Presença confirmada':'Ausência registada');return}
     case 'reason':{const t=$('#reason').value.trim();if(!t){toast('Escreva o motivo');return}Store.one('rsvp.'+m.id,{s:'nao',reason:t,j:'pendente'});toast('Justificação enviada');return}
+    case 'setrsvp':{const nm=S.people[id]?S.people[id].name:'';Store.one('rsvp.'+id,{s:v==='vou'?'vou':'nao',by:m.id,at:Date.now()});toast(nm+(v==='vou'?' vai ao jantar':' não vai'));return}
+    case 'unsetrsvp':Store.one('rsvp.'+id,{});toast('Resposta anulada');return;
     case 'pickcand':UI.pick[k]=id;ui();return;
     case 'proxyvote':UI.proxy={k,id,pick:null};openProxy();return;
     case 'proxypick':if(UI.proxy){UI.proxy.pick=id;openProxy()}return;
