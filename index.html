@@ -1011,8 +1011,8 @@ function inviteHTML(){
       <div><div class="inv-place">${esc(e.place)}</div><div class="inv-city">${esc(e.city)}</div></div>
       <div class="inv-foot"><span class="tag brass">${when}</span><a href="${map}" target="_blank" rel="noopener"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s-7-6.2-7-11.5A7 7 0 0 1 19 9.5C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></svg>Ver no mapa</a></div>
     </div>
-    <div class="inv-masc">${(()=>{const id=nightMascot();return id?`${avatar(P(id))}<div><span>Mascote do jantar ${e.year}</span><b>${esc(S.people[id].name)}</b></div>`
-      :`<span class="inv-masc-ph">${STACHE}</span><div><span>Mascote do jantar ${e.year}</span><i>A eleger na noite do jantar</i></div>`})()}</div>
+    <div class="inv-masc">${(()=>{const id=nightMascot();return id?`${avatar(P(id))}<div><span>Mascote do jantar</span><b>${esc(S.people[id].name)}</b></div>`
+      :`<span class="inv-masc-ph">${STACHE}</span><div><span>Mascote do jantar</span><i>A eleger na noite do jantar</i></div>`})()}</div>
   </div>`;
 }
 
