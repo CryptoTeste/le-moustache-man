@@ -273,6 +273,11 @@ label.f{display:flex;flex-direction:column;gap:6px;min-width:0;font-size:10px;le
 .miss-p{display:inline-flex;align-items:center;gap:6px;padding:3px 10px 3px 3px;border:1px solid var(--line);border-radius:99px;font-size:13px;font-weight:600}
 .miss-p .ini,.miss-p .av{width:24px;height:24px;font-size:11px}
 .win-card{margin-bottom:4px}
+.inv-masc{display:flex;align-items:center;gap:10px;border-top:1px solid var(--line);padding-top:10px;font-size:13px}
+.inv-masc div>span{display:block;font-size:9px;letter-spacing:.24em;color:var(--green)}
+.inv-masc b{font:500 19px/1.15 var(--f-serif)}
+.inv-masc i{color:var(--muted)}
+.inv-masc .ini{width:32px;height:32px;font-size:14px;border-color:var(--green-line);color:var(--green)}
 .win-ini{display:flex;align-items:center;justify-content:center;font:500 28px var(--f-serif);color:#E8C987}
 .hon-strip{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;background:none;border:0;padding:0;cursor:pointer;width:100%}
 .hon-strip span{position:relative;aspect-ratio:1;overflow:hidden;border-radius:6px;background:var(--surface)}
@@ -947,6 +952,8 @@ function viewFile(id){
 }
 
 /* ---------- Convite (invitation card) ---------- */
+// The night's Mascot: the one elected in the ballot, or the one the Committee named in the dinner details
+function nightMascot(){const b=S.ballots.mascote;if(b.revealed&&leaders(b).length===1)return leaders(b)[0];const id=S.edition.mascot;return id&&S.people[id]?id:null}
 function inviteHTML(){
   const e=S.edition,d=D(e.date);
   const wd=d.toLocaleDateString('pt-PT',{weekday:'short'}).replace('.','').toUpperCase();
@@ -959,6 +966,7 @@ function inviteHTML(){
     <div class="inv-body">
       <div><div class="inv-place">${esc(e.place)}</div><div class="inv-city">${esc(e.city)}</div></div>
       <div class="inv-dress"><span>TRAJE</span>${esc(e.dress)}</div>
+      <div class="inv-masc">${(()=>{const id=nightMascot();return id?`${avatar(P(id))}<div><span>MASCOTE DO JANTAR</span><b>${esc(S.people[id].name)}</b></div>`:`<div><span>MASCOTE DO JANTAR</span><i>A eleger na noite do jantar</i></div>`})()}</div>
       <div class="inv-foot"><span class="tag brass">${when}</span><a href="${map}" target="_blank" rel="noopener"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s-7-6.2-7-11.5A7 7 0 0 1 19 9.5C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></svg>Ver no mapa</a></div>
     </div></div>`;
 }
@@ -1301,6 +1309,8 @@ function vComissao(){
     <label class="f" for="f-place">Local<input type="text" id="f-place" value="${esc(e.place)}"></label>
     <label class="f" for="f-city">Localidade<input type="text" id="f-city" value="${esc(e.city)}"></label>
     <label class="f" for="f-dress">Traje<textarea id="f-dress">${esc(e.dress)}</textarea></label>
+    <label class="f" for="f-mascot">Mascote do jantar<select id="f-mascot"><option value="">A eleger na noite (votação)</option>${(()=>{const ids=[...new Set(S.ballots.mascote.cands.concat(Object.keys(S.people).filter(id=>S.people[id].role==='mascote')))].filter(id=>S.people[id]);
+      return ids.map(id=>`<option value="${id}" ${e.mascot===id?'selected':''}>${esc(S.people[id].name)}${S.people[id].role==='mascote'?' · mascote '+(S.people[id].mascotYear||''):' · proposto'}</option>`).join('')})()}</select></label>
     <label class="f" for="f-dead">Prazo de resposta<input type="date" id="f-dead" value="${e.deadline}"></label>
     <button class="btn brass" data-a="saveed">Guardar convocatória</button>
     <p class="note">${deadlinePassed()?'<b>O prazo de resposta já passou</b>: quem não respondeu aparece como Excluído (Art. 5.º). Para reabrir as respostas, escolha uma data futura e guarde.':'Depois do prazo, quem não respondeu fica Excluído (Art. 5.º).'}</p></section>`;
@@ -1781,7 +1791,7 @@ document.addEventListener('click',ev=>{
     case 'pickcand':UI.pick[k]=id;ui();return;
     case 'vote':{const kk=k,pk=UI.pick[kk];if(!pk)return;Store.one(`ballots.${kk}.votes.${m.id}`,pk);delete UI.pick[kk];toast('Voto depositado');return}
     case 'phase':UI.ctab='jantar';Store.setMany({'edition.phase':v,'edition.updatedAt':Date.now(),'edition.updatedBy':m.id});if(v==='noite'){notify('night');toast('Registo de membros iniciado')}return;
-    case 'saveed':Store.setMany({'edition.date':$('#f-date').value||S.edition.date,'edition.time':$('#f-time').value||S.edition.time,'edition.place':$('#f-place').value.trim(),'edition.city':$('#f-city').value.trim(),'edition.dress':$('#f-dress').value.trim(),'edition.deadline':$('#f-dead').value||S.edition.deadline,'edition.updatedAt':Date.now(),'edition.updatedBy':m.id});notify('details');toast('Convocatória guardada');return;
+    case 'saveed':Store.setMany({'edition.date':$('#f-date').value||S.edition.date,'edition.time':$('#f-time').value||S.edition.time,'edition.place':$('#f-place').value.trim(),'edition.city':$('#f-city').value.trim(),'edition.dress':$('#f-dress').value.trim(),'edition.mascot':($('#f-mascot')||{}).value||'','edition.deadline':$('#f-dead').value||S.edition.deadline,'edition.updatedAt':Date.now(),'edition.updatedBy':m.id});notify('details');toast('Convocatória guardada');return;
     case 'just':Store.one(`rsvp.${id}.j`,v);toast(v==='aceite'?'Justificação aceite':'Justificação recusada');return;
     case 'present':if(S.edition.phase!=='noite'){toast('Inicie a noite primeiro');return}Store.one('present.'+id,S.present[id]?undefined:true);return;
     case 'askendnight':UI.confirm='endnight';ui();return;
@@ -1839,7 +1849,7 @@ document.addEventListener('click',ev=>{
     case 'cancel':UI.confirm=null;UI.editing=null;ui();return;
     case 'resetok':UI.confirm=null;Store.reset();ui();toast('Dados de exemplo repostos');return;
     case 'closeok':{
-      const y=S.edition.year,bw=leaders(S.ballots.bigode)[0],mw=leaders(S.ballots.mascote)[0],ch={};
+      const y=S.edition.year,bw=leaders(S.ballots.bigode)[0],mw=leaders(S.ballots.mascote)[0]||(S.edition.mascot&&S.people[S.edition.mascot]?S.edition.mascot:undefined),ch={};
       const mt=tally(S.ballots.mascote),bt=tally(S.ballots.bigode);
       const nm=ids=>Object.fromEntries(ids.filter(i=>S.people[i]).map(i=>[i,S.people[i].name]));
       const results={mascote:{counts:mt,names:nm(Object.keys(mt))},bigode:{counts:bt,names:nm(Object.keys(bt))}};
@@ -1850,11 +1860,11 @@ document.addEventListener('click',ev=>{
         attended:presentIds(),absent:inv.filter(p=>status(p.id)==='nao'&&!S.present[p.id]).map(p=>p.id),
         silent:inv.filter(p=>(status(p.id)==='excluido'||status(p.id)==='pendente')&&!S.present[p.id]).map(p=>p.id)});
       S.ballots.mascote.cands.forEach(c=>{if(c!==mw&&S.people[c]&&S.people[c].role==='convidado')ch['people.'+c]=undefined});
-      const mp=S.people[mw];ch[`people.${mw}.mascotYear`]=y;if(mp.role!=='membro')ch[`people.${mw}.role`]='mascote';
+      const mp=S.people[mw];if(mp){ch[`people.${mw}.mascotYear`]=y;if(mp.role!=='membro')ch[`people.${mw}.role`]='mascote'}
       presentIds().forEach(pid=>ch[`people.${pid}.dinners`]=(S.people[pid].dinners||0)+1);
       invited().forEach(p=>{if(status(p.id)==='excluido')ch[`people.${p.id}.strikes`]=(p.strikes||0)+1});
       const nd=D(S.edition.date);nd.setFullYear(y+1);const dd=new Date(nd);dd.setDate(dd.getDate()-14);
-      ch.edition=Object.assign({},S.edition,{year:y+1,date:iso(nd),deadline:iso(dd),place:'Restaurante a confirmar',phase:'convocatoria'});
+      ch.edition=Object.assign({},S.edition,{year:y+1,date:iso(nd),deadline:iso(dd),place:'Restaurante a confirmar',phase:'convocatoria',mascot:''});
       ch.rsvp={};ch.present={};
       ['mascote','bigode'].forEach(x=>ch['ballots.'+x]={cands:[],open:false,revealed:false,votes:{},round:1});
       UI.confirm=null;Store.setMany(ch);notify('closed');toast('Edição '+y+' encerrada');location.hash='galeria';return}
