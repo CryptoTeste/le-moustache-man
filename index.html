@@ -767,6 +767,9 @@ const tierName={membro:'Membro da Irmandade',mascote:'Mascote do Bigode',vencedo
 const avatar=p=>p.photo?`<span class="ini ${tier(p)}"><img src="${p.photo}" alt=""></span>`:`<span class="ini ${tier(p)}">${esc(ini(p.name))}</span>`;
 const portrait=(p,cls)=>`<span class="portrait ${cls||''}"><span class="in">${p&&p.photo?`<img src="${p.photo}" alt="${esc(p.name)}">`:esc(p?ini(p.name):'?')}</span></span>`;
 const passPhoto=p=>p&&p.photo?`<span class="pass-photo"><img src="${p.photo}" alt=""></span>`:'';
+// Member card: how many times they won Best Moustache (Mascots show their year instead)
+const winsOf=id=>S.history.filter(h=>h.bigode===id).length;
+const winsCell=p=>p.role==='mascote'?`<div><div>MASCOTE</div><div>${p.mascotYear||'—'}</div></div>`:(n=>`<div><div>${n===1?'VITÓRIA':'VITÓRIAS'}</div><div>${n}</div></div>`)(winsOf(p.id));
 const photoControls=p=>`<div class="btn-row">${p.photo?`<button class="btn sm" data-a="photomenu" data-id="${p.id}">Editar fotografia</button><button class="txt-btn" data-a="rmphoto" data-id="${p.id}">Remover</button>`
   :`<label class="btn sm" for="photo-in-${p.id}" style="display:inline-flex;align-items:center;cursor:pointer">Adicionar fotografia</label>`}<input type="file" id="photo-in-${p.id}" data-photo="${p.id}" accept="image/*" hidden></div>`;
 // A small menu of choices for one thing (here: the photo), so a row never shows several look-alike buttons
@@ -1274,7 +1277,7 @@ function vGaleria(){
   ${cp?`<div class="pass vencedor"><span class="ghost">${STACHE}</span>
     <div class="top-row"><span class="lbl">Laço-Testemunho</span><span class="no">${cp.no?'Nº '+String(cp.no).padStart(3,'0'):''}</span></div>
     <div style="display:flex;align-items:center;gap:14px">${passPhoto(cp)}<div><div class="name">${esc(cp.name)}</div><div class="sub">Melhor Bigode ${cur.year}${cur.prize?' · «'+esc(cur.prize)+'»':''}</div></div></div>
-    <div class="meta"><div><div>DESDE</div><div>${cp.since}</div></div><div><div>JANTARES</div><div>${cp.dinners}</div></div><div><div>ENTREGA EM</div><div>${roman(cur.year+1)}</div></div></div></div>`:''}
+    <div class="meta"><div><div>DESDE</div><div>${cp.since}</div></div>${winsCell(cp)}<div><div>ENTREGA EM</div><div>${roman(cur.year+1)}</div></div></div></div>`:''}
   <section class="sec"><div class="sec-row"><span class="h-serif">Livro de honra</span>${me()&&me().committee?`<button class="add-link" data-a="histform" style="background:none;border:0"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>Edição anterior</button>`:'<span class="note">Art. 14.º</span>'}</div>${honour}</section>
   ${(()=>{const ys=[...new Set(S.history.map(h=>h.year).concat(Object.values(S.media||{}).map(x=>x.year)))].sort((a,b)=>b-a);
     return `<section class="sec"><div class="sec-row"><span class="h-serif">Arquivo dos jantares</span><span class="note">fotografias e propostas</span></div>
@@ -1512,7 +1515,7 @@ function sheet(){
     <div class="pass ${t}"><span class="ghost">${STACHE}</span>
       <div class="top-row"><span class="lbl">${tierName[t]}</span><span class="no">${m.no?'Nº '+String(m.no).padStart(3,'0'):roman(m.mascotYear||m.since)}</span></div>
       <div style="display:flex;align-items:center;gap:14px">${passPhoto(m)}<div><div class="name">${esc(m.name)}</div><div class="sub">${esc(sub)}</div></div></div>
-      <div class="meta"><div><div>DESDE</div><div>${m.since}</div></div><div><div>JANTARES</div><div>${m.dinners||0}</div></div>${m.committee?'<div><div>CARGO</div><div>Comissão</div></div>':''}</div>
+      <div class="meta"><div><div>DESDE</div><div>${m.since}</div></div>${winsCell(m)}${m.committee?'<div><div>CARGO</div><div>Comissão</div></div>':''}</div>
     </div>
     ${photoControls(m)}
     <p class="note">A cor segue a hierarquia dos laços (Art. 11.º): carvão para membros, verde para mascotes, vinho para o Melhor Bigode em funções.</p>
@@ -1731,7 +1734,7 @@ function vPerfil(){
   <div class="pass ${t}"><span class="ghost">${STACHE}</span>
     <div class="top-row"><span class="lbl">${tierName[t]}</span><span class="no">${m.no?'Nº '+String(m.no).padStart(3,'0'):roman(m.mascotYear||m.since)}</span></div>
     <div style="display:flex;align-items:center;gap:14px">${passPhoto(m)}<div><div class="name">${esc(m.name)}</div><div class="sub">${esc(sub)}</div></div></div>
-    <div class="meta"><div><div>DESDE</div><div>${m.since}</div></div><div><div>JANTARES</div><div>${m.dinners||0}</div></div>${m.committee?'<div><div>CARGO</div><div>Comissão</div></div>':''}</div>
+    <div class="meta"><div><div>DESDE</div><div>${m.since}</div></div>${winsCell(m)}${m.committee?'<div><div>CARGO</div><div>Comissão</div></div>':''}</div>
   </div>
 
   <section class="sec">${m.photo?`<div class="sec-row"><span class="h-serif">Fotografia</span><span class="note">com bigode</span></div>${photoControls(m)}`
