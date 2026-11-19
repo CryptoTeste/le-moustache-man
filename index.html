@@ -1138,7 +1138,7 @@ function histForm(y){
   $('#layer').innerHTML=`<div class="scrim" data-a="closesheet"><div class="sheet" role="dialog" aria-modal="true" aria-label="${h?'Editar a edição '+y:'Nova edição anterior'}">
     <div class="grab" aria-hidden="true"></div>
     <div class="sec-row"><div><span class="eyebrow">Livro de honra</span><div class="title-sm">${h?'Jantar <em>'+roman(y)+'</em>':'Edição <em>anterior</em>'}</div></div><button class="x-btn" data-a="closesheet" aria-label="Fechar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
-    <div class="grid2"><label class="f" for="hf-year">Ano<input type="number" id="hf-year" inputmode="numeric" value="${y||''}" placeholder="2024" min="1990" max="${S.edition.year-1}" ${h?'disabled':''}></label>
+    <div class="grid2"><label class="f" for="hf-year">Ano<input type="number" id="hf-year" inputmode="numeric" value="${y||''}" placeholder="2024" min="1950" max="${S.edition.year-1}" ${h?'disabled':''}></label>
       <label class="f" for="hf-date">Data<input type="date" id="hf-date" value="${h&&h.date||''}"></label></div>
     <label class="f" for="hf-place">Local<input type="text" id="hf-place" maxlength="80" value="${esc(h&&h.place||'')}" placeholder="Ex.: Tasca do Largo, Óbidos"></label>
     <label class="f" for="hf-bigode">Melhor Bigode<select id="hf-bigode"><option value="">— Por definir —</option>${opt(mem,h&&h.bigode)}</select></label>
@@ -1155,7 +1155,7 @@ function histForm(y){
 }
 async function saveHistForm(btn){
   const m=me(),editing=UI.histYear,y=editing||Number($('#hf-year').value);
-  if(!y||y<1990||y>=S.edition.year){toast('Ano inválido');return}
+  if(!y||y<1950||y>=S.edition.year){toast('Ano inválido');return}
   if(!editing&&S.history.some(h=>h.year===y)){toast(y+' já existe: abra-a para editar');return}
   btn.disabled=true;
   const ch={};let mascote=$('#hf-mascote').value;
@@ -1357,8 +1357,10 @@ function personCard(id){
   const t=ONLINE?Remote.keys[id]:null,canRm=!(id===ME||p.admin);
   return `<div class="sheet-bar"><div class="pc-head">${avatar(p)}<div><div class="title-sm">${esc(p.name)}</div><div class="note">${sub}${role?` · <span class="tag brass">${role}</span>`:''}</div></div></div><button class="x-btn" data-a="closesheet" aria-label="Fechar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
   <section class="pc-sec"><span class="pc-k">Dados</span>
-    <label class="f" for="ed-name">Nome<input type="text" id="ed-name" value="${esc(keep('#ed-name',p.name))}" maxlength="40"></label>
-    ${masc?`<label class="f" for="ed-year">Eleito mascote em<input type="number" id="ed-year" value="${esc(keep('#ed-year',p.mascotYear||''))}" min="1990" max="${S.edition.year}"></label>`
+    ${masc?`<label class="f" for="ed-name">Nome<input type="text" id="ed-name" value="${esc(keep('#ed-name',p.name))}" maxlength="40"></label>`
+      :`<div class="grid2" style="grid-template-columns:minmax(0,1fr) 110px"><label class="f" for="ed-name">Nome<input type="text" id="ed-name" value="${esc(keep('#ed-name',p.name))}" maxlength="40"></label>
+      <label class="f" for="ed-since">Membro desde<input type="number" inputmode="numeric" id="ed-since" value="${esc(keep('#ed-since',p.since||''))}" min="1950" max="${S.edition.year}"></label></div>`}
+    ${masc?`<label class="f" for="ed-year">Eleito mascote em<input type="number" id="ed-year" value="${esc(keep('#ed-year',p.mascotYear||''))}" min="1950" max="${S.edition.year}"></label>`
       :`<label class="sw-row${canCom?'':' off'}"><span><b>Comissão</b><small>${p.admin?'O administrador está sempre na Comissão.':canCom?'Gere o jantar, as urnas e as pessoas.':'Só o administrador altera.'}</small></span><input type="checkbox" class="sw" id="ed-com" ${p.committee?'checked':''} ${canCom?'':'disabled'}></label>`}
     <button class="btn brass" data-a="saveedit" data-id="${id}">Guardar alterações</button>
   </section>
@@ -1459,7 +1461,7 @@ function vComissao(){
     <div class="add-box">
     <span class="sub-label">Adicionar uma mascote de anos anteriores</span>
     <div class="grid2" style="grid-template-columns:minmax(0,1fr) 110px"><label class="f" for="new-mascot">Nome<input type="text" id="new-mascot" placeholder="Nome" maxlength="60"></label>
-      <label class="f" for="new-mascot-year">Eleito em<input type="number" id="new-mascot-year" value="${e.year-1}" min="1990" max="${e.year}"></label></div>
+      <label class="f" for="new-mascot-year">Eleito em<input type="number" id="new-mascot-year" value="${e.year-1}" min="1950" max="${e.year}"></label></div>
     <button class="btn sm brass" data-a="addmascot" style="align-self:flex-start">Adicionar mascote</button>
     <p class="note">Ficam com convite vitalício e aparecem no Livro de honra no ano em que foram eleitas.</p></div></section>`;
   const hist=S.history.slice().sort((a,b)=>b.year-a.year);
@@ -2001,11 +2003,13 @@ document.addEventListener('click',ev=>{
     case 'tiebreak':{const b=S.ballots[k];Store.setMany({[`ballots.${k}`]:{cands:leaders(b),open:true,revealed:false,votes:{},round:(b.round||1)+1,openedAt:Date.now(),openedBy:m.id}});toast('Desempate aberto');return}
     case 'resetb':Store.one(`ballots.${k}`,{cands:S.ballots[k].cands,open:false,revealed:false,votes:{},round:1});return;
     case 'edit':case 'person':openPerson(id);return;
-    case 'saveedit':{const n=$('#ed-name').value.trim();if(!n){toast('O nome não pode ficar vazio');return}UI.editing=null;UI.personOpen=null;closeLayer();const ch={[`people.${id}.name`]:n};const cb=$('#ed-com');if(cb&&m.admin&&!S.people[id].admin)ch[`people.${id}.committee`]=cb.checked;
-      const ey=$('#ed-year');if(ey&&Number(ey.value))ch[`people.${id}.mascotYear`]=Number(ey.value);Store.setMany(ch);toast(S.people[id]&&S.people[id].role==='mascote'?'Mascote atualizada':'Membro atualizado');return}
+    case 'saveedit':{const n=$('#ed-name').value.trim();if(!n){toast('O nome não pode ficar vazio');return}const ch={[`people.${id}.name`]:n};const cb=$('#ed-com');if(cb&&m.admin&&!S.people[id].admin)ch[`people.${id}.committee`]=cb.checked;
+      const ey=$('#ed-year');if(ey&&Number(ey.value))ch[`people.${id}.mascotYear`]=Number(ey.value);
+      const es=$('#ed-since');if(es){const y=Number(es.value);if(!y||y<1950||y>S.edition.year){toast('Ano «Membro desde» inválido');return}ch[`people.${id}.since`]=y}
+      UI.editing=null;UI.personOpen=null;closeLayer();Store.setMany(ch);toast(S.people[id]&&S.people[id].role==='mascote'?'Mascote atualizada':'Membro atualizado');return}
     case 'askrm':UI.confirm='rm-'+id;ui();return;
     case 'rmok':{UI.editing=null;UI.confirm=null;if(UI.personOpen===id){UI.personOpen=null;closeLayer()}const ch={['people.'+id]:undefined,['rsvp.'+id]:undefined,['present.'+id]:undefined};['bigode','mascote'].forEach(x=>ch[`ballots.${x}.cands`]=S.ballots[x].cands.filter(c=>c!==id));Store.setMany(ch);if(ONLINE)Remote.dropKeys(id).catch(()=>{});toast('Membro removido');return}
-    case 'addmascot':{const n=$('#new-mascot').value.trim(),y=Number($('#new-mascot-year').value);if(!n){toast('Escreva o nome');return}if(!y||y<1990||y>S.edition.year){toast('Ano inválido');return}
+    case 'addmascot':{const n=$('#new-mascot').value.trim(),y=Number($('#new-mascot-year').value);if(!n){toast('Escreva o nome');return}if(!y||y<1950||y>S.edition.year){toast('Ano inválido');return}
       const nid='g'+Date.now().toString(36),ch={['people.'+nid]:{name:n,role:'mascote',since:y,dinners:0,mascotYear:y}};
       const hs=S.history.slice(),h=hs.find(x=>x.year===y);
       if(h){if(!h.mascote){ch.history=hs.map(x=>x.year===y?Object.assign({},x,{mascote:nid}):x)}}else ch.history=hs.concat({year:y,mascote:nid,manual:true}).sort((a,b)=>a.year-b.year);
@@ -2013,7 +2017,7 @@ document.addEventListener('click',ev=>{
     case 'histform':histForm(v?Number(v):null);return;
     case 'savehistform':saveHistForm(el);return;
     case 'hfnophoto':UI.histPhoto=null;$('#hf-preview').innerHTML='<p class="note">A fotografia será removida ao guardar.</p>';el.remove();return;
-    case 'addhist':{const y=Number($('#new-hist-year').value);if(!y||y<1990||y>=S.edition.year){toast('Ano inválido');return}if(S.history.some(h=>h.year===y)){toast(y+' já existe');return}
+    case 'addhist':{const y=Number($('#new-hist-year').value);if(!y||y<1950||y>=S.edition.year){toast('Ano inválido');return}if(S.history.some(h=>h.year===y)){toast(y+' já existe');return}
       Store.one('history',S.history.concat({year:y,manual:true}).sort((a,b)=>a.year-b.year));toast(y+' adicionado');return}
     case 'savehist':{const y=Number(v),d=$('#hd-'+y).value,bb=$('#hb-'+y).value,mm=$('#hm-'+y).value;
       const hs=S.history.map(h=>{if(h.year!==y)return h;const n=Object.assign({},h);d?n.date=d:delete n.date;bb?n.bigode=bb:delete n.bigode;mm?n.mascote=mm:delete n.mascote;return n});
